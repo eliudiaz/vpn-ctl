@@ -1,4 +1,4 @@
-description: 'VPN peer: internal-legacy-network'
+description: 'VPN peer: mock-peer-d'
 name: aff-atg
 runtime:
   name: python

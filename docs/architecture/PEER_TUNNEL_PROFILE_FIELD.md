@@ -12,7 +12,7 @@
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: vimenca
+  name: mock-peer-a
 spec:
   tunnel:
     profile: checkpoint_r80        # ← Profile reference (clear but could be more explicit)
@@ -31,7 +31,7 @@ spec:
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: vimenca
+  name: mock-peer-a
   labels:
     tunnel-profile: checkpoint_r80  # ← Explicit label for easier querying
     tunnel-vendor: checkpoint       # ← Quick vendor identification
@@ -140,7 +140,7 @@ spec:
     # Validation metadata
     profileMetadata:
       vendor: checkpoint
-      description: "Checkpoint R80.10 compatible (Vimenca standard)"
+      description: "Checkpoint R80.10 compatible (MockPeerA standard)"
       ike_version: "IKEv2"
       encryption: "AES256"
       pfs: "disabled"
@@ -165,7 +165,7 @@ spec:
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: vimenca
+  name: mock-peer-a
   labels:
     tunnel-profile: checkpoint_r80  # For querying all peers with this profile
     tunnel-vendor: checkpoint
@@ -243,12 +243,12 @@ vpn-ctl peer list --tunnel-profile=checkpoint_r80 --action=update-dpd
 
 **Apply Option A (recommended) to all peers**:
 
-### vimenca.yaml
+### mock-peer-a.yaml
 ```yaml
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: vimenca
+  name: mock-peer-a
   labels:
     tunnel-profile: checkpoint_r80
     tunnel-vendor: checkpoint
@@ -264,12 +264,12 @@ spec:
   # ... rest of spec ...
 ```
 
-### cibao.yaml
+### mock-peer-b.yaml
 ```yaml
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: cibao
+  name: mock-peer-b
   labels:
     tunnel-profile: checkpoint_r80
     tunnel-vendor: checkpoint
@@ -285,12 +285,12 @@ spec:
   # ... rest of spec ...
 ```
 
-### apap.yaml
+### mock-peer-c.yaml
 ```yaml
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: apap
+  name: mock-peer-c
   labels:
     tunnel-profile: fortigate_standard
     tunnel-vendor: fortinet
@@ -306,12 +306,12 @@ spec:
   # ... rest of spec ...
 ```
 
-### internal-legacy-network.yaml
+### mock-peer-d.yaml
 ```yaml
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: internal-legacy-network
+  name: mock-peer-d
   labels:
     tunnel-profile: checkpoint_r80
     tunnel-vendor: checkpoint

@@ -122,7 +122,7 @@ class ATGVerifier:
                         peer_name = tag.get('Value', vpn['VpnConnectionId'])
                         break
                     elif tag.get('Key') == 'Name':
-                        # Fallback: extract peer name from VPN name (e.g., "company-partner-vpn" -> "Vimenca")
+                        # Fallback: extract peer name from VPN name (e.g., "company-partner-vpn" -> "MockPeerA")
                         name_value = tag.get('Value', '').replace('vpn-', '').replace('-vpn', '')
                         peer_name = name_value.capitalize() if name_value else vpn['VpnConnectionId']
 

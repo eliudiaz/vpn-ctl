@@ -1,4 +1,4 @@
-description: 'VPN peer: vimenca'
+description: 'VPN peer: mock-peer-a'
 name: aff-atg
 runtime:
   name: python

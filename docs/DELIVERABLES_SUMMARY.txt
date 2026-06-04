@@ -34,9 +34,9 @@ Usage Examples:
 Form_VPN_Filled_20251225_230440.docx (40 KB)
   • Pre-filled VPN form with ATG configuration
   • Organization section: COMPLETELY FILLED ✓
-  • Vimenca section: BLANK (ready for manual entry)
+  • MockPeerA section: BLANK (ready for manual entry)
   • IPSec properties: ALL FILLED ✓
-  • Ready to send to Vimenca
+  • Ready to send to MockPeerA
   • Professional Word 2007+ format
 
 Contents:
@@ -173,8 +173,8 @@ PYTHON DIRECT:
     "source_cidr": "172.31.0.0/16",
     "ports": "80, 443, ICMP"
   },
-  "vimenca": {
-    "company": "Vimenca",
+  "mock-peer-a": {
+    "company": "MockPeerA",
     "vpn_ip": "X.X.X.X",
     "device_type": "Device",
     "device_version": "Version",
@@ -220,7 +220,7 @@ Documentation:
 
 3. Verify Output:
    $ open Form_VPN_Filled_*.docx
-   Check: Organization section filled, Vimenca blank
+   Check: Organization section filled, MockPeerA blank
 
 4. Test Custom Config:
    $ ./fill-form.sh config vpn-custom.json
@@ -236,13 +236,13 @@ Documentation:
 
 2. REVIEW:
    • Verify Organization section is filled correctly
-   • Verify Vimenca section is blank
+   • Verify MockPeerA section is blank
    • Check IPSec properties are present
 
-3. SEND TO VIMENCA:
+3. SEND TO MOCK_PEER_A:
    Eric Frias (809-487-2679)
    • Email the DOCX file
-   • They complete Vimenca section
+   • They complete MockPeerA section
    • Return signed copy
 
 4. REUSE:
@@ -284,7 +284,7 @@ Help:
 ✓ Output file size: ~40 KB
 ✓ All sections correctly populated
 ✓ No manual editing needed for Organization section
-✓ Vimenca section blank as intended
+✓ MockPeerA section blank as intended
 ✓ File opens in Microsoft Word without issues
 ✓ Can be printed directly
 ✓ Ready to share with external parties
@@ -293,12 +293,12 @@ Help:
 14. FEATURES NOT INCLUDED (By Design)
 ================================================================================
 
-X Vimenca auto-completion (intentionally left blank)
+X MockPeerA auto-completion (intentionally left blank)
 X Signature field auto-population (for manual signing)
 X Digital signature support (outside scope)
 X PDF export (DOCX only, but can be exported to PDF from Word)
 
-These are intentionally left for manual completion by Vimenca or for
+These are intentionally left for manual completion by MockPeerA or for
 final processing before sending.
 
 ================================================================================

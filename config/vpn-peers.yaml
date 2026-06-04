@@ -1,6 +1,6 @@
 tunnel_profiles:
   checkpoint_r80:
-    description: Checkpoint R80.10 compatible (Vimenca standard)
+    description: Checkpoint R80.10 compatible (MockPeerA standard)
     ike_versions:
     - ikev2
     phase1:

@@ -404,7 +404,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Add new VPN peer to ATG infrastructure with collision prevention'
     )
-    parser.add_argument('peer_name', help='Peer name (e.g., Vimenca, Checkpoint)')
+    parser.add_argument('peer_name', help='Peer name (e.g., MockPeerA, Checkpoint)')
     parser.add_argument('public_ip', help='Peer public IP address')
     parser.add_argument('bgp_asn', type=int, help='BGP ASN (64512-65534)')
     parser.add_argument('--cidrs', nargs='+', required=True, help='Destination CIDRs (peer-side)')

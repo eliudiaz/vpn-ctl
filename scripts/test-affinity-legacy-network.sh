@@ -2,10 +2,10 @@
 set -e
 
 # =============================================================================
-# Test Pod Deployment for internal-legacy-network VPN (MSSQL)
+# Test Pod Deployment for mock-peer-d VPN (MSSQL)
 # =============================================================================
 # This script deploys test pods to verify connectivity to legacy MSSQL databases
-# Usage: ./test-internal-legacy-network.sh [test-type]
+# Usage: ./test-mock-peer-d.sh [test-type]
 #   test-type: ping, port, mssql, or all (default: all)
 # =============================================================================
 
@@ -13,7 +13,7 @@ TEST_TYPE=${1:-all}
 NAMESPACE=${NAMESPACE:-default}
 TEST_POD_PREFIX="org-legacy-test"
 LEGACY_IPS=("192.168.100.8" "192.168.100.11" "192.168.100.12")
-LEGACY_NAMES=("APAP-Produccion" "Pruebas" "Produccion")
+LEGACY_NAMES=("MOCK_PEER_C-Produccion" "Pruebas" "Produccion")
 MSSQL_PORT=1433
 MSSQL_USER=${MSSQL_USER:-sa}
 MSSQL_PASS=${MSSQL_PASS:-YourPassword}

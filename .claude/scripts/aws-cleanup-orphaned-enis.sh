@@ -11,7 +11,7 @@ set -euo pipefail
 # Resources to Delete:
 #   1. ENI: eni-01d75d76eb7080228 (orphaned, 172.31.7.7)
 #   2. ENI: eni-094723bda8d9ea6a3 (orphaned, 172.31.100.134)
-#   3. SG: sg-01b4a0c5bb8f5c912 (multi-provider-nat-vimenca-sg, no usage)
+#   3. SG: sg-01b4a0c5bb8f5c912 (multi-provider-nat-mock-peer-a-sg, no usage)
 #
 # Estimated Savings: $2-4/month
 # Risk Level: 🟢 LOW
@@ -219,7 +219,7 @@ main() {
         echo -e "${YELLOW}WARNING: You are about to delete the following resources:${NC}"
         [ "$ENI1_FOUND" = true ] && echo "  - ENI: $ORPHANED_ENI_1 (172.31.7.7)"
         [ "$ENI2_FOUND" = true ] && echo "  - ENI: $ORPHANED_ENI_2 (172.31.100.134)"
-        [ "$SG_FOUND" = true ] && echo "  - Security Group: $ORPHANED_SG (multi-provider-nat-vimenca-sg)"
+        [ "$SG_FOUND" = true ] && echo "  - Security Group: $ORPHANED_SG (multi-provider-nat-mock-peer-a-sg)"
         echo ""
 
         if ! confirm "Proceed with deletion?"; then
@@ -327,9 +327,9 @@ main() {
             --output text 2>/dev/null)
 
         if [[ "$tester_instance" == "running" ]]; then
-            log_success "Vimenca tester instance (i-05c40371fbcf6ed71) is running"
+            log_success "MockPeerA tester instance (i-05c40371fbcf6ed71) is running"
         else
-            log_warning "Vimenca tester instance status: $tester_instance"
+            log_warning "MockPeerA tester instance status: $tester_instance"
         fi
     fi
 

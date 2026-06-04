@@ -206,7 +206,7 @@ vpnTargets:
   # If empty, uses default vpn-targets.yaml
   content: |
     providers:
-      - name: "Vimenca"
+      - name: "MockPeerA"
         description: "Banking services provider"
         enabled: true
         targets:
@@ -247,7 +247,7 @@ vpnTargets:
             timeout: 5
             enabled: true
 
-      - name: "CIBAO"
+      - name: "MOCK_PEER_B"
         description: "Enterprise partner network - TNS production databases"
         enabled: true
         targets:
@@ -274,13 +274,13 @@ vpnTargets:
         description: "Legacy MSSQL databases - Original pod IPs visible"
         enabled: true
         targets:
-          - name: "APAP-TCP"
+          - name: "MOCK_PEER_C-TCP"
             ip: "192.168.100.8"
             port: 1433
             protocol: "tcp"
             timeout: 5
             enabled: true
-          - name: "APAP-ICMP"
+          - name: "MOCK_PEER_C-ICMP"
             ip: "192.168.100.8"
             port: 1433
             protocol: "icmp"

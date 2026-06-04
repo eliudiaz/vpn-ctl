@@ -108,7 +108,7 @@ vpnctl infra export-config --output prod-infra.json --region us-east-2 --profile
     "tgw_route_table": { ... }
   },
   "peers": {
-    "vimenca": {
+    "mock-peer-a": {
       "enabled": true,
       "public_ip": "191.97.106.141",
       "device_type": "Checkpoint Firewall",
@@ -415,7 +415,7 @@ vpnctl health check --format json
 
 # Certification (Phase 0 - completed in earlier work)
 vpnctl certify core
-vpnctl certify peer --peer vimenca
+vpnctl certify peer --peer mock-peer-a
 ```
 
 ### Health Service Management
@@ -483,8 +483,8 @@ Detailed peer status:
 {
   "summary": { ... },
   "peers": {
-    "vimenca": {
-      "peer_name": "vimenca",
+    "mock-peer-a": {
+      "peer_name": "mock-peer-a",
       "enabled": true,
       "vpn_id": "vpn-...",
       "aws_state": "available",
@@ -504,7 +504,7 @@ Detailed peer status:
 Specific peer health:
 ```json
 {
-  "peer_name": "vimenca",
+  "peer_name": "mock-peer-a",
   "enabled": true,
   ...
 }

@@ -13,10 +13,10 @@
 config/
 ├── tunnel-profiles.yaml           ← Shared, referenced by peers
 └── peers/
-    ├── vimenca.yaml              ← References: checkpoint_r80
-    ├── cibao.yaml                ← References: checkpoint_r80
-    ├── apap.yaml                 ← References: fortigate_standard
-    └── internal-legacy-network.yaml
+    ├── mock-peer-a.yaml              ← References: checkpoint_r80
+    ├── mock-peer-b.yaml                ← References: checkpoint_r80
+    ├── mock-peer-c.yaml                 ← References: fortigate_standard
+    └── mock-peer-d.yaml
 ```
 
 **Problem**: Two separate files — peers and profiles decoupled.
@@ -27,13 +27,13 @@ config/
 
 **Concept**: Move tunnel profile definition directly into each peer manifest.
 
-### Example: vimenca.yaml (with inline profile)
+### Example: mock-peer-a.yaml (with inline profile)
 
 ```yaml
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: vimenca
+  name: mock-peer-a
 spec:
   device:
     type: "Checkpoint Firewall"
@@ -69,13 +69,13 @@ spec:
     # ... rest of config ...
 ```
 
-### Example: apap.yaml (with inline profile)
+### Example: mock-peer-c.yaml (with inline profile)
 
 ```yaml
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: apap
+  name: mock-peer-c
 spec:
   device:
     type: "Firewall Fortinet"
@@ -116,11 +116,11 @@ spec:
 - ✅ **Complete self-containment**: One peer file = everything needed to deploy
 - ✅ **Atomic git commits**: Peer + profile changes in one commit
 - ✅ **No external dependencies**: Peer doesn't reference external file
-- ✅ **Easy to understand**: New developer opens vimenca.yaml, sees full config
+- ✅ **Easy to understand**: New developer opens mock-peer-a.yaml, sees full config
 - ✅ **Per-peer customization**: Easy to have slight profile variations
 
 **Cons ❌**:
-- ❌ **Duplication**: Vimenca and CIBAO repeat same checkpoint_r80 profile (50+ lines each)
+- ❌ **Duplication**: MockPeerA and MOCK_PEER_B repeat same checkpoint_r80 profile (50+ lines each)
 - ❌ **Maintenance nightmare**: Update DPD timeout → edit 2 peer files
 - ❌ **Violates DRY**: Same profile defined multiple times
 - ❌ **Larger files**: ~280 lines → ~330 lines per peer (50 line increase)
@@ -186,7 +186,7 @@ peers:
   - apiVersion: vpn.example.io/v1
     kind: VpnPeer
     metadata:
-      name: vimenca
+      name: mock-peer-a
     spec:
       device:
         type: "Checkpoint Firewall"
@@ -200,7 +200,7 @@ peers:
   - apiVersion: vpn.example.io/v1
     kind: VpnPeer
     metadata:
-      name: cibao
+      name: mock-peer-b
     spec:
       device:
         type: "Checkpoint Firewall"
@@ -214,7 +214,7 @@ peers:
   - apiVersion: vpn.example.io/v1
     kind: VpnPeer
     metadata:
-      name: apap
+      name: mock-peer-c
     spec:
       device:
         type: "Firewall Fortinet"
@@ -237,12 +237,12 @@ checkpoint_r80: &checkpoint_r80_profile
   # ... full profile ...
 ```
 
-**File**: `config/peers/vimenca.yaml`
+**File**: `config/peers/mock-peer-a.yaml`
 ```yaml
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: vimenca
+  name: mock-peer-a
 spec:
   device:
     type: "Checkpoint Firewall"
@@ -289,10 +289,10 @@ config/
 │   ├── fortinet-profiles.yaml      ← All Fortinet profiles
 │   └── palo-alto-profiles.yaml     ← All Palo Alto profiles
 └── peers/
-    ├── vimenca.yaml               ← References checkpoint:r80
-    ├── cibao.yaml                 ← References checkpoint:r80
-    ├── apap.yaml                  ← References fortinet:standard
-    └── internal-legacy-network.yaml
+    ├── mock-peer-a.yaml               ← References checkpoint:r80
+    ├── mock-peer-b.yaml                 ← References checkpoint:r80
+    ├── mock-peer-c.yaml                  ← References fortinet:standard
+    └── mock-peer-d.yaml
 ```
 
 **File**: `config/profiles/checkpoint-profiles.yaml`
@@ -315,12 +315,12 @@ profiles:
     # ... config ...
 ```
 
-**File**: `config/peers/vimenca.yaml`
+**File**: `config/peers/mock-peer-a.yaml`
 ```yaml
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: vimenca
+  name: mock-peer-a
 spec:
   device:
     type: "Checkpoint Firewall"
@@ -377,19 +377,19 @@ def load_tunnel_profile(vendor: str, profile_name: str) -> Dict:
 config/
 ├── tunnel-profiles.yaml           ← Base/standard profiles
 └── peers/
-    ├── vimenca.yaml              ← References checkpoint_r80
-    ├── cibao.yaml                ← References checkpoint_r80
-    ├── apap.yaml                 ← References fortigate_standard + custom overrides
-    └── internal-legacy-network.yaml
+    ├── mock-peer-a.yaml              ← References checkpoint_r80
+    ├── mock-peer-b.yaml                ← References checkpoint_r80
+    ├── mock-peer-c.yaml                 ← References fortigate_standard + custom overrides
+    └── mock-peer-d.yaml
 ```
 
-**File**: `config/peers/apap.yaml` (with custom profile tuning)
+**File**: `config/peers/mock-peer-c.yaml` (with custom profile tuning)
 
 ```yaml
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: apap
+  name: mock-peer-c
 spec:
   device:
     type: "Firewall Fortinet"
@@ -468,7 +468,7 @@ The **current architecture (Option 4)** is optimal for this use case:
 ```
 tunnel-profiles.yaml       ← 3 profiles (checkpoint_r80, fortigate_standard, palo_alto_standard)
      ↓ (referenced by)
-config/peers/*.yaml        ← 4 peers (vimenca, cibao, apap, internal-legacy-network)
+config/peers/*.yaml        ← 4 peers (mock-peer-a, mock-peer-b, mock-peer-c, mock-peer-d)
 ```
 
 ### **Why This Wins**:
@@ -489,7 +489,7 @@ config/peers/*.yaml        ← 4 peers (vimenca, cibao, apap, internal-legacy-ne
 
 4. **Developer Experience**: New developer wants to understand VPN config?
    - ✅ Option 4: Clear separation — profiles are templates, peers are instances
-   - ❌ Option 1: Open vimenca.yaml, see 330 lines, hard to tell what's shared vs. unique
+   - ❌ Option 1: Open mock-peer-a.yaml, see 330 lines, hard to tell what's shared vs. unique
    - ❌ Option 2: One giant file with YAML anchors (intimidating)
 
 5. **Professional Architecture**: How do enterprises structure this?
@@ -584,7 +584,7 @@ If you decide to move to Option 1 (inline profiles):
 
 ```bash
 # 1. Extract profiles from tunnel-profiles.yaml for each peer
-for peer in vimenca cibao apap internal-legacy-network; do
+for peer in mock-peer-a mock-peer-b mock-peer-c mock-peer-d; do
   PROFILE=$(grep "profile:" config/peers/$peer.yaml | awk '{print $2}')
   # Find profile definition in tunnel-profiles.yaml
   # Copy into config/peers/$peer.yaml under spec.tunnel.profileDefinition

@@ -6,7 +6,7 @@ Each peer is a self-contained manifest with complete specification.
 
 Usage:
     loader = VpnManifestLoader("../config")
-    peer = loader.load_peer("vimenca")  # Load single peer
+    peer = loader.load_peer("mock-peer-a")  # Load single peer
     all_peers = loader.load_all_peers()  # Load all peer manifests
 """
 
@@ -97,7 +97,7 @@ class VpnManifestLoader:
         Load single peer manifest by name.
 
         Args:
-            peer_name: Name of the peer (e.g., "vimenca", "apap")
+            peer_name: Name of the peer (e.g., "mock-peer-a", "mock-peer-c")
             resolve_profile: If True, resolve tunnel profile references
 
         Returns:
@@ -328,7 +328,7 @@ class VpnConfigLoader:
         Tries manifest first, falls back to monolithic file.
 
         Args:
-            peer_name: Name of the peer (e.g., "vimenca", "apap")
+            peer_name: Name of the peer (e.g., "mock-peer-a", "mock-peer-c")
 
         Returns:
             Peer configuration dictionary

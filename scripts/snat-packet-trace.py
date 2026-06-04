@@ -379,7 +379,7 @@ Status:                     {'✓ Available for verification' if vpc_flow['statu
 
         report += f"""
 Overall Status:             {passed}/{total} checks passed
-Masquerading Confirmed:     {'✓ YES - Ready for Vimenca' if passed >= 4 else '⚠ Incomplete - see details'}
+Masquerading Confirmed:     {'✓ YES - Ready for MockPeerA' if passed >= 4 else '⚠ Incomplete - see details'}
 
 7. DIAGNOSTIC EVIDENCE
 {'-'*80}
@@ -398,39 +398,39 @@ Network Path:
     ↓
   Transit Gateway
     ↓
-  VPN Tunnel to Vimenca
+  VPN Tunnel to MockPeerA
     ↓
-  Vimenca receives traffic from {self.config.provider_ip} ✓
+  MockPeerA receives traffic from {self.config.provider_ip} ✓
 
-8. WHAT THIS MEANS FOR VIMENCA
+8. WHAT THIS MEANS FOR MOCK_PEER_A
 {'-'*80}
 
-Vimenca firewall should be configured to accept traffic from:
+MockPeerA firewall should be configured to accept traffic from:
   Source IP:    {self.config.provider_ip}
   Destination:  172.16.x.x networks
 
 The masquerading (SNAT) is working correctly on our AWS side.
-All packets leaving our network toward Vimenca have source IP: {self.config.provider_ip}
+All packets leaving our network toward MockPeerA have source IP: {self.config.provider_ip}
 
 If connectivity is still failing, the issue is likely:
-  1. Vimenca firewall rules don't include {self.config.provider_ip}
-  2. Vimenca service not responding on target port
+  1. MockPeerA firewall rules don't include {self.config.provider_ip}
+  2. MockPeerA service not responding on target port
   3. Return traffic path blocked
-  4. VPN tunnel configuration issue on Vimenca side
+  4. VPN tunnel configuration issue on MockPeerA side
 
-9. RECOMMENDATIONS FOR VIMENCA TEAM
+9. RECOMMENDATIONS FOR MOCK_PEER_A TEAM
 {'-'*80}
 
 1. Verify Checkpoint firewall rule allows source IP: {self.config.provider_ip}
-2. Confirm Vimenca service is listening on 172.16.82.28:8088
-3. Check VPN tunnel logs on Vimenca side for dropped packets
-4. Run packet capture on Vimenca gateway to verify packets arriving from {self.config.provider_ip}
-5. Verify return route: Vimenca → {self.config.provider_ip} via VPN tunnel
+2. Confirm MockPeerA service is listening on 172.16.82.28:8088
+3. Check VPN tunnel logs on MockPeerA side for dropped packets
+4. Run packet capture on MockPeerA gateway to verify packets arriving from {self.config.provider_ip}
+5. Verify return route: MockPeerA → {self.config.provider_ip} via VPN tunnel
 
-10. TROUBLESHOOTING COMMANDS FOR VIMENCA
+10. TROUBLESHOOTING COMMANDS FOR MOCK_PEER_A
 {'-'*80}
 
-On Vimenca gateway/firewall:
+On MockPeerA gateway/firewall:
   # Check if packets from 203.0.113.10 are reaching
   tcpdump -i <vpn_interface> -nn 'src host 203.0.113.10'
 
@@ -517,7 +517,7 @@ Examples:
 
         # Save report
         filename = tracer.save_report(report, args.output)
-        print(f"\n✓ Report ready for Vimenca: {filename}")
+        print(f"\n✓ Report ready for MockPeerA: {filename}")
 
     else:
         # Trace specific target

@@ -22,7 +22,7 @@ class PulumiProvider(IInfrastructureProvider):
         Initialize Pulumi provider.
 
         Args:
-            stack_name: Name of Pulumi stack (e.g., 'core', 'peer-vimenca')
+            stack_name: Name of Pulumi stack (e.g., 'core', 'peer-mock-peer-a')
             pulumi_dir: Path to Pulumi directory (default: pulumi/)
         """
         self.stack_name = stack_name

@@ -12,7 +12,7 @@
 # =============================================================================
 tunnel_profiles:
   checkpoint_r80:
-    description: "Checkpoint R80.10 compatible (Vimenca standard)"
+    description: "Checkpoint R80.10 compatible (MockPeerA standard)"
     ike_versions: ["ikev2"]
     phase1:
       encryption: ["AES256"]
@@ -70,7 +70,7 @@ tunnel_profiles:
 # VPN PEERS - Customer Gateway Configurations (PEER-AGNOSTIC)
 # =============================================================================
 peers:
-  vimenca:
+  mock-peer-a:
     enabled: true
     tunnel_profile: checkpoint_r80
     public_ip: "191.97.106.141"
@@ -90,7 +90,7 @@ peers:
         phone: "809-487-2679"
         email: "efrias@bv.com.do"
 
-  cibao:
+  mock-peer-b:
     enabled: true
     tunnel_profile: checkpoint_r80
     public_ip: "186.148.92.203"
@@ -104,9 +104,9 @@ peers:
       tunnel2: "auto_generate_or_provide_backup"
     # SNAT: No provider_assigned_ip, routes directly to TGW
     contacts:
-      - name: "CIBAO Operations"
+      - name: "MOCK_PEER_B Operations"
         phone: "TBD"
-        email: "operations@cibao.local"
+        email: "operations@mock-peer-b.local"
 
   org_legacy_network:
     enabled: true
@@ -129,7 +129,7 @@ peers:
         phone: "TBD"
         email: "legacy-admin@company.local"
 
-  apap:
+  mock-peer-c:
     enabled: true
     tunnel_profile: fortigate_standard
     public_ip: "4.152.100.174"
@@ -141,15 +141,15 @@ peers:
     psk:
       tunnel1: "rb70BeeW9_uzZyDzGuc1wIkSkLkMPeUrJgZpH4Lm5177m09JelLvFbh95y2ziuoW"
       tunnel2: "oaVKn9YDRxkINDMvfX_wnlx1dyNLgBesOzzCt9hksynaHmYF5fxEX9Jr0DRIyYip"
-    # SNAT: APAP has provider_assigned_ip, routes via SNAT instance
+    # SNAT: MOCK_PEER_C has provider_assigned_ip, routes via SNAT instance
     provider_assigned_ip: "203.0.113.10/32"
     snat_config:
       instance_type: "t3.small"
       enabled: true
     contacts:
-      - name: "APAP Network Operations"
+      - name: "MOCK_PEER_C Network Operations"
         phone: "TBD"
-        email: "operations@apap.local"
+        email: "operations@mock-peer-c.local"
 
 # =============================================================================
 # SNAT INSTANCE CONFIGURATION (dynamically created from peer settings)
@@ -157,8 +157,8 @@ peers:
 # If peer has provider_assigned_ip, SNAT instance is created automatically
 # using cluster EKS info (discovered at runtime, NOT hardcoded)
 #
-# Example: apap peer with provider_assigned_ip will create:
-#   - Instance name: affinity-apap-snat
+# Example: mock-peer-c peer with provider_assigned_ip will create:
+#   - Instance name: affinity-mock-peer-c-snat
 #   - Instance type: t3.small (from snat_config)
 #   - VPC/Subnet: Discovered from EKS cluster (dynamic, NOT hardcoded)
 #   - Provider IP: 203.0.113.10/32 (from provider_assigned_ip)

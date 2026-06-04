@@ -8,9 +8,9 @@ CONTEXTO DEL PROYECTO
 
 Tengo:
 1. Un cluster EKS existente en su propia VPC
-2. Transit Gateway con VPN Site-to-Site conectado a Vimenca (Checkpoint)
+2. Transit Gateway con VPN Site-to-Site conectado a MockPeerA (Checkpoint)
 3. Necesito que pods de EKS puedan comunicarse con:
-   - Red de Vimenca (172.16.70.0/24) vía Transit Gateway
+   - Red de MockPeerA (172.16.70.0/24) vía Transit Gateway
    - Red de Organization en otras VPCs (172.33.6.0/28, 172.33.16.0/28)
    - Servicios de AWS (ECR, S3, EC2 API, etc.)
 
@@ -70,7 +70,7 @@ ARQUITECTURA OBJETIVO (ECONÓMICA)
                                │
               ┌────────────────┼────────────────┐
               │                │                │
-         VPN Vimenca      VPC Organization    Otras VPCs
+         VPN MockPeerA      VPC Organization    Otras VPCs
 
 COSTOS COMPARADOS
 ─────────────────────────────────────────────────────────────────────────────
@@ -98,7 +98,7 @@ ESPECIFICACIONES TÉCNICAS
    - eks_vpc_id: string (ID de la VPC del EKS)
    - transit_gateway_id: string (TGW existente)
    - region: string (us-east-1, us-west-2, etc.)
-   - vimenca_cidr: string (172.16.70.0/24)
+   - mock-peer-a_cidr: string (172.16.70.0/24)
    - vpn_cidrs: list[string] (172.33.6.0/28, 172.33.16.0/28)
 
 2. OBTENER INFORMACIÓN DEL CLUSTER EKS:
@@ -158,7 +158,7 @@ ESPECIFICACIONES TÉCNICAS
 6. ROUTE TABLES:
    
    Para cada subnet privada de EKS:
-   - Ruta a Vimenca: 172.16.70.0/24 → Transit Gateway
+   - Ruta a MockPeerA: 172.16.70.0/24 → Transit Gateway
    - Ruta a Organization: 172.33.0.0/16 → Transit Gateway (ruta agregada)
    - Rutas a servicios AWS: vía VPC Endpoints (automático)
    
@@ -174,7 +174,7 @@ ESPECIFICACIONES TÉCNICAS
    
    b) Actualizar Security Group de Nodes EKS:
       - Agregar egress a VPC Endpoints SG port 443
-      - Agregar egress a Vimenca CIDR (172.16.70.0/24)
+      - Agregar egress a MockPeerA CIDR (172.16.70.0/24)
       - Agregar egress a Organization CIDR (172.33.0.0/16)
 
 8. DNS RESOLUTION:
@@ -193,7 +193,7 @@ ESPECIFICACIONES TÉCNICAS
    d) Opcional: Lanza pod de test que intenta:
       - Pull imagen de ECR
       - Acceso a S3
-      - Conectividad a Vimenca (ping)
+      - Conectividad a MockPeerA (ping)
 
 OUTPUTS REQUERIDOS
 ─────────────────────────────────────────────────────────────────────────────
@@ -227,7 +227,7 @@ export const eksConnectivityConfig = {
   },
   
   routing: {
-    to_vimenca: "172.16.70.0/24 → Transit Gateway",
+    to_mock-peer-a: "172.16.70.0/24 → Transit Gateway",
     to_org: "172.33.0.0/16 → Transit Gateway",
     to_aws_services: "via VPC Endpoints (private)",
   },
@@ -254,7 +254,7 @@ export const eksConnectivityConfig = {
        # Test S3
        aws s3 ls
        
-       # Test Vimenca
+       # Test MockPeerA
        ping 172.16.70.1
        
        # Test Organization
@@ -370,7 +370,7 @@ Script de validación debe probar:
 6. Test práctico con pod:
    - Pull de imagen ECR
    - Acceso a S3
-   - Ping a Vimenca
+   - Ping a MockPeerA
    - Curl a Organization
 
 EJEMPLO DE USO
@@ -380,7 +380,7 @@ EJEMPLO DE USO
 pulumi config set aws:region us-east-1
 pulumi config set eks_cluster_name my-cluster
 pulumi config set transit_gateway_id tgw-xxxxx
-pulumi config set vimenca_cidr 172.16.70.0/24
+pulumi config set mock-peer-a_cidr 172.16.70.0/24
 pulumi config set vpn_cidrs 172.33.6.0/28,172.33.16.0/28
 
 # 2. Preview
@@ -430,7 +430,7 @@ OBJETIVO: Eliminar NAT Gateway ($150-300/mes) y usar VPC Endpoints + TGW ($79-12
 INPUTS:
 - eks_cluster_name (obtener VPC/subnets con boto3)
 - transit_gateway_id (existente)
-- vimenca_cidr: 172.16.70.0/24
+- mock-peer-a_cidr: 172.16.70.0/24
 - vpn_cidrs: [172.33.6.0/28, 172.33.16.0/28]
 
 CREAR:
@@ -454,7 +454,7 @@ CREAR:
    - dynamodb
 
 4. Route Tables:
-   - 172.16.70.0/24 → TGW (Vimenca)
+   - 172.16.70.0/24 → TGW (MockPeerA)
    - 172.33.0.0/16 → TGW (Organization)
    - NO ruta 0.0.0.0/0
 

@@ -21,14 +21,14 @@ class StateSplitter:
             dev_state: Original monolithic dev stack state
 
         Returns:
-            (core_state, vimenca_state, cibao_state, apap_state, vpn_legacy_state)
+            (core_state, mock-peer-a_state, mock-peer-b_state, mock-peer-c_state, vpn_legacy_state)
         """
         resources = dev_state.get("resources", [])
 
         core_resources = []
-        vimenca_resources = []
-        cibao_resources = []
-        apap_resources = []
+        mock-peer-a_resources = []
+        mock-peer-b_resources = []
+        mock-peer-c_resources = []
         vpn_legacy_resources = []
 
         # Categorize resources by peer
@@ -38,12 +38,12 @@ class StateSplitter:
 
             if self._is_core_resource(urn, name):
                 core_resources.append(resource)
-            elif "vimenca" in name:
-                vimenca_resources.append(resource)
-            elif "cibao" in name:
-                cibao_resources.append(resource)
-            elif "apap" in name:
-                apap_resources.append(resource)
+            elif "mock-peer-a" in name:
+                mock-peer-a_resources.append(resource)
+            elif "mock-peer-b" in name:
+                mock-peer-b_resources.append(resource)
+            elif "mock-peer-c" in name:
+                mock-peer-c_resources.append(resource)
             elif "default" in name or "legacy" in name:
                 vpn_legacy_resources.append(resource)
             else:
@@ -52,18 +52,18 @@ class StateSplitter:
 
         # Create per-peer states
         core_state = self._create_state(dev_state, core_resources, "core")
-        vimenca_state = self._create_state(dev_state, vimenca_resources, "peer-vimenca")
-        cibao_state = self._create_state(dev_state, cibao_resources, "peer-cibao")
-        apap_state = self._create_state(dev_state, apap_resources, "peer-apap")
+        mock-peer-a_state = self._create_state(dev_state, mock-peer-a_resources, "peer-mock-peer-a")
+        mock-peer-b_state = self._create_state(dev_state, mock-peer-b_resources, "peer-mock-peer-b")
+        mock-peer-c_state = self._create_state(dev_state, mock-peer-c_resources, "peer-mock-peer-c")
         vpn_legacy_state = self._create_state(
-            dev_state, vpn_legacy_resources, "peer-internal-legacy-network"
+            dev_state, vpn_legacy_resources, "peer-mock-peer-d"
         )
 
         return (
             core_state,
-            vimenca_state,
-            cibao_state,
-            apap_state,
+            mock-peer-a_state,
+            mock-peer-b_state,
+            mock-peer-c_state,
             vpn_legacy_state,
         )
 
@@ -105,7 +105,7 @@ class StateSplitter:
         """Save split states to files.
 
         Args:
-            states: Tuple of (core, vimenca, cibao, apap, vpn_legacy) states
+            states: Tuple of (core, mock-peer-a, mock-peer-b, mock-peer-c, vpn_legacy) states
 
         Returns:
             Dict mapping stack name to file path
@@ -115,20 +115,20 @@ class StateSplitter:
 
         state_files = {
             "core": split_dir / "core-state.json",
-            "peer-vimenca": split_dir / "peer-vimenca-state.json",
-            "peer-cibao": split_dir / "peer-cibao-state.json",
-            "peer-apap": split_dir / "peer-apap-state.json",
-            "peer-internal-legacy-network": split_dir / "peer-internal-legacy-network-state.json",
+            "peer-mock-peer-a": split_dir / "peer-mock-peer-a-state.json",
+            "peer-mock-peer-b": split_dir / "peer-mock-peer-b-state.json",
+            "peer-mock-peer-c": split_dir / "peer-mock-peer-c-state.json",
+            "peer-mock-peer-d": split_dir / "peer-mock-peer-d-state.json",
         }
 
-        core, vimenca, cibao, apap, vpn_legacy = states
+        core, mock-peer-a, mock-peer-b, mock-peer-c, vpn_legacy = states
 
         for name, state in [
             ("core", core),
-            ("peer-vimenca", vimenca),
-            ("peer-cibao", cibao),
-            ("peer-apap", apap),
-            ("peer-internal-legacy-network", vpn_legacy),
+            ("peer-mock-peer-a", mock-peer-a),
+            ("peer-mock-peer-b", mock-peer-b),
+            ("peer-mock-peer-c", mock-peer-c),
+            ("peer-mock-peer-d", vpn_legacy),
         ]:
             with open(state_files[name], "w") as f:
                 json.dump(state, f, indent=2)

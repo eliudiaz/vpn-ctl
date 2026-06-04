@@ -1,4 +1,4 @@
-description: 'VPN peer: apap'
+description: 'VPN peer: mock-peer-c'
 name: aff-atg
 runtime:
   name: python

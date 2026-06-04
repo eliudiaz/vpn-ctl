@@ -8,7 +8,7 @@ to configure their firewalls/VPN devices to connect to Organization's ATG.
 
 Usage:
     python3 generate-peer-guides.py --device checkpoint
-    python3 generate-peer-guides.py --device fortigate --peer Vimenca
+    python3 generate-peer-guides.py --device fortigate --peer MockPeerA
     python3 generate-peer-guides.py --all
     python3 generate-peer-guides.py --all --output-dir ./guides/
 

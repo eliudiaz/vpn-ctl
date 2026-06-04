@@ -2,20 +2,20 @@
 ORGANIZATION-LEGACY-NETWORK - QUICK START GUIDE
 ================================================================================
 Date: 2026-03-10
-Provider: internal-legacy-network
+Provider: mock-peer-d
 Status: Ready for deployment
 
 ================================================================================
 QUICK FACTS
 ================================================================================
 
-Provider Name:          internal-legacy-network
+Provider Name:          mock-peer-d
 Public IP (Tunnel 1):   52.254.86.115
 PSK:                    pruebas
 BGP ASN:                64515
 Destination CIDRs:      192.168.100.8/32, 192.168.100.11/32, 192.168.100.12/32
 Internal Databases:
-  • 192.168.100.8 (Legacy DB APAP Producción) - MSSQL:1433
+  • 192.168.100.8 (Legacy DB MOCK_PEER_C Producción) - MSSQL:1433
   • 192.168.100.11 (Legacy DB Pruebas) - MSSQL:1433
   • 192.168.100.12 (Legacy DB Producción) - MSSQL:1433
 Database Type:          Microsoft SQL Server (MSSQL)
@@ -31,13 +31,13 @@ STEP 1: UPDATE CONFIGURATION (5 min)
 
 Add to config/vpn-peers.yaml:
 
-  - name: internal-legacy-network
+  - name: mock-peer-d
     enabled: true
     tunnel_profile: checkpoint_r80
     public_ip: "52.254.86.115"
     bgp_asn: 64515
     destination_cidrs:
-      - "192.168.100.8/32"      # Legacy DB APAP Producción
+      - "192.168.100.8/32"      # Legacy DB MOCK_PEER_C Producción
       - "192.168.100.11/32"     # Legacy DB Pruebas
       - "192.168.100.12/32"     # Legacy DB Producción
     device_type: "Legacy Infrastructure"
@@ -84,16 +84,16 @@ STEP 4: TEST CONNECTIVITY (10 min) - MSSQL
 ================================================================================
 
 Run comprehensive test:
-./scripts/test-internal-legacy-network.sh all
+./scripts/test-mock-peer-d.sh all
 
 Or test individually:
-./scripts/test-internal-legacy-network.sh ping    # ICMP reachability
-./scripts/test-internal-legacy-network.sh port    # Port 1433 connectivity
-./scripts/test-internal-legacy-network.sh mssql   # MSSQL query test
+./scripts/test-mock-peer-d.sh ping    # ICMP reachability
+./scripts/test-mock-peer-d.sh port    # Port 1433 connectivity
+./scripts/test-mock-peer-d.sh mssql   # MSSQL query test
 
 Override MSSQL credentials (if not default sa):
 export MSSQL_USER=yourusername MSSQL_PASS=yourpassword
-./scripts/test-internal-legacy-network.sh mssql
+./scripts/test-mock-peer-d.sh mssql
 
 ================================================================================
 EXPECTED TEST RESULTS
@@ -241,7 +241,7 @@ NEXT STEPS
 5. ⏳ Update vpn-peers.yaml
 6. ⏳ Run: pulumi preview (review changes)
 7. ⏳ Run: pulumi up (deploy)
-8. ⏳ Run: test-internal-legacy-network.sh all (verify)
+8. ⏳ Run: test-mock-peer-d.sh all (verify)
 9. ⏳ Coordinate firewall rules with legacy team
 10. ⏳ Enable production pod traffic
 

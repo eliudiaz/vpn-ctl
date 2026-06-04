@@ -24,10 +24,10 @@ pulumi/stacks/dev.json    ← All peers + shared infra mixed (700+ lines)
 ├─ TGW (shared)
 ├─ EKS attachment (shared)
 ├─ SNAT infrastructure
-├─ vimenca VPN + routes (11 resources)
-├─ cibao VPN + routes (6 resources)
-├─ apap VPN + routes (6 resources)
-└─ internal-legacy-network VPN + routes (6 resources)
+├─ mock-peer-a VPN + routes (11 resources)
+├─ mock-peer-b VPN + routes (6 resources)
+├─ mock-peer-c VPN + routes (6 resources)
+└─ mock-peer-d VPN + routes (6 resources)
 ```
 
 ### Problem
@@ -45,10 +45,10 @@ pulumi/stacks/dev.json    ← All peers + shared infra mixed (700+ lines)
 ```
 .pulumi/stacks/
 ├─ core.json                          ← TGW, EKS, shared infra (12 resources)
-├─ peer-vimenca.json                  ← vimenca only (8 resources)
-├─ peer-cibao.json                    ← cibao only (6 resources)
-├─ peer-apap.json                     ← apap only (6 resources)
-└─ peer-internal-legacy-network.json  ← internal-legacy-network only (6 resources)
+├─ peer-mock-peer-a.json                  ← mock-peer-a only (8 resources)
+├─ peer-mock-peer-b.json                    ← mock-peer-b only (6 resources)
+├─ peer-mock-peer-c.json                     ← mock-peer-c only (6 resources)
+└─ peer-mock-peer-d.json  ← mock-peer-d only (6 resources)
                                       ════════════════
                                       TOTAL: 36 resources ✓
 ```
@@ -163,10 +163,10 @@ echo "Before: $dev_count resources"
 
 # After dry-run split
 core_count=$(cat .pulumi-split-states/core.json | jq '.resources | length')
-peer_vimenca_count=$(cat .pulumi-split-states/peer-vimenca.json | jq '.resources | length')
+peer_mock-peer-a_count=$(cat .pulumi-split-states/peer-mock-peer-a.json | jq '.resources | length')
 # ... etc
 
-total=$((core_count + peer_vimenca_count + ...))
+total=$((core_count + peer_mock-peer-a_count + ...))
 echo "After: $total resources"
 
 # Verification
@@ -202,10 +202,10 @@ Type 'EXTRACT STATE' to confirm: EXTRACT STATE
 
 2️⃣  Splitting state into per-peer files...
     ✓ core-state.json (TGW + EKS)
-    ✓ peer-vimenca-state.json
-    ✓ peer-cibao-state.json
-    ✓ peer-apap-state.json
-    ✓ peer-internal-legacy-network-state.json
+    ✓ peer-mock-peer-a-state.json
+    ✓ peer-mock-peer-b-state.json
+    ✓ peer-mock-peer-c-state.json
+    ✓ peer-mock-peer-d-state.json
 
 3️⃣  Verifying zero data loss...
     ✓ Resource count: 36 (original) = 36 (split) ✓
@@ -214,17 +214,17 @@ Type 'EXTRACT STATE' to confirm: EXTRACT STATE
 
 4️⃣  Initializing new stacks...
     ✓ Core stack initialized
-    ✓ peer-vimenca initialized
-    ✓ peer-cibao initialized
-    ✓ peer-apap initialized
-    ✓ peer-internal-legacy-network initialized
+    ✓ peer-mock-peer-a initialized
+    ✓ peer-mock-peer-b initialized
+    ✓ peer-mock-peer-c initialized
+    ✓ peer-mock-peer-d initialized
 
 5️⃣  Verifying all stacks...
     ✓ core: 12 resources
-    ✓ peer-vimenca: 8 resources
-    ✓ peer-cibao: 6 resources
-    ✓ peer-apap: 6 resources
-    ✓ peer-internal-legacy-network: 6 resources
+    ✓ peer-mock-peer-a: 8 resources
+    ✓ peer-mock-peer-b: 6 resources
+    ✓ peer-mock-peer-c: 6 resources
+    ✓ peer-mock-peer-d: 6 resources
 
 6️⃣  Running final validation...
     ✓ All migrations valid
@@ -245,27 +245,27 @@ Type 'EXTRACT STATE' to confirm: EXTRACT STATE
 cd pulumi && pulumi stack ls
   ✓ dev (old - can delete)
   ✓ core
-  ✓ peer-vimenca
-  ✓ peer-cibao
-  ✓ peer-apap
-  ✓ peer-internal-legacy-network
+  ✓ peer-mock-peer-a
+  ✓ peer-mock-peer-b
+  ✓ peer-mock-peer-c
+  ✓ peer-mock-peer-d
 
 # 2. Specs are valid
 vpn-ctl spec validate
-  ✓ vimenca.yaml: valid
-  ✓ cibao.yaml: valid
-  ✓ apap.yaml: valid
-  ✓ internal-legacy-network.yaml: valid
+  ✓ mock-peer-a.yaml: valid
+  ✓ mock-peer-b.yaml: valid
+  ✓ mock-peer-c.yaml: valid
+  ✓ mock-peer-d.yaml: valid
 
 # 3. States match specs (sync check)
 vpn-ctl spec sync --report-only
-  ✓ vimenca: IN SYNC
-  ✓ cibao: IN SYNC
-  ✓ apap: IN SYNC
-  ✓ internal-legacy-network: IN SYNC
+  ✓ mock-peer-a: IN SYNC
+  ✓ mock-peer-b: IN SYNC
+  ✓ mock-peer-c: IN SYNC
+  ✓ mock-peer-d: IN SYNC
 
 # 4. Each peer is deployable (preview test)
-for peer in vimenca cibao apap internal-legacy-network; do
+for peer in mock-peer-a mock-peer-b mock-peer-c mock-peer-d; do
     cd pulumi/stacks/peers
     pulumi stack select peer-$peer
     pulumi up --preview 2>&1 | grep -E "(Plan:|No changes)"
@@ -274,17 +274,17 @@ for peer in vimenca cibao apap internal-legacy-network; do
 
 # 5. Tunnel status unchanged
 vpn-ctl tunnel status
-  ✓ vimenca: UP (same as before)
-  ✓ cibao: UP (same as before)
-  ✓ apap: DOWN (same as before - awaiting customer config)
-  ✓ internal-legacy-network: UP (same as before)
+  ✓ mock-peer-a: UP (same as before)
+  ✓ mock-peer-b: UP (same as before)
+  ✓ mock-peer-c: DOWN (same as before - awaiting customer config)
+  ✓ mock-peer-d: UP (same as before)
 
 # 6. AWS resources still exist
 aws ec2 describe-vpn-connections --profile default --region us-east-2
-  ✓ vpn-05ea9c12f40b67844 (vimenca) - exists
-  ✓ vpn-0e751eec94d5d4743 (cibao) - exists
-  ✓ vpn-0603daac887e7abed (apap) - exists
-  ✓ default-internal-legacy-network-vpn - exists
+  ✓ vpn-05ea9c12f40b67844 (mock-peer-a) - exists
+  ✓ vpn-0e751eec94d5d4743 (mock-peer-b) - exists
+  ✓ vpn-0603daac887e7abed (mock-peer-c) - exists
+  ✓ default-mock-peer-d-vpn - exists
 
 # 7. TGW routes still active
 aws ec2 search-transit-gateway-routes \
@@ -295,9 +295,9 @@ aws ec2 search-transit-gateway-routes \
 
 # 8. Audit logs preserved
 find .pulumi/peer-states -name "audit.jsonl" -exec wc -l {} \;
-  ✓ vimenca: 24 events
-  ✓ cibao: 18 events
-  ✓ apap: 15 events
+  ✓ mock-peer-a: 24 events
+  ✓ mock-peer-b: 18 events
+  ✓ mock-peer-c: 15 events
 ```
 
 ### If ANY Check Fails
@@ -335,7 +335,7 @@ git commit -m "feat: Complete state extraction - dev → per-peer stacks
 
 State extraction and verification complete:
 - Original state: dev stack (monolithic)
-- New states: core + peer-vimenca + peer-cibao + peer-apap + peer-internal-legacy-network
+- New states: core + peer-mock-peer-a + peer-mock-peer-b + peer-mock-peer-c + peer-mock-peer-d
 - Resource count: 36 (original) = 36 (split) ✓
 - AWS resources: verified in sync ✓
 - Tunnel status: unchanged ✓
@@ -368,10 +368,10 @@ Type 'ROLLBACK' to confirm: ROLLBACK
 
 Deleting new stacks...
   ✓ Deleted core
-  ✓ Deleted peer-vimenca
-  ✓ Deleted peer-cibao
-  ✓ Deleted peer-apap
-  ✓ Deleted peer-internal-legacy-network
+  ✓ Deleted peer-mock-peer-a
+  ✓ Deleted peer-mock-peer-b
+  ✓ Deleted peer-mock-peer-c
+  ✓ Deleted peer-mock-peer-d
 
 Restoring dev stack...
   ✓ Restored all 36 resources
@@ -465,10 +465,10 @@ After successful extraction, typical operations are now per-peer:
 
 ```bash
 # Deploy a single peer (safe - only affects that peer)
-vpn-ctl peer deploy vimenca
+vpn-ctl peer deploy mock-peer-a
 
 # Destroy a single peer (safe - doesn't affect others)
-vpn-ctl peer destroy apap
+vpn-ctl peer destroy mock-peer-c
 
 # Add a new peer (no impact on existing peers)
 vpn-ctl peer add customer-new

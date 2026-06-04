@@ -2,7 +2,7 @@
 #
 # Script de prueba de conectividad VPN
 #
-# Este script verifica la conectividad entre AWS y Vimenca
+# Este script verifica la conectividad entre AWS y MockPeerA
 # después de configurar el Transit Gateway y la VPN.
 #
 # Uso: ./test-vpn-connectivity.sh [--from-pod]
@@ -19,8 +19,8 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 # Configuración
-VIMENCA_CIDR="172.16.70.0/24"
-VIMENCA_TEST_IP="172.16.70.1"
+MOCK_PEER_A_CIDR="172.16.70.0/24"
+MOCK_PEER_A_TEST_IP="172.16.70.1"
 ORGANIZATION_CIDRS=("172.33.6.0/28" "172.33.16.0/28")
 REGION="${AWS_REGION:-us-east-1}"
 AWS_PROFILE="${AWS_PROFILE:-default}"
@@ -49,7 +49,7 @@ print_check() {
     fi
 }
 
-print_header "TEST DE CONECTIVIDAD VPN - Organization <-> Vimenca"
+print_header "TEST DE CONECTIVIDAD VPN - Organization <-> MockPeerA"
 echo -e "\nFecha: $(date)"
 echo -e "Región: $REGION"
 echo -e "Profile: $AWS_PROFILE"
@@ -90,14 +90,14 @@ if [ "$VPN_INFO" != "{}" ] && [ "$VPN_INFO" != "null" ]; then
     if [ "$TUNNEL1_STATUS" = "UP" ]; then
         print_check "  Estado Túnel 1" "PASS" "UP"
     else
-        print_check "  Estado Túnel 1" "FAIL" "$TUNNEL1_STATUS (esperando configuración en Vimenca)"
+        print_check "  Estado Túnel 1" "FAIL" "$TUNNEL1_STATUS (esperando configuración en MockPeerA)"
     fi
 
     echo -e "  Túnel 2: $TUNNEL2_IP"
     if [ "$TUNNEL2_STATUS" = "UP" ]; then
         print_check "  Estado Túnel 2" "PASS" "UP"
     else
-        print_check "  Estado Túnel 2" "FAIL" "$TUNNEL2_STATUS (esperando configuración en Vimenca)"
+        print_check "  Estado Túnel 2" "FAIL" "$TUNNEL2_STATUS (esperando configuración en MockPeerA)"
     fi
 else
     print_check "VPN Connection" "FAIL" "No se encontró VPN Connection"
@@ -106,7 +106,7 @@ fi
 # ============================================================================
 # 2. Verificar Customer Gateway
 # ============================================================================
-print_header "2. CUSTOMER GATEWAY (Vimenca)"
+print_header "2. CUSTOMER GATEWAY (MockPeerA)"
 
 CGW_INFO=$(aws ec2 describe-customer-gateways \
     --filters "Name=state,Values=available" \
@@ -180,7 +180,7 @@ done
 # ============================================================================
 # 5. Verificar Route Tables
 # ============================================================================
-print_header "5. RUTAS A VIMENCA"
+print_header "5. RUTAS A MOCK_PEER_A"
 
 ROUTES=$(aws ec2 describe-route-tables \
     --query 'RouteTables[].Routes[?TransitGatewayId!=`null`]' \
@@ -188,10 +188,10 @@ ROUTES=$(aws ec2 describe-route-tables \
     --profile $AWS_PROFILE \
     --output json 2>/dev/null || echo "[]")
 
-if echo "$ROUTES" | grep -q "$VIMENCA_CIDR"; then
-    print_check "Ruta a Vimenca ($VIMENCA_CIDR)" "PASS" "via Transit Gateway"
+if echo "$ROUTES" | grep -q "$MOCK_PEER_A_CIDR"; then
+    print_check "Ruta a MockPeerA ($MOCK_PEER_A_CIDR)" "PASS" "via Transit Gateway"
 else
-    print_check "Ruta a Vimenca ($VIMENCA_CIDR)" "FAIL" "no encontrada"
+    print_check "Ruta a MockPeerA ($MOCK_PEER_A_CIDR)" "FAIL" "no encontrada"
 fi
 
 # ============================================================================
@@ -223,11 +223,11 @@ fi
 if [ "$1" = "--from-pod" ]; then
     print_header "7. TEST DE CONECTIVIDAD (desde pod)"
 
-    echo -e "\n${YELLOW}Ejecutando ping a Vimenca ($VIMENCA_TEST_IP)...${NC}"
-    if ping -c 3 -W 5 $VIMENCA_TEST_IP > /dev/null 2>&1; then
-        print_check "Ping a Vimenca" "PASS" "$VIMENCA_TEST_IP responde"
+    echo -e "\n${YELLOW}Ejecutando ping a MockPeerA ($MOCK_PEER_A_TEST_IP)...${NC}"
+    if ping -c 3 -W 5 $MOCK_PEER_A_TEST_IP > /dev/null 2>&1; then
+        print_check "Ping a MockPeerA" "PASS" "$MOCK_PEER_A_TEST_IP responde"
     else
-        print_check "Ping a Vimenca" "FAIL" "$VIMENCA_TEST_IP no responde (túnel puede no estar UP)"
+        print_check "Ping a MockPeerA" "FAIL" "$MOCK_PEER_A_TEST_IP no responde (túnel puede no estar UP)"
     fi
 
     echo -e "\n${YELLOW}Verificando acceso a ECR...${NC}"
@@ -267,16 +267,16 @@ ${BOLD}Próximos pasos:${NC}"
 
 if [ "$TUNNEL1_STATUS" != "UP" ] || [ "$TUNNEL2_STATUS" != "UP" ]; then
     echo -e "
-  ${YELLOW}1. Intercambiar Pre-Shared Keys con Vimenca:${NC}
+  ${YELLOW}1. Intercambiar Pre-Shared Keys con MockPeerA:${NC}
      Contacto: Eric Frias - 809-487-2679
      Archivos: secrets/tunnel1-psk.txt, secrets/tunnel2-psk.txt
 
-  ${YELLOW}2. Enviar información de configuración a Vimenca:${NC}
+  ${YELLOW}2. Enviar información de configuración a MockPeerA:${NC}
      - IPs de túneles AWS: $TUNNEL1_IP, $TUNNEL2_IP
-     - Redes Organization: $VIMENCA_CIDR
+     - Redes Organization: $MOCK_PEER_A_CIDR
      - Configuración IPSec: IKEv2, AES256, SHA256, DH Group 14
 
-  ${YELLOW}3. Esperar confirmación de Vimenca y verificar túneles UP${NC}
+  ${YELLOW}3. Esperar confirmación de MockPeerA y verificar túneles UP${NC}
 
   ${YELLOW}4. Probar conectividad desde pod EKS:${NC}
      kubectl run vpn-test --rm -it --image=amazonlinux:2 -- bash
@@ -291,7 +291,7 @@ else
      ping 172.16.70.1
      curl http://172.16.70.X
 
-  ${YELLOW}2. Verificar que los servicios de Vimenca son accesibles${NC}
+  ${YELLOW}2. Verificar que los servicios de MockPeerA son accesibles${NC}
 "
 fi
 

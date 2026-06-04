@@ -316,17 +316,17 @@ SPEC-BASED OPERATIONS (Recommended):
   vpn-ctl apply --spec-file specs/core-stack.yaml
     Deploy core infrastructure from spec
 
-  vpn-ctl apply --spec-file specs/peer-vimenca.yaml --dry-run
+  vpn-ctl apply --spec-file specs/peer-mock-peer-a.yaml --dry-run
     Preview peer deployment
 
-  vpn-ctl destroy --spec-file specs/peer-vimenca.yaml
+  vpn-ctl destroy --spec-file specs/peer-mock-peer-a.yaml
     Destroy peer infrastructure from spec
 
-  vpn-ctl status --spec-file specs/peer-vimenca.yaml
+  vpn-ctl status --spec-file specs/peer-mock-peer-a.yaml
     Check deployment status
 
 LEGACY PEER COMMANDS (Deprecated):
-  vpn-ctl peer deploy vimenca
+  vpn-ctl peer deploy mock-peer-a
     (Internally uses specs)
 """,
     )
@@ -383,7 +383,7 @@ LEGACY PEER COMMANDS (Deprecated):
 
     # peer deploy command
     deploy_parser = peer_subparsers.add_parser("deploy", help="Deploy a VPN peer")
-    deploy_parser.add_argument("peer_name", help="Name of the peer to deploy (e.g., vimenca, cibao, apap)")
+    deploy_parser.add_argument("peer_name", help="Name of the peer to deploy (e.g., mock-peer-a, mock-peer-b, mock-peer-c)")
     deploy_parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -406,7 +406,7 @@ LEGACY PEER COMMANDS (Deprecated):
 
     # peer config set command
     config_set_parser = config_subparsers.add_parser("set", help="Set peer configuration values")
-    config_set_parser.add_argument("peer_name", help="Name of the peer (e.g., vimenca, cibao, apap)")
+    config_set_parser.add_argument("peer_name", help="Name of the peer (e.g., mock-peer-a, mock-peer-b, mock-peer-c)")
     config_set_parser.add_argument("key", help="Configuration key (e.g., transit_gateway_id)")
     config_set_parser.add_argument("value", help="Configuration value")
 
@@ -502,7 +502,7 @@ def handle_core_deploy(args):
                     print(f"   1. Set TGW ID in peer stacks:")
                     print(f"      vpn-ctl peer config set transit_gateway_id {tgw_id}")
                     print(f"   2. Deploy peers:")
-                    print(f"      vpn-ctl peer deploy vimenca")
+                    print(f"      vpn-ctl peer deploy mock-peer-a")
                 else:
                     print("\n✅ Core infrastructure deployed (TGW ID not exported)")
             except json.JSONDecodeError:

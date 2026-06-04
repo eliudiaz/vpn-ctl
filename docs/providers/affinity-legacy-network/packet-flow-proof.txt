@@ -108,7 +108,7 @@ Why Organization-Legacy-Network Does NOT Masquerade to 203.0.113.10:
    iptables -t nat -A POSTROUTING -d 172.16.82.0/24  -j SNAT --to-source 203.0.113.10
    iptables -t nat -A POSTROUTING -d 203.0.113.10/32 -j SNAT --to-source 203.0.113.10
 
-2. Rules ONLY match when DESTINATION is 172.16.x.x or 203.0.113.10 (Vimenca)
+2. Rules ONLY match when DESTINATION is 172.16.x.x or 203.0.113.10 (MockPeerA)
 
 3. When pod sends to 192.168.100.x (org-legacy):
    - Packet leaves pod with source: 172.31.6.202
@@ -125,15 +125,15 @@ Why Organization-Legacy-Network Does NOT Masquerade to 203.0.113.10:
 5. Legacy Firewall sees: Source IP 172.31.6.202 (original pod IP)
 
 ================================================================================
-COMPARISON: Vimenca vs Organization-Legacy
+COMPARISON: MockPeerA vs Organization-Legacy
 ================================================================================
 
-VIMENCA Traffic (172.16.70.0/24):
+MOCK_PEER_A Traffic (172.16.70.0/24):
 ────────────────────────────────
   Pod sends: Source 172.31.x.x → Destination 172.16.70.1
   iptables rule MATCHES: -d 172.16.70.0/24 (✓ MATCH)
   SNAT rewrite applied: Source becomes 203.0.113.10
-  Vimenca Firewall sees: 203.0.113.10 (masqueraded IP)
+  MockPeerA Firewall sees: 203.0.113.10 (masqueraded IP)
 
 ORGANIZATION-LEGACY Traffic (192.168.100.8):
 ──────────────────────────────────────
@@ -158,7 +158,7 @@ Correct Rule for Legacy Network Team:
   Logging:        Enable
 
 INCORRECT (do not use):
-  Source:         203.0.113.10    ← This is VIMENCA's masqueraded IP, NOT org-legacy
+  Source:         203.0.113.10    ← This is MOCK_PEER_A's masqueraded IP, NOT org-legacy
 
 ================================================================================
 ENGINEERING SIGN-OFF
@@ -167,7 +167,7 @@ ENGINEERING SIGN-OFF
 As AWS EC2 Networking Engineer, I certify:
 
 ✅ Packet-level inspection proves source IP is 172.31.6.202 (original pod IP)
-✅ 203.0.113.10 masquerading is ONLY for Vimenca traffic
+✅ 203.0.113.10 masquerading is ONLY for MockPeerA traffic
 ✅ Organization-legacy-network traffic uses original pod IPs from 172.31.0.0/16
 ✅ Architecture is correctly implemented
 ✅ SNAT rules are provider-specific and function as intended

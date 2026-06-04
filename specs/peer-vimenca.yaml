@@ -2,14 +2,14 @@ apiVersion: vpnctl.example.io/v1
 kind: PeerStackDeployment
 metadata:
   annotations:
-    description: Vimenca (Checkpoint R80.10) VPN peer
+    description: MockPeerA (Checkpoint R80.10) VPN peer
     device_type: Checkpoint
     device_version: R80.10
   labels:
     environment: production
-    peer: vimenca
+    peer: mock-peer-a
     type: peer
-  name: peer-vimenca
+  name: peer-mock-peer-a
   namespace: aff-atg
 spec:
   config:
@@ -20,15 +20,15 @@ spec:
   peer:
     bgp_asn: 65000
     contacts:
-    - email: admin@vimenca.com
-      name: Vimenca Admin
+    - email: admin@mock-peer-a.com
+      name: MockPeerA Admin
     destination_cidrs:
     - 172.16.70.0/24
     - 172.16.65.21/32
     - 172.16.82.0/24
     device_type: Checkpoint
     device_version: R80.10
-    name: vimenca
+    name: mock-peer-a
     public_ip: 191.97.106.141
     snat_enabled: false
     tunnel_profile: checkpoint_r80
@@ -37,12 +37,12 @@ spec:
   - config:
       bgp_asn: 65000
       public_ip: 191.97.106.141
-    name: company-partner-cgw
+    name: mock-peer-cgw
     type: customer-gateway
   - config:
       static_routes_only: true
       tunnel_profile: checkpoint_r80
-    name: company-partner-vpn
+    name: mock-peer-vpn
     type: vpn-connection
   - config:
       destination_cidr_block: '{{ item }}'
@@ -52,7 +52,7 @@ spec:
       destination_cidr_block: '{{ item }}'
     for_each: peer.destination_cidrs
     type: vpc-routes
-  stack_directory: pulumi/stacks/peer-vimenca
+  stack_directory: pulumi/stacks/peer-mock-peer-a
   version: 3.x
 status:
   completionTime: '2026-05-12T16:50:02.153599'

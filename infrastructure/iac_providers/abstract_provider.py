@@ -97,7 +97,7 @@ class IacProvider(ABC):
         """Initialize provider for a specific peer.
 
         Args:
-            peer_name: Name of peer (e.g., 'vimenca', 'cibao')
+            peer_name: Name of peer (e.g., 'mock-peer-a', 'mock-peer-b')
             config: Peer configuration (e.g., Pulumi.yaml content)
         """
         self.peer_name = peer_name

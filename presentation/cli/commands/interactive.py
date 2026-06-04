@@ -120,10 +120,10 @@ def show_peer_status(peer_name, peers):
     
     # Simulated tunnel status - in real impl, would query AWS
     tunnel_status = {
-        'vimenca': {'tunnel1': 'UP', 'tunnel2': 'UP'},
-        'cibao': {'tunnel1': 'UP', 'tunnel2': 'UP'},
-        'apap': {'tunnel1': 'DOWN', 'tunnel2': 'DOWN'},
-        'internal-legacy-network': {'tunnel1': 'UP', 'tunnel2': 'DOWN'}
+        'mock-peer-a': {'tunnel1': 'UP', 'tunnel2': 'UP'},
+        'mock-peer-b': {'tunnel1': 'UP', 'tunnel2': 'UP'},
+        'mock-peer-c': {'tunnel1': 'DOWN', 'tunnel2': 'DOWN'},
+        'mock-peer-d': {'tunnel1': 'UP', 'tunnel2': 'DOWN'}
     }
     
     status = tunnel_status.get(peer_name.lower(), {'tunnel1': 'UNKNOWN', 'tunnel2': 'UNKNOWN'})
@@ -191,10 +191,10 @@ def show_test_traffic(peer_name, peers):
     
     # Simulated test results
     test_results = {
-        'vimenca': {'status': 'SUCCESS', 'latency': '45ms', 'loss': '0%'},
-        'cibao': {'status': 'SUCCESS', 'latency': '52ms', 'loss': '0%'},
-        'apap': {'status': 'FAILED', 'latency': 'N/A', 'loss': '100%'},
-        'internal-legacy-network': {'status': 'SUCCESS', 'latency': '38ms', 'loss': '0%'}
+        'mock-peer-a': {'status': 'SUCCESS', 'latency': '45ms', 'loss': '0%'},
+        'mock-peer-b': {'status': 'SUCCESS', 'latency': '52ms', 'loss': '0%'},
+        'mock-peer-c': {'status': 'FAILED', 'latency': 'N/A', 'loss': '100%'},
+        'mock-peer-d': {'status': 'SUCCESS', 'latency': '38ms', 'loss': '0%'}
     }
     
     result = test_results.get(peer_name.lower(), {'status': 'UNKNOWN', 'latency': 'N/A', 'loss': 'N/A'})

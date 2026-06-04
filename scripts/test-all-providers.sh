@@ -5,9 +5,9 @@
 # Test connectivity to all VPN provider targets
 # Usage: ./test-all-providers.sh [provider|all]
 # Examples:
-#   ./test-all-providers.sh vimenca
+#   ./test-all-providers.sh mock-peer-a
 #   ./test-all-providers.sh org-legacy
-#   ./test-all-providers.sh cibao
+#   ./test-all-providers.sh mock-peer-b
 #   ./test-all-providers.sh all
 ################################################################################
 
@@ -111,14 +111,14 @@ test_http() {
 # PROVIDER TEST ROUTINES
 ################################################################################
 
-test_vimenca() {
-    print_header "VIMENCA - Banking Services (SNAT Masquerading)"
+test_mock-peer-a() {
+    print_header "MOCK_PEER_A - Banking Services (SNAT Masquerading)"
 
     echo "Service Details:"
     echo "  • Primary Banking: 172.16.70.0/24 (8080)"
     echo "  • Securities: 172.16.65.21/32 (443)"
     echo "  • Integration Hub: 172.16.82.0/24 (8088)"
-    echo "  • Source IP (seen by Vimenca): 203.0.113.10 (masqueraded)"
+    echo "  • Source IP (seen by MockPeerA): 203.0.113.10 (masqueraded)"
     echo "  • VPN Tunnel: vpn-05ea9c12f40b67844"
     echo ""
 
@@ -140,18 +140,18 @@ test_vimenca() {
     test_port "172.16.82.28" "Integration Hub" "8088" && ((pass++)) || ((fail++))
     echo ""
 
-    print_summary "VIMENCA" $pass $fail
+    print_summary "MOCK_PEER_A" $pass $fail
 }
 
-test_cibao() {
-    print_header "CIBAO - Enterprise Network (Original Pod IPs)"
+test_mock-peer-b() {
+    print_header "MOCK_PEER_B - Enterprise Network (Original Pod IPs)"
 
     echo "Service Details:"
     echo "  • Data Warehouse: 172.17.10.50:1433 (SQL Server)"
     echo "  • CRM Portal: 172.17.5.10:8080 (REST API)"
     echo "  • ERP API: 172.17.5.20:8443 (HTTPS)"
     echo "  • Message Broker: 172.17.20.10:5672 (RabbitMQ)"
-    echo "  • Source IP (seen by CIBAO): 172.31.x.x (original pod IP)"
+    echo "  • Source IP (seen by MOCK_PEER_B): 172.31.x.x (original pod IP)"
     echo "  • VPN Tunnel: vpn-0e751eec94d5d4743"
     echo "  • Firewall Status: ⏳ PENDING ACTIVATION"
     echo ""
@@ -179,14 +179,14 @@ test_cibao() {
     test_port "172.17.20.10" "Broker" "5672" && ((pass++)) || ((fail++))
     echo ""
 
-    print_summary "CIBAO" $pass $fail
+    print_summary "MOCK_PEER_B" $pass $fail
 }
 
 test_vpn_legacy() {
     print_header "ORGANIZATION-LEGACY - MSSQL Databases (Original Pod IPs)"
 
     echo "Service Details:"
-    echo "  • APAP Producción: 192.168.100.8:1433 (SQL Server)"
+    echo "  • MOCK_PEER_C Producción: 192.168.100.8:1433 (SQL Server)"
     echo "  • Pruebas: 192.168.100.11:1433 (SQL Server)"
     echo "  • Producción Secondary: 192.168.100.12:1433 (SQL Server)"
     echo "  • Legacy Application Gateway: 172.133.5.4:443 (New - HTTPS)"
@@ -198,9 +198,9 @@ test_vpn_legacy() {
     local pass=0
     local fail=0
 
-    echo "Testing APAP Producción (192.168.100.8)..."
-    test_ping "192.168.100.8" "APAP" && ((pass++)) || ((fail++))
-    test_port "192.168.100.8" "APAP" "1433" && ((pass++)) || ((fail++))
+    echo "Testing MOCK_PEER_C Producción (192.168.100.8)..."
+    test_ping "192.168.100.8" "MOCK_PEER_C" && ((pass++)) || ((fail++))
+    test_port "192.168.100.8" "MOCK_PEER_C" "1433" && ((pass++)) || ((fail++))
     echo ""
 
     echo "Testing Pruebas (192.168.100.11)..."
@@ -250,8 +250,8 @@ print_final_summary() {
     echo ""
 
     echo -e "${BLUE}For more detailed information:${NC}"
-    echo "  • Vimenca:          providers-conn-docs/VIMENCA.md"
-    echo "  • CIBAO:            providers-conn-docs/CIBAO.md"
+    echo "  • MockPeerA:          providers-conn-docs/MOCK_PEER_A.md"
+    echo "  • MOCK_PEER_B:            providers-conn-docs/MOCK_PEER_B.md"
     echo "  • Organization-Legacy:  providers-conn-docs/ORGANIZATION-LEGACY.md"
     echo ""
 
@@ -273,12 +273,12 @@ print_final_summary() {
 
 main() {
     case "$PROVIDER" in
-        vimenca)
-            test_vimenca
+        mock-peer-a)
+            test_mock-peer-a
             print_final_summary
             ;;
-        cibao)
-            test_cibao
+        mock-peer-b)
+            test_mock-peer-b
             print_final_summary
             ;;
         org-legacy|default)
@@ -286,19 +286,19 @@ main() {
             print_final_summary
             ;;
         all)
-            test_vimenca
+            test_mock-peer-a
             echo ""
-            test_cibao
+            test_mock-peer-b
             echo ""
             test_vpn_legacy
             print_final_summary
             ;;
         *)
-            echo "Usage: $0 [vimenca|cibao|org-legacy|all]"
+            echo "Usage: $0 [mock-peer-a|mock-peer-b|org-legacy|all]"
             echo ""
             echo "Examples:"
-            echo "  $0 vimenca          - Test Vimenca banking services"
-            echo "  $0 cibao            - Test CIBAO enterprise network"
+            echo "  $0 mock-peer-a          - Test MockPeerA banking services"
+            echo "  $0 mock-peer-b            - Test MOCK_PEER_B enterprise network"
             echo "  $0 org-legacy  - Test Organization-Legacy MSSQL databases"
             echo "  $0 all              - Test all providers"
             exit 1

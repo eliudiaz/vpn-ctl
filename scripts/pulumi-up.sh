@@ -111,7 +111,7 @@ if [ "$CONFIG_OK" = false ]; then
     echo -e "  pulumi config set eks_cluster_name <nombre-cluster>"
     echo -e "  pulumi config set transit_gateway_id tgw-xxxxx"
     echo -e "\nOpcionales:"
-    echo -e "  pulumi config set vimenca_cidr 172.16.70.0/24"
+    echo -e "  pulumi config set mock-peer-a_cidr 172.16.70.0/24"
     echo -e "  pulumi config set vpn_cidrs 172.33.6.0/28,172.33.16.0/28"
     exit 1
 fi
@@ -145,7 +145,7 @@ Este script creará los siguientes recursos en AWS:
     - Security Group para egress de nodos
 
   ${BOLD}Rutas:${NC}
-    - 172.16.70.0/24 -> Transit Gateway (Vimenca)
+    - 172.16.70.0/24 -> Transit Gateway (MockPeerA)
     - 172.33.0.0/16 -> Transit Gateway (Organization)
 
   ${GREEN}Costo mensual estimado: \$86-126/mes${NC}
@@ -237,7 +237,7 @@ PYTHON_EOF
    # Test S3
    aws s3 ls
 
-   # Test Vimenca
+   # Test MockPeerA
    ping -c 3 172.16.70.1
 
    # Test Organization

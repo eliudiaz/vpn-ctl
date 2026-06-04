@@ -1,5 +1,5 @@
 ================================================================================
-VIMENCA SNAT MASQUERADING - COMPLETE DATA FLOW PROOF
+MOCK_PEER_A SNAT MASQUERADING - COMPLETE DATA FLOW PROOF
 ================================================================================
 Date: 2026-03-10
 Time: 18:26 UTC
@@ -9,7 +9,7 @@ Status: ✅ INFRASTRUCTURE CONFIGURED FOR MASQUERADING TO 203.0.113.10
 SECTION 1: LOGICAL DATA FLOW PROOF
 ================================================================================
 
-SCENARIO 1: Pod sends HTTP request to Vimenca test server
+SCENARIO 1: Pod sends HTTP request to MockPeerA test server
 ─────────────────────────────────────────────────────────────────────────────
 
 Step 1: Pod Generates Request
@@ -24,7 +24,7 @@ Step 1: Pod Generates Request
   ┌─────────────────────────────────────────┐
   │ Layer 3 (IP)                            │
   │ Source IP:      172.31.45.67 ← POD     │
-  │ Destination IP: 172.16.82.28 ← VIMENCA │
+  │ Destination IP: 172.16.82.28 ← MOCK_PEER_A │
   ├─────────────────────────────────────────┤
   │ Layer 4 (TCP)                           │
   │ Source Port:    48234                   │
@@ -60,7 +60,7 @@ Step 3: Packet Arrives at SNAT Instance
   Packet Header at arrival:
   ┌─────────────────────────────────────────┐
   │ Source IP:      172.31.45.67 ← POD     │
-  │ Destination IP: 172.16.82.28 ← VIMENCA │
+  │ Destination IP: 172.16.82.28 ← MOCK_PEER_A │
   │ Source Port:    48234                   │
   │ Destination Port: 8088                  │
   └─────────────────────────────────────────┘
@@ -92,7 +92,7 @@ Step 4: iptables SNAT Rule Evaluation (MASQUERADING ENGINE)
   BEFORE SNAT:
   ┌─────────────────────────────────────────┐
   │ Source IP:      172.31.45.67 (pod)     │
-  │ Destination IP: 172.16.82.28 (vimenca) │
+  │ Destination IP: 172.16.82.28 (mock-peer-a) │
   │ Source Port:    48234                   │
   │ Destination Port: 8088                  │
   └─────────────────────────────────────────┘
@@ -129,7 +129,7 @@ Step 5: SNAT Subnet Route Table (Exit SNAT Instance)
   Current packet header:
   ┌─────────────────────────────────────────────────────────────┐
   │ Source IP:      203.0.113.10 ← MASQUERADED ✅              │
-  │ Destination IP: 172.16.82.28 (Vimenca)                     │
+  │ Destination IP: 172.16.82.28 (MockPeerA)                     │
   │ TTL:            63 (decremented)                             │
   │ DL Header:      Shows SNAT instance as source in ARP       │
   └─────────────────────────────────────────────────────────────┘
@@ -145,25 +145,25 @@ Step 6: Transit Gateway Route Table (Layer 2 Routing - VPN Decision)
   ┌──────────────────────────────────────────────────────────────┐
   │ Destination CIDR: 172.16.82.0/24                            │
   │ Type:            Static Route (created by Pulumi)          │
-  │ Target:          vpn-05ea9c12f40b67844 (Vimenca VPN)       │
+  │ Target:          vpn-05ea9c12f40b67844 (MockPeerA VPN)       │
   │ Attachment:      tgw-attach-0adc096ceb26a06d4              │
   │ State:           ACTIVE ✅                                  │
   │ Route Type:      CreateRoute                               │
   │ Owner:           Pulumi IaC                                │
   └──────────────────────────────────────────────────────────────┘
 
-  Decision: Forward to Vimenca VPN Connection
+  Decision: Forward to MockPeerA VPN Connection
   Packet sent to VPN IPsec processing
 
   Current packet header (being processed):
   ┌─────────────────────────────────────────────────────────────┐
   │ Source IP:      203.0.113.10 ← MASQUERADED ✅              │
-  │ Destination IP: 172.16.82.28 (Vimenca internal)            │
+  │ Destination IP: 172.16.82.28 (MockPeerA internal)            │
   │ Payload:        HTTP GET /ws/methods.wsdl                  │
   └─────────────────────────────────────────────────────────────┘
 
 Step 7: VPN IPsec Tunnel Encryption
-  VPN Connection: vpn-05ea9c12f40b67844 (Vimenca)
+  VPN Connection: vpn-05ea9c12f40b67844 (MockPeerA)
   Tunnel Selection:
     Tunnel 1: UP (3.151.94.15) ✅ SELECTED
     Tunnel 2: DOWN (18.117.210.11)
@@ -172,7 +172,7 @@ Step 7: VPN IPsec Tunnel Encryption
   ┌──────────────────────────────────────────────────────────────┐
   │ Inner Packet (plaintext):                                   │
   │   Source IP:      203.0.113.10 ← MASQUERADED ✅             │
-  │   Destination IP: 172.16.82.28 (Vimenca)                    │
+  │   Destination IP: 172.16.82.28 (MockPeerA)                    │
   │   Payload:        HTTP GET request                          │
   │                                                              │
   │ Encryption Applied:                                         │
@@ -189,31 +189,31 @@ Step 7: VPN IPsec Tunnel Encryption
 
   Tunnel Inside Network:
   │   Tunnel Interface CIDR: 169.254.23.200/30 (TGW side)      │
-  │   CGW Inside IP:         169.254.23.202 (Vimenca side)     │
+  │   CGW Inside IP:         169.254.23.202 (MockPeerA side)     │
   └──────────────────────────────────────────────────────────────┘
 
 Step 8: VPN Transmission Over Internet
   Packet transmitted through IPsec tunnel #1
-  Route: AWS Region us-east-2 → Vimenca Data Center
+  Route: AWS Region us-east-2 → MockPeerA Data Center
 
   Network Path:
     AWS Internet Gateway
       ↓
     Internet (encrypted)
       ↓
-    Vimenca's Internet Gateway
+    MockPeerA's Internet Gateway
       ↓
-    Vimenca's Customer Gateway
+    MockPeerA's Customer Gateway
       ↓
-    Vimenca Checkpoint Firewall
+    MockPeerA Checkpoint Firewall
 
-Step 9: Vimenca Checkpoint Firewall Receives Packet
+Step 9: MockPeerA Checkpoint Firewall Receives Packet
   VPN Tunnel 1 decrypts packet
 
   Decrypted packet:
   ┌──────────────────────────────────────────────────────────────┐
   │ Source IP:      203.0.113.10 ← MASQUERADED ✅              │
-  │ Destination IP: 172.16.82.28 (Vimenca internal service)     │
+  │ Destination IP: 172.16.82.28 (MockPeerA internal service)     │
   │ Source Port:    48234                                       │
   │ Destination Port: 8088                                      │
   │ Protocol:       TCP                                         │
@@ -236,13 +236,13 @@ Step 9: Vimenca Checkpoint Firewall Receives Packet
   │   Action:       ACCEPT                                      │
   └──────────────────────────────────────────────────────────────┘
 
-Step 10: Return Traffic (Vimenca → Pod)
+Step 10: Return Traffic (MockPeerA → Pod)
   Once firewall rule is configured and ACCEPT action taken:
 
   Server 172.16.82.28 sends HTTP response
   Response Packet:
   ┌──────────────────────────────────────────────────────────────┐
-  │ Source IP:      172.16.82.28 (Vimenca server)              │
+  │ Source IP:      172.16.82.28 (MockPeerA server)              │
   │ Destination IP: 203.0.113.10 (our masqueraded IP)          │
   │ Source Port:    8088                                        │
   │ Destination Port: 48234                                     │
@@ -250,7 +250,7 @@ Step 10: Return Traffic (Vimenca → Pod)
   └──────────────────────────────────────────────────────────────┘
 
   Response transmitted through VPN tunnel
-  Encrypted at Vimenca's Customer Gateway
+  Encrypted at MockPeerA's Customer Gateway
   Transmitted through IPsec tunnel #1
   Decrypted by AWS VPN endpoint
   Routed by TGW to SNAT instance
@@ -258,7 +258,7 @@ Step 10: Return Traffic (Vimenca → Pod)
 
   Return packet arrives at pod:
   ┌──────────────────────────────────────────────────────────────┐
-  │ Source IP:      172.16.82.28 (Vimenca server)              │
+  │ Source IP:      172.16.82.28 (MockPeerA server)              │
   │ Destination IP: 172.31.45.67 (original pod IP) ✅          │
   │ Payload:        HTTP 200 OK + WSDL content                 │
   └──────────────────────────────────────────────────────────────┘
@@ -271,7 +271,7 @@ Step 11: Complete Bidirectional Communication
   ✅ Communication successful
   ✅ Source IP properly masqueraded (203.0.113.10)
   ✅ Return traffic properly de-masqueraded (172.31.45.67)
-  ✅ Vimenca can now whitelist single IP (203.0.113.10) instead of pod CIDR
+  ✅ MockPeerA can now whitelist single IP (203.0.113.10) instead of pod CIDR
 
 ================================================================================
 SECTION 2: MASQUERADING PROOF CHECKLIST
@@ -308,15 +308,15 @@ SNAT Subnet Routes (Layer 2):
   ✅ Route 203.0.113.10/32 → TGW [ACTIVE]
 
 Transit Gateway Routes (Layer 3):
-  ✅ Route 172.16.70.0/24 → vpn-05ea9c12f40b67844 (Vimenca) [ACTIVE]
-  ✅ Route 172.16.65.21/32 → vpn-05ea9c12f40b67844 (Vimenca) [ACTIVE]
-  ✅ Route 172.16.82.0/24 → vpn-05ea9c12f40b67844 (Vimenca) [ACTIVE]
-  ✅ Route 203.0.113.10/32 → vpn-05ea9c12f40b67844 (Vimenca) [ACTIVE]
+  ✅ Route 172.16.70.0/24 → vpn-05ea9c12f40b67844 (MockPeerA) [ACTIVE]
+  ✅ Route 172.16.65.21/32 → vpn-05ea9c12f40b67844 (MockPeerA) [ACTIVE]
+  ✅ Route 172.16.82.0/24 → vpn-05ea9c12f40b67844 (MockPeerA) [ACTIVE]
+  ✅ Route 203.0.113.10/32 → vpn-05ea9c12f40b67844 (MockPeerA) [ACTIVE]
 
 VPN Connection:
   ✅ Connection ID: vpn-05ea9c12f40b67844
   ✅ Device Type: Checkpoint Firewall R80.10
-  ✅ Customer GW: 191.97.106.141 (Vimenca external IP)
+  ✅ Customer GW: 191.97.106.141 (MockPeerA external IP)
   ✅ Tunnel 1: UP (3.151.94.15) ✅ ACTIVE
   ✅ Tunnel 2: DOWN (18.117.210.11)
   ✅ IPsec Profile: AES256 + SHA2-256 + IKEv2
@@ -331,7 +331,7 @@ iptables SNAT Rules (Applied via user data):
 
 Masquerading Target:
   ✅ Masquerade to IP: 203.0.113.10 (provider-assigned IP)
-  ✅ Scope: All Vimenca destination CIDRs
+  ✅ Scope: All MockPeerA destination CIDRs
   ✅ Bidirectional: Both outbound and return traffic handled
   ✅ Connection tracking: iptables tracks state for reverse SNAT
 
@@ -339,7 +339,7 @@ Masquerading Target:
 SECTION 3: CLOUDWATCH LOGS QUERY STRATEGY
 ================================================================================
 
-To capture actual traffic masquerading to Vimenca:
+To capture actual traffic masquerading to MockPeerA:
 
 1. VPC Flow Logs Configuration:
    ✅ Log Group: /aws/vpc/flowlogs/asg-plat-dev
@@ -348,12 +348,12 @@ To capture actual traffic masquerading to Vimenca:
 
 2. Query Pattern for Masqueraded Traffic:
 
-   Query 1: Find traffic from SNAT instance to Vimenca
+   Query 1: Find traffic from SNAT instance to MockPeerA
    ─────────────────────────────────────────────────
    Filter pattern: srcip="203.0.113.10" AND (dstip="172.16.70.0" OR dstip="172.16.65" OR dstip="172.16.82")
    Expected results:
      - Multiple packets with source 203.0.113.10
-     - Various destinations in Vimenca networks
+     - Various destinations in MockPeerA networks
      - Status: ACCEPT
      - This proves masquerading is working
 
@@ -369,8 +369,8 @@ To capture actual traffic masquerading to Vimenca:
    ──────────────────────────
    Filter pattern: srcip="203.0.113.10" OR dstip="203.0.113.10"
    Expected results:
-     - Packets with source 203.0.113.10 going to Vimenca
-     - Packets with destination 203.0.113.10 coming from Vimenca
+     - Packets with source 203.0.113.10 going to MockPeerA
+     - Packets with destination 203.0.113.10 coming from MockPeerA
      - This proves return traffic flows correctly
 
 3. Expected VPC Flow Log Format:
@@ -382,7 +382,7 @@ To capture actual traffic masquerading to Vimenca:
 
    Parsed:
    - Source IP: 203.0.113.10 ✅ MASQUERADED
-   - Destination IP: 172.16.82.28 (Vimenca)
+   - Destination IP: 172.16.82.28 (MockPeerA)
    - Source Port: 48234 (ephemeral)
    - Destination Port: 8088 (test service)
    - Packets: 125 (request + response)
@@ -406,11 +406,11 @@ Infrastructure Components Status:
 Traffic Masquerading:
   • Source transformation: 172.31.x.x → 203.0.113.10 ✅
   • Return traffic: 203.0.113.10 → 172.31.x.x ✅
-  • All Vimenca destinations covered ✅
+  • All MockPeerA destinations covered ✅
 
-Awaiting Vimenca Action:
+Awaiting MockPeerA Action:
   • Checkpoint firewall rule to whitelist 203.0.113.10
-  • Once configured: Pod-to-Vimenca communication enabled
+  • Once configured: Pod-to-MockPeerA communication enabled
 
 CloudWatch Evidence:
   • VPC Flow Logs available for traffic verification

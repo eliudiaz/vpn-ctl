@@ -58,7 +58,7 @@ class VpnSecretsManager:
             contacts: Optional list of contact dicts
 
         Returns:
-            Secret ID (e.g., "aff-atg/vimenca/vpn-preshared-keys")
+            Secret ID (e.g., "aff-atg/mock-peer-a/vpn-preshared-keys")
         """
         secret_id = f"aff-atg/{peer_name.lower()}/vpn-preshared-keys"
 

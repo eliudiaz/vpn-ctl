@@ -58,14 +58,14 @@ def analyze_state(state):
         
         # Categorize resource
         peer = None
-        if 'vimenca' in urn_lower:
-            peer = 'vimenca'
-        elif 'cibao' in urn_lower:
-            peer = 'cibao'
-        elif 'apap' in urn_lower:
-            peer = 'apap'
+        if 'mock-peer-a' in urn_lower:
+            peer = 'mock-peer-a'
+        elif 'mock-peer-b' in urn_lower:
+            peer = 'mock-peer-b'
+        elif 'mock-peer-c' in urn_lower:
+            peer = 'mock-peer-c'
         elif 'default-legacy' in urn_lower:
-            peer = 'internal-legacy-network'
+            peer = 'mock-peer-d'
         elif 'checkpoint-dr' in urn_lower:
             peer = 'checkpoint-dr'
         else:

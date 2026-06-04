@@ -39,7 +39,7 @@ class VpnPeer:
     """
     VPN Peer Entity
 
-    Core domain model representing a VPN peer (e.g., Vimenca, APAP).
+    Core domain model representing a VPN peer (e.g., MockPeerA, MOCK_PEER_C).
     Enforces all business rule invariants in __post_init__.
 
     INVARIANTS:

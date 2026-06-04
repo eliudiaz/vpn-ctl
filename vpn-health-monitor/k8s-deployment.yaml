@@ -21,7 +21,7 @@ metadata:
 data:
   vpn-targets.yaml: |
     providers:
-      - name: "Vimenca"
+      - name: "MockPeerA"
         description: "Banking services provider"
         enabled: true
         targets:
@@ -44,7 +44,7 @@ data:
             timeout: 5
             enabled: true
 
-      - name: "CIBAO"
+      - name: "MOCK_PEER_B"
         description: "Enterprise network"
         enabled: true
         targets:
@@ -77,7 +77,7 @@ data:
         description: "Legacy MSSQL databases"
         enabled: true
         targets:
-          - name: "APAP-Produccion"
+          - name: "MOCK_PEER_C-Produccion"
             ip: "192.168.100.8"
             port: 1433
             protocol: "icmp"

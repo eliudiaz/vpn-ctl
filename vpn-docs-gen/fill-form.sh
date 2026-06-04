@@ -86,7 +86,7 @@ ${GREEN}OUTPUT:${NC}
   Example: Form_VPN_Filled_20251225_225530.docx
 
 ${GREEN}NOTES:${NC}
-  • Vimenca section will be left BLANK for manual completion
+  • MockPeerA section will be left BLANK for manual completion
   • Organization section will be filled with provided configuration
   • All signature fields will be left blank for manual signatures
   • A Python virtual environment will be created automatically

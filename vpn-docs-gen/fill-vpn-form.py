@@ -3,7 +3,7 @@
 VPN Form Filler - Reusable Script
 
 Fills VPN configuration form with Organization information.
-Leaves Vimenca section blank for manual completion.
+Leaves MockPeerA section blank for manual completion.
 
 Usage:
     # Using JSON config file
@@ -68,8 +68,8 @@ class VPNFormFiller:
             "source_cidr": "172.31.0.0/16",
             "ports": "80, 443, ICMP",
         },
-        "vimenca": {
-            "company": "Vimenca",
+        "mock-peer-a": {
+            "company": "MockPeerA",
             "vpn_ip": "191.97.106.141",
             "device_type": "Checkpoint Firewall",
             "device_version": "R80.10",
@@ -107,9 +107,9 @@ class VPNFormFiller:
         else:
             # Try common locations
             possible_paths = [
-                Path.home() / "Downloads" / "Form_VPN_Organization-Vimenca_V1.docx",
-                Path("/Users/eliudiaz/Downloads/Form_VPN_Organization-Vimenca_V1.docx"),
-                Path("Form_VPN_Organization-Vimenca_V1.docx"),
+                Path.home() / "Downloads" / "Form_VPN_Organization-MockPeerA_V1.docx",
+                Path("/Users/eliudiaz/Downloads/Form_VPN_Organization-MockPeerA_V1.docx"),
+                Path("Form_VPN_Organization-MockPeerA_V1.docx"),
             ]
 
             self.template_path = None
@@ -121,8 +121,8 @@ class VPNFormFiller:
         if not self.template_path or not self.template_path.exists():
             raise FileNotFoundError(
                 f"VPN form template not found. Searched:\n"
-                f"  - ~/Downloads/Form_VPN_Organization-Vimenca_V1.docx\n"
-                f"  - ./Form_VPN_Organization-Vimenca_V1.docx"
+                f"  - ~/Downloads/Form_VPN_Organization-MockPeerA_V1.docx\n"
+                f"  - ./Form_VPN_Organization-MockPeerA_V1.docx"
             )
 
         self.doc = Document(self.template_path)
@@ -132,12 +132,12 @@ class VPNFormFiller:
         with open(config_path, 'r') as f:
             return json.load(f)
 
-    def fill_contacts_table(self, vpn_data: Dict, vimenca_data: Dict = None) -> None:
+    def fill_contacts_table(self, vpn_data: Dict, mock-peer-a_data: Dict = None) -> None:
         """
         Fill the contacts table (Table 0).
 
         Organization data: Column 1
-        Vimenca data: Column 2 (left blank if not provided)
+        MockPeerA data: Column 2 (left blank if not provided)
         """
         table = self.doc.tables[0]
 
@@ -174,16 +174,16 @@ class VPNFormFiller:
         # Row 9: Tertiary Email
         table.rows[9].cells[1].text = vpn_data.get("email_tertiary", "")
 
-        # Leave Vimenca column (index 2) blank for manual entry
-        if vimenca_data:
-            table.rows[0].cells[2].text = vimenca_data.get("company", "")
+        # Leave MockPeerA column (index 2) blank for manual entry
+        if mock-peer-a_data:
+            table.rows[0].cells[2].text = mock-peer-a_data.get("company", "")
 
-    def fill_vpn_device_table(self, vpn_data: Dict, vimenca_data: Dict = None) -> None:
+    def fill_vpn_device_table(self, vpn_data: Dict, mock-peer-a_data: Dict = None) -> None:
         """
         Fill the VPN device information table (Table 1).
 
         Organization data: Column 1
-        Vimenca data: Column 2 (left blank if not provided)
+        MockPeerA data: Column 2 (left blank if not provided)
         """
         table = self.doc.tables[1]
 
@@ -202,13 +202,13 @@ class VPNFormFiller:
         # Row 5: Services/Ports
         table.rows[5].cells[1].text = vpn_data.get("ports", "")
 
-        # Leave Vimenca column blank for manual entry
-        if vimenca_data:
-            table.rows[1].cells[2].text = vimenca_data.get("vpn_ip", "")
-            table.rows[2].cells[2].text = vimenca_data.get("device_type", "")
-            table.rows[3].cells[2].text = vimenca_data.get("device_version", "")
-            table.rows[4].cells[2].text = vimenca_data.get("dest_cidr", "")
-            table.rows[5].cells[2].text = vimenca_data.get("ports", "")
+        # Leave MockPeerA column blank for manual entry
+        if mock-peer-a_data:
+            table.rows[1].cells[2].text = mock-peer-a_data.get("vpn_ip", "")
+            table.rows[2].cells[2].text = mock-peer-a_data.get("device_type", "")
+            table.rows[3].cells[2].text = mock-peer-a_data.get("device_version", "")
+            table.rows[4].cells[2].text = mock-peer-a_data.get("dest_cidr", "")
+            table.rows[5].cells[2].text = mock-peer-a_data.get("ports", "")
 
     def fill_ipsec_properties_table(self, ipsec_data: Dict) -> None:
         """Fill the IPSec tunnel properties table (Table 2)."""
@@ -237,7 +237,7 @@ class VPNFormFiller:
     def fill_form(
         self,
         vpn_data: Dict = None,
-        vimenca_data: Dict = None,
+        mock-peer-a_data: Dict = None,
         ipsec_data: Dict = None,
     ) -> None:
         """
@@ -245,22 +245,22 @@ class VPNFormFiller:
 
         Args:
             vpn_data: Organization VPN configuration
-            vimenca_data: Vimenca VPN configuration (optional)
+            mock-peer-a_data: MockPeerA VPN configuration (optional)
             ipsec_data: IPSec tunnel properties
         """
         # Use defaults if not provided
         vpn_data = vpn_data or self.DEFAULT_CONFIG["default"]
-        vimenca_data = vimenca_data or self.DEFAULT_CONFIG["vimenca"]
+        mock-peer-a_data = mock-peer-a_data or self.DEFAULT_CONFIG["mock-peer-a"]
         ipsec_data = ipsec_data or self.DEFAULT_CONFIG["ipsec"]
 
         print("Filling form with Organization configuration...")
 
         # Fill contacts
-        self.fill_contacts_table(vpn_data, vimenca_data)
+        self.fill_contacts_table(vpn_data, mock-peer-a_data)
         print("  ✓ Contacts table filled")
 
         # Fill VPN device info
-        self.fill_vpn_device_table(vpn_data, vimenca_data)
+        self.fill_vpn_device_table(vpn_data, mock-peer-a_data)
         print("  ✓ VPN device information filled")
 
         # Fill IPSec properties
@@ -371,7 +371,7 @@ Examples:
 
         # Determine configuration source
         vpn_data = None
-        vimenca_data = None
+        mock-peer-a_data = None
         ipsec_data = None
 
         if args.use_atg:
@@ -382,8 +382,8 @@ Examples:
                     **filler.DEFAULT_CONFIG["default"],
                     "vpn_ip": atg_config.get("tunnel1_address", ""),
                 }
-                vimenca_data = {
-                    **filler.DEFAULT_CONFIG["vimenca"],
+                mock-peer-a_data = {
+                    **filler.DEFAULT_CONFIG["mock-peer-a"],
                     "vpn_ip": atg_config.get("customer_ip", ""),
                 }
                 ipsec_data = filler.DEFAULT_CONFIG["ipsec"]
@@ -393,14 +393,14 @@ Examples:
             print(f"Loading configuration from {args.config}...")
             config = filler.load_config(args.config)
             vpn_data = config.get("default")
-            vimenca_data = config.get("vimenca")
+            mock-peer-a_data = config.get("mock-peer-a")
             ipsec_data = config.get("ipsec")
             print("✓ Configuration loaded\n")
 
         else:
             # Use defaults with CLI overrides
             vpn_data = filler.DEFAULT_CONFIG["default"].copy()
-            vimenca_data = filler.DEFAULT_CONFIG["vimenca"].copy()
+            mock-peer-a_data = filler.DEFAULT_CONFIG["mock-peer-a"].copy()
             ipsec_data = filler.DEFAULT_CONFIG["ipsec"].copy()
 
             # Apply CLI overrides
@@ -413,7 +413,7 @@ Examples:
 
         # Fill the form
         print("Filling form with configuration...\n")
-        filler.fill_form(vpn_data, vimenca_data, ipsec_data)
+        filler.fill_form(vpn_data, mock-peer-a_data, ipsec_data)
 
         # Save the form
         print()
@@ -424,7 +424,7 @@ Examples:
         print("FORM FILLED SUCCESSFULLY")
         print("=" * 80)
         print(f"✓ Output file: {output_file}")
-        print("\nVimenca Section: BLANK (ready for manual completion)")
+        print("\nMockPeerA Section: BLANK (ready for manual completion)")
         print("Organization Section: FILLED with configuration\n")
 
     except FileNotFoundError as e:

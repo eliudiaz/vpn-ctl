@@ -21,8 +21,8 @@ def diff(ctx, peer_name: str, json_output: bool):
     PEER_NAME: Name of peer
 
     Example:
-        vpnctl peer diff vimenca
-        vpnctl peer diff vimenca --json-output
+        vpnctl peer diff mock-peer-a
+        vpnctl peer diff mock-peer-a --json-output
     """
     service: PeerManagementService = ctx.obj.get('peer_service')
 

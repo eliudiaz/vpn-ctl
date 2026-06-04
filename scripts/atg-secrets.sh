@@ -115,7 +115,7 @@ ${GREEN}SEGURIDAD:${NC}
   ✓ Los archivos se crean con permisos restrictivos (0o600)
   ✓ Las PSKs deben intercambiarse por TELÉFONO, nunca por email
 
-${GREEN}CONTACTOS VIMENCA:${NC}
+${GREEN}CONTACTOS MOCK_PEER_A:${NC}
 
   • Eric Frias (Principal): 809-487-2679
   • Fermir Quezada (Secundario): 809-487-2602

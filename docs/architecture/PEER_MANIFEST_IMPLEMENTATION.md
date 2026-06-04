@@ -49,10 +49,10 @@ mkdir -p config/peers
 ### Step 1.3: Create Individual Peer Manifests
 
 **Files** (one per peer):
-- `config/peers/vimenca.yaml` ✅ Created
-- `config/peers/cibao.yaml` ✅ Created
-- `config/peers/apap.yaml` ✅ Created
-- `config/peers/internal-legacy-network.yaml` ✅ Created
+- `config/peers/mock-peer-a.yaml` ✅ Created
+- `config/peers/mock-peer-b.yaml` ✅ Created
+- `config/peers/mock-peer-c.yaml` ✅ Created
+- `config/peers/mock-peer-d.yaml` ✅ Created
 
 Each contains complete peer specification in K8s-style manifest format.
 
@@ -146,7 +146,7 @@ cd pulumi
 python3 -c "
 from vpn_manifest_loader import VpnManifestLoader
 loader = VpnManifestLoader('../config')
-peer = loader.load_peer('vimenca')
+peer = loader.load_peer('mock-peer-a')
 print(f'Loaded: {peer[\"metadata\"][\"name\"]}')
 print(f'Status: {peer[\"status\"][\"conditions\"][0][\"status\"]}')
 "
@@ -154,7 +154,7 @@ print(f'Status: {peer[\"status\"][\"conditions\"][0][\"status\"]}')
 
 **Expected output**:
 ```
-Loaded: vimenca
+Loaded: mock-peer-a
 Status: True
 ```
 
@@ -174,10 +174,10 @@ for p in peers:
 **Expected output**:
 ```
 Loaded 4 enabled peers:
-  - vimenca: Checkpoint Firewall
-  - cibao: Checkpoint Firewall
-  - apap: Firewall Fortinet
-  - internal-legacy-network: Legacy Infrastructure
+  - mock-peer-a: Checkpoint Firewall
+  - mock-peer-b: Checkpoint Firewall
+  - mock-peer-c: Firewall Fortinet
+  - mock-peer-d: Legacy Infrastructure
 ```
 
 ### Step 4.3: Test Config Extraction
@@ -186,7 +186,7 @@ Loaded 4 enabled peers:
 python3 -c "
 from vpn_manifest_loader import VpnManifestLoader
 loader = VpnManifestLoader('../config')
-peer = loader.load_peer('apap')
+peer = loader.load_peer('mock-peer-c')
 config = loader.extract_vpn_config(peer)
 print(f'Peer: {config[\"name\"]}')
 print(f'Public IP: {config[\"public_ip\"]}')
@@ -197,7 +197,7 @@ print(f'SNAT Type: {config[\"snat_type\"]}')
 
 **Expected output**:
 ```
-Peer: apap
+Peer: mock-peer-c
 Public IP: 4.152.100.174
 SNAT: True
 SNAT Type: provider_assigned_ip
@@ -223,7 +223,7 @@ print(f'Peers: {sorted(names)}')
 **Expected output**:
 ```
 Total peers: 5 (or 4 if monolithic is removed)
-Peers: ['internal-legacy-network', 'apap', 'cibao', 'vimenca']
+Peers: ['mock-peer-d', 'mock-peer-c', 'mock-peer-b', 'mock-peer-a']
 ```
 
 ### Step 4.5: Verify Backward Compatibility
@@ -236,12 +236,12 @@ from vpn_manifest_loader import VpnManifestLoader, VpnConfigLoader
 
 # Load from manifest
 manifest_loader = VpnManifestLoader('../config')
-manifest_peer = manifest_loader.load_peer('vimenca')
+manifest_peer = manifest_loader.load_peer('mock-peer-a')
 manifest_config = manifest_loader.extract_vpn_config(manifest_peer)
 
 # Load from unified (which tries manifest first)
 config_loader = VpnConfigLoader('../config')
-unified_config = config_loader.load_peer('vimenca')
+unified_config = config_loader.load_peer('mock-peer-a')
 
 # Compare key fields
 assert manifest_config['name'] == unified_config['name']
@@ -363,12 +363,12 @@ vpn-ctl peer status --condition "type=Ready,status=True"
 
 ```bash
 # Check if manifest file exists
-ls -la config/peers/vimenca.yaml
+ls -la config/peers/mock-peer-a.yaml
 
 # Validate YAML syntax
 python3 -c "
 import yaml
-with open('config/peers/vimenca.yaml') as f:
+with open('config/peers/mock-peer-a.yaml') as f:
     doc = yaml.safe_load(f)
     print('Valid YAML')
 "
@@ -377,7 +377,7 @@ with open('config/peers/vimenca.yaml') as f:
 python3 -c "
 from vpn_manifest_loader import VpnManifestLoader
 loader = VpnManifestLoader('../config')
-peer = loader.load_peer('vimenca')
+peer = loader.load_peer('mock-peer-a')
 if peer:
     print('✓ Manifest loaded')
 else:
@@ -392,7 +392,7 @@ else:
 ls -la config/tunnel-profiles.yaml
 
 # Verify profile name in peer matches profile name in tunnel-profiles.yaml
-grep "profile:" config/peers/vimenca.yaml
+grep "profile:" config/peers/mock-peer-a.yaml
 grep -A2 "checkpoint_r80:" config/tunnel-profiles.yaml
 ```
 
@@ -400,13 +400,13 @@ grep -A2 "checkpoint_r80:" config/tunnel-profiles.yaml
 
 ```bash
 # Check SNAT config in manifest
-grep -A10 "snat:" config/peers/apap.yaml
+grep -A10 "snat:" config/peers/mock-peer-c.yaml
 
 # Verify in extracted config
 python3 -c "
 from vpn_manifest_loader import VpnManifestLoader
 loader = VpnManifestLoader('../config')
-peer = loader.load_peer('apap')
+peer = loader.load_peer('mock-peer-c')
 config = loader.extract_vpn_config(peer)
 print(f'SNAT enabled: {config[\"snat_enabled\"]}')
 print(f'SNAT type: {config[\"snat_type\"]}')
@@ -420,10 +420,10 @@ print(f'SNAT IP: {config[\"snat_provider_ip\"]}')
 
 ### New Files
 - ✅ `config/tunnel-profiles.yaml` — Shared tunnel profiles
-- ✅ `config/peers/vimenca.yaml` — Vimenca peer manifest
-- ✅ `config/peers/cibao.yaml` — CIBAO peer manifest
-- ✅ `config/peers/apap.yaml` — APAP peer manifest with SNAT
-- ✅ `config/peers/internal-legacy-network.yaml` — Legacy network peer
+- ✅ `config/peers/mock-peer-a.yaml` — MockPeerA peer manifest
+- ✅ `config/peers/mock-peer-b.yaml` — MOCK_PEER_B peer manifest
+- ✅ `config/peers/mock-peer-c.yaml` — MOCK_PEER_C peer manifest with SNAT
+- ✅ `config/peers/mock-peer-d.yaml` — Legacy network peer
 - ✅ `pulumi/vpn_manifest_loader.py` — Manifest loading code
 
 ### Modified Files

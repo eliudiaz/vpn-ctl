@@ -1,6 +1,6 @@
-# VIMENCA VPN Configuration - Ready for Setup
+# MOCK_PEER_A VPN Configuration - Ready for Setup
 
-**Status**: ✅ Organization infrastructure fully configured and ready for VIMENCA to connect
+**Status**: ✅ Organization infrastructure fully configured and ready for MOCK_PEER_A to connect
 
 **Date Created**: 2026-04-08  
 **VPN Connection ID**: vpn-0ab5476c1fcceac5b  
@@ -8,9 +8,9 @@
 
 ---
 
-## Tunnel Endpoint Information for VIMENCA
+## Tunnel Endpoint Information for MOCK_PEER_A
 
-Share the following tunnel endpoints with VIMENCA so they can configure their Checkpoint Firewall R80.10:
+Share the following tunnel endpoints with MOCK_PEER_A so they can configure their Checkpoint Firewall R80.10:
 
 ### Tunnel 1
 - **Organization Tunnel IP**: `3.146.163.197`
@@ -26,7 +26,7 @@ Share the following tunnel endpoints with VIMENCA so they can configure their Ch
 
 ## IPsec Configuration Parameters
 
-All the following parameters are already configured on Organization's side. VIMENCA must match these on their Checkpoint Firewall:
+All the following parameters are already configured on Organization's side. MOCK_PEER_A must match these on their Checkpoint Firewall:
 
 ### Phase 1 (IKE)
 - **IKE Version**: IKEv2 only
@@ -51,13 +51,13 @@ All the following parameters are already configured on Organization's side. VIME
 
 ---
 
-## Networks Accessible Through VIMENCA VPN
+## Networks Accessible Through MOCK_PEER_A VPN
 
-Once the tunnels are UP, VIMENCA can reach the following networks at Organization:
+Once the tunnels are UP, MOCK_PEER_A can reach the following networks at Organization:
 
 | Network | CIDR | Description |
 |---------|------|-------------|
-| Securities Services | 172.16.65.21/32 | HTTPS/HTTP services at VIMENCA endpoint |
+| Securities Services | 172.16.65.21/32 | HTTPS/HTTP services at MOCK_PEER_A endpoint |
 | Securities Range | 172.16.70.0/24 | Full range for Securities infrastructure |
 | Test Services | 172.16.82.0/24 | Test environment including 172.16.82.28:8088 |
 
@@ -66,19 +66,19 @@ Once the tunnels are UP, VIMENCA can reach the following networks at Organizatio
 ## Connection Status Monitoring
 
 ### Expected Timeline
-1. VIMENCA configures their Checkpoint Firewall with the tunnel endpoints
-2. VIMENCA initiates the IKE handshake to both tunnel IPs
+1. MOCK_PEER_A configures their Checkpoint Firewall with the tunnel endpoints
+2. MOCK_PEER_A initiates the IKE handshake to both tunnel IPs
 3. Organization's tunnels transition from **DOWN** → **UP** (typically 1-5 minutes)
 4. Traffic begins flowing through the established tunnels
 5. Static routes in Transit Gateway activate (change from blackhole → active)
 
 ### Current Status (as of 2026-04-08 15:57:41 UTC)
-- Tunnel 1 (3.146.163.197): **DOWN** ⏳ Awaiting VIMENCA connection
-- Tunnel 2 (16.58.137.104): **DOWN** ⏳ Awaiting VIMENCA connection
-- VPN Connection State: **pending** → will become **available** when VIMENCA connects
+- Tunnel 1 (3.146.163.197): **DOWN** ⏳ Awaiting MOCK_PEER_A connection
+- Tunnel 2 (16.58.137.104): **DOWN** ⏳ Awaiting MOCK_PEER_A connection
+- VPN Connection State: **pending** → will become **available** when MOCK_PEER_A connects
 
 ### How to Monitor
-Once VIMENCA connects, you can check tunnel status in AWS Console:
+Once MOCK_PEER_A connects, you can check tunnel status in AWS Console:
 ```bash
 aws ec2 describe-vpn-connections --vpn-connection-ids vpn-0ab5476c1fcceac5b \
   --region us-east-2 --profile default | jq '.VpnConnections[0].VgwTelemetry'
@@ -86,7 +86,7 @@ aws ec2 describe-vpn-connections --vpn-connection-ids vpn-0ab5476c1fcceac5b \
 
 ---
 
-## VIMENCA Contact Information (Organization Records)
+## MOCK_PEER_A Contact Information (Organization Records)
 
 - **Primary**: Eric Frias
   - Phone: 809-487-2679
@@ -103,8 +103,8 @@ aws ec2 describe-vpn-connections --vpn-connection-ids vpn-0ab5476c1fcceac5b \
 | Parameter | Value |
 |-----------|-------|
 | **Organization Public IP** | 3.146.163.197 (Tunnel 1), 16.58.137.104 (Tunnel 2) |
-| **VIMENCA Public IP** | 191.97.106.141 |
-| **BGP ASN (VIMENCA)** | 65000 |
+| **MOCK_PEER_A Public IP** | 191.97.106.141 |
+| **BGP ASN (MOCK_PEER_A)** | 65000 |
 | **BGP ASN (Organization TGW)** | 64512 |
 | **Transit Gateway ID** | tgw-0572ce4b80ff7445a |
 | **VPN Type** | IPsec 1.0 |
@@ -115,10 +115,10 @@ aws ec2 describe-vpn-connections --vpn-connection-ids vpn-0ab5476c1fcceac5b \
 
 ## Next Steps
 
-1. **For VIMENCA**: Configure both tunnel endpoints on Checkpoint Firewall with provided credentials
+1. **For MOCK_PEER_A**: Configure both tunnel endpoints on Checkpoint Firewall with provided credentials
 2. **For Organization**: Monitor tunnel status for UP transition
 3. **After Tunnels UP**: Verify end-to-end connectivity through VPN Health Monitor dashboard at https://vpn.assurehub.io/
-4. **Testing**: VIMENCA can test connectivity to any IP in the accessible networks above
+4. **Testing**: MOCK_PEER_A can test connectivity to any IP in the accessible networks above
 
 ---
 

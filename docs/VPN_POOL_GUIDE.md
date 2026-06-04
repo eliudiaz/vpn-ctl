@@ -71,7 +71,7 @@ Result: Customer firewall rules unaffected ✅
 ### 1. First Peer Creation (Create New VPN)
 
 ```
-Peer Spec: vimenca.yaml
+Peer Spec: mock-peer-a.yaml
      ↓
 Orchestrator: Check pool for existing VPN
      ↓ (not found)
@@ -80,7 +80,7 @@ Create new VPN + CGW
 Register in pool
      ↓
 config/vpn-pool.yaml updated:
-  vimenca:
+  mock-peer-a:
     vpn_id: vpn-05ea9c12f40b67844
     state: attached
     tunnel1_ip: 3.131.49.110
@@ -91,7 +91,7 @@ config/vpn-pool.yaml updated:
 ### 2. Peer Destruction (Detach, Preserve)
 
 ```
-Destroy peer-vimenca stack
+Destroy peer-mock-peer-a stack
      ↓
 Mark VPN as detached
      ↓
@@ -102,7 +102,7 @@ Delete peer stack state
      ↓
 VPN REMAINS in pool ✅
 config/vpn-pool.yaml updated:
-  vimenca:
+  mock-peer-a:
     vpn_id: vpn-05ea9c12f40b67844
     state: detached
     tunnel1_ip: 3.131.49.110 (PRESERVED)
@@ -113,7 +113,7 @@ config/vpn-pool.yaml updated:
 ### 3. Peer Redeployment (Reuse VPN)
 
 ```
-Deploy new peer-vimenca stack
+Deploy new peer-mock-peer-a stack
      ↓
 Orchestrator: Check pool for existing VPN
      ↓ (found, detached)
@@ -125,7 +125,7 @@ Create new CloudWatch alarms
      ↓
 Same tunnel IPs as before ✅
 config/vpn-pool.yaml updated:
-  vimenca:
+  mock-peer-a:
     vpn_id: vpn-05ea9c12f40b67844
     state: attached
     tunnel1_ip: 3.131.49.110 (SAME)
@@ -140,7 +140,7 @@ config/vpn-pool.yaml updated:
 ### Deploy a Peer (Automatic VPN Management)
 
 ```bash
-cd pulumi/stacks/peer-vimenca
+cd pulumi/stacks/peer-mock-peer-a
 pulumi up
 
 # What happens:
@@ -168,12 +168,12 @@ mgr.print_pool_status()
 #   Orphaned: 0
 # Total preservations: 2
 # 
-# 🟢 vpn-05ea9c12f40b67844 (vimenca)
+# 🟢 vpn-05ea9c12f40b67844 (mock-peer-a)
 #    Profile: checkpoint_r80
 #    Tunnel IPs: 3.131.49.110, 3.151.46.131
 #    Preserved: 0 times
 # 
-# 🟡 vpn-0603daac887e7abed (apap)
+# 🟡 vpn-0603daac887e7abed (mock-peer-c)
 #    Profile: fortigate_standard
 #    Tunnel IPs: 3.156.78.90, 3.161.89.101
 #    Preserved: 1 times
@@ -183,7 +183,7 @@ mgr.print_pool_status()
 ### Destroy a Peer (VPN Preserved)
 
 ```bash
-cd pulumi/stacks/peer-vimenca
+cd pulumi/stacks/peer-mock-peer-a
 pulumi destroy
 
 # What happens:
@@ -243,7 +243,7 @@ vpns:
   # Entry for each VPN in pool
   - vpn_id: vpn-05ea9c12f40b67844
     customer_gateway_id: cgw-09e8da53ae18ef414
-    peer_name: vimenca              # Which peer owns it (null if detached)
+    peer_name: mock-peer-a              # Which peer owns it (null if detached)
     state: attached|detached|orphaned
     tunnel_profile: checkpoint_r80    # Profile name for matching
     tunnel1_ip: 3.131.49.110          # AWS-assigned, preserved forever
@@ -265,7 +265,7 @@ vpns:
               ↓
          ┌─────────────┐
          │  ATTACHED   │  (Peer using VPN)
-         │ (vimenca)   │
+         │ (mock-peer-a)   │
          └────┬────────┘
               ↓
       ┌───────────────┐
@@ -308,7 +308,7 @@ vpns:
 ### VPN Not Found in Pool
 
 ```
-Error: No VPN found to detach for peer vimenca
+Error: No VPN found to detach for peer mock-peer-a
 ```
 
 **Cause:** Peer was created before pool was implemented.
@@ -383,7 +383,7 @@ registry = VpnRegistry()
 registry.data['vpns'].append({
     'vpn_id': 'vpn-05ea9c12f40b67844',
     'customer_gateway_id': 'cgw-09e8da53ae18ef414',
-    'peer_name': 'vimenca',
+    'peer_name': 'mock-peer-a',
     'state': 'attached',
     'tunnel_profile': 'checkpoint_r80',
     'tunnel1_ip': '3.131.49.110',

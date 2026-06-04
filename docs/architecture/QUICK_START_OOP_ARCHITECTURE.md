@@ -31,7 +31,7 @@ PulumiProvider (Pulumi implementation)  ← Can swap with TerraformProvider
 ```python
 # In CLI command
 service = ctx.obj['peer_service']
-result = service.add_destination_cidr('vimenca', '172.16.80.0/24')
+result = service.add_destination_cidr('mock-peer-a', '172.16.80.0/24')
 
 # Works with active provider (Pulumi/Terraform/CloudFormation)
 # CLI doesn't know which one!
@@ -41,16 +41,16 @@ result = service.add_destination_cidr('vimenca', '172.16.80.0/24')
 
 ```python
 # Same code works with any provider
-result = service.deploy_peer('vimenca', preview_only=False)
+result = service.deploy_peer('mock-peer-a', preview_only=False)
 
-# Provider is determined by: Pulumi.vimenca.yaml → iac_provider field
+# Provider is determined by: Pulumi.mock-peer-a.yaml → iac_provider field
 ```
 
 ### 3. Show Diff (Provider-Agnostic)
 
 ```python
 # Works with any provider
-result = service.show_peer_diff('vimenca')
+result = service.show_peer_diff('mock-peer-a')
 
 # Returns diff regardless of whether Pulumi/Terraform/CloudFormation
 ```
@@ -102,7 +102,7 @@ from infrastructure.iac_providers import IacProviderFactory
 
 # Get active provider from config
 config = {'iac_provider': 'pulumi'}  # or 'terraform' or 'cloudformation'
-provider = IacProviderFactory.get_active_provider('vimenca', config)
+provider = IacProviderFactory.get_active_provider('mock-peer-a', config)
 
 # Use same interface
 result = provider.add_route('172.16.80.0/24')
@@ -163,7 +163,7 @@ def bootstrap_providers():
 **Step 3: Update config to use it**
 
 ```yaml
-# Pulumi.vimenca.yaml
+# Pulumi.mock-peer-a.yaml
 iac_provider: terraform
 ```
 
@@ -276,7 +276,7 @@ IacProviderFactory.register('cloudformation', CloudFormationProvider)
 
 2. **Use it:** vpnctl CLI now works with ANY provider
    ```bash
-   vpnctl peer add-route vimenca 172.16.80.0/24
+   vpnctl peer add-route mock-peer-a 172.16.80.0/24
    ```
 
 3. **Add Terraform:** When ready, implement TerraformProvider (3 days work)

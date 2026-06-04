@@ -18,13 +18,13 @@ tunnel_profiles:      # Shared across all peers
   palo_alto_standard: { ... }
 
 peers:                # All peers mixed in one array
-  - name: Vimenca
+  - name: MockPeerA
     tunnel_profile: checkpoint_r80
     ...
-  - name: CIBAO
+  - name: MOCK_PEER_B
     tunnel_profile: checkpoint_r80
     ...
-  - name: APAP
+  - name: MOCK_PEER_C
     tunnel_profile: fortigate_standard
     ...
 ```
@@ -49,22 +49,22 @@ peers:                # All peers mixed in one array
 config/
 ├── tunnel-profiles.yaml          (Shared tunnel templates)
 └── peers/
-    ├── vimenca.yaml             (Vimenca specification)
-    ├── cibao.yaml               (CIBAO specification)
-    ├── apap.yaml                (APAP specification)
-    └── internal-legacy-network.yaml  (Legacy network specification)
+    ├── mock-peer-a.yaml             (MockPeerA specification)
+    ├── mock-peer-b.yaml               (MOCK_PEER_B specification)
+    ├── mock-peer-c.yaml                (MOCK_PEER_C specification)
+    └── mock-peer-d.yaml  (Legacy network specification)
 ```
 
 ### File Format: K8s-Inspired Manifest
 
 Each peer file follows Kubernetes resource pattern:
 
-**`config/peers/vimenca.yaml`** (Example):
+**`config/peers/mock-peer-a.yaml`** (Example):
 ```yaml
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: vimenca
+  name: mock-peer-a
   namespace: vpn-infrastructure
   labels:
     vendor: checkpoint
@@ -135,12 +135,12 @@ status:
       reason: "VpnConnected"
 ```
 
-**`config/peers/apap.yaml`** (SNAT Example):
+**`config/peers/mock-peer-c.yaml`** (SNAT Example):
 ```yaml
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: apap
+  name: mock-peer-c
   namespace: vpn-infrastructure
   labels:
     vendor: fortinet
@@ -173,15 +173,15 @@ spec:
   snat:
     enabled: true
     type: "provider_assigned_ip"  # or "nat_instance"
-    provider_assigned_ip: "203.0.113.99"  # APAP provides this IP
+    provider_assigned_ip: "203.0.113.99"  # MOCK_PEER_C provides this IP
     nat_instance_config:
       # Would be populated if using isolated NAT gateway
       instance_type: "t3.micro"
       availability_zone: "us-east-2a"
   contacts:
-    - name: "APAP Network Operations"
+    - name: "MOCK_PEER_C Network Operations"
       phone: "TBD"
-      email: "operations@apap.local"
+      email: "operations@mock-peer-c.local"
       role: "Network Administrator"
 status:
   lastDeployed: "2026-04-16T08:22:33Z"
@@ -205,7 +205,7 @@ metadata:
   namespace: vpn-infrastructure
 profiles:
   checkpoint_r80:
-    description: "Checkpoint R80.10 compatible (Vimenca standard)"
+    description: "Checkpoint R80.10 compatible (MockPeerA standard)"
     ike_versions: ["ikev2"]
     phase1:
       encryption: ["AES256"]
@@ -269,7 +269,7 @@ profiles:
 ### 1. **Atomic Per-Peer Specifications**
 - Each peer = one file = one git commit
 - Changes to peer X don't affect peer Y
-- Easy to audit history: `git log config/peers/apap.yaml`
+- Easy to audit history: `git log config/peers/mock-peer-c.yaml`
 
 ### 2. **Extensible Peer Parameters**
 
@@ -313,7 +313,7 @@ tunnel:
 ### 4. **SNAT Configuration as Native Peer Property**
 - SNAT is now first-class citizen in peer spec
 - Supports multiple SNAT modes (provider_assigned_ip, nat_instance, etc.)
-- APAP-specific SNAT parameters co-located with peer definition
+- MOCK_PEER_C-specific SNAT parameters co-located with peer definition
 
 ```yaml
 snat:
@@ -453,15 +453,15 @@ Both `vpn-peers.yaml` and individual manifests work simultaneously.
 ```yaml
 # config/vpn-peers.yaml (still works)
 peers:
-  - name: vimenca
+  - name: mock-peer-a
     tunnel_profile: checkpoint_r80
     ...
 
-# config/peers/vimenca.yaml (new, also works)
+# config/peers/mock-peer-a.yaml (new, also works)
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: vimenca
+  name: mock-peer-a
 ...
 ```
 
@@ -506,10 +506,10 @@ Deprecate `vpn-peers.yaml`, use only individual manifests and shared `tunnel-pro
 
 - [ ] Create `config/tunnel-profiles.yaml` with shared profiles
 - [ ] Create `config/peers/` directory
-- [ ] Migrate vimenca → `config/peers/vimenca.yaml`
-- [ ] Migrate cibao → `config/peers/cibao.yaml`
-- [ ] Migrate apap → `config/peers/apap.yaml`
-- [ ] Migrate internal-legacy-network → `config/peers/internal-legacy-network.yaml`
+- [ ] Migrate mock-peer-a → `config/peers/mock-peer-a.yaml`
+- [ ] Migrate mock-peer-b → `config/peers/mock-peer-b.yaml`
+- [ ] Migrate mock-peer-c → `config/peers/mock-peer-c.yaml`
+- [ ] Migrate mock-peer-d → `config/peers/mock-peer-d.yaml`
 - [ ] Update `vpn_config_manager.py` to load manifests with fallback to monolithic
 - [ ] Add dual-stack support in orchestrator
 - [ ] Test: Each peer deploys identically via manifest vs. monolithic

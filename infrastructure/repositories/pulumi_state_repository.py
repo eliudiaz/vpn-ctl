@@ -46,7 +46,7 @@ class PulumiStateRepository(StateRepository):
         """Get resource count for a peer stack.
 
         Args:
-            peer_name: Peer name (e.g., 'vimenca')
+            peer_name: Peer name (e.g., 'mock-peer-a')
 
         Returns:
             Count of resources in peer-{peer_name} stack

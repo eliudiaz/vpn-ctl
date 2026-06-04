@@ -3,7 +3,7 @@
 VPN Secrets Retrieval Script - AFF-ATG
 
 Script para recuperar y validar Pre-Shared Keys (PSK) y configuración VPN.
-Genera reportes seguros para compartir con la red remota (Vimenca/Checkpoint).
+Genera reportes seguros para compartir con la red remota (MockPeerA/Checkpoint).
 
 Uso:
     python retrieve-vpn-secrets.py --action get-all
@@ -246,7 +246,7 @@ class VPNSecretsManager:
 
         checkpoint_config = f"""
 ================================================================================
-CONFIGURACIÓN VPN CHECKPOINT - COMPANY TO VIMENCA
+CONFIGURACIÓN VPN CHECKPOINT - COMPANY TO MOCK_PEER_A
 ================================================================================
 
 Generado: {datetime.now().isoformat()}
@@ -275,7 +275,7 @@ Inside CIDR Block:            169.254.23.200/30
 AWS Inside IP:                169.254.23.201
 Checkpoint Inside IP:         169.254.23.202
 BGP ASN (AWS):                64512
-BGP ASN (Vimenca):            65000
+BGP ASN (MockPeerA):            65000
 Pre-Shared Key:               {tunnel1_psk}
 
 ================================================================================
@@ -287,7 +287,7 @@ Inside CIDR Block:            169.254.107.44/30
 AWS Inside IP:                169.254.107.45
 Checkpoint Inside IP:         169.254.107.46
 BGP ASN (AWS):                64512
-BGP ASN (Vimenca):            65000
+BGP ASN (MockPeerA):            65000
 Pre-Shared Key:               {tunnel2_psk}
 
 ================================================================================
@@ -342,7 +342,7 @@ Egress     | ICMP   | ICMP      | 172.31.0.0/16   | ALLOW
 6. Aplicar reglas de firewall
 7. Contactar a Organization para confirmar ambos lados UP
 
-Contacto Vimenca:
+Contacto MockPeerA:
   - Eric Frias (Principal): 809-487-2679
   - Fermir Quezada (Secundario): 809-487-2602
 
@@ -453,7 +453,7 @@ Fecha: {datetime.now().isoformat()}
         # Log de auditoría
         logger.warning(f"PSK Túnel {tunnel} mostrada en consola (auditoría registrada)")
 
-        # Opción de copiar al portapapeles
+        # Opción de copiar al portmock-peer-celes
         try:
             import subprocess
             process = subprocess.Popen(
@@ -462,7 +462,7 @@ Fecha: {datetime.now().isoformat()}
                 text=True
             )
             process.communicate(input=psk)
-            print("✓ PSK copiada al portapapeles (macOS)")
+            print("✓ PSK copiada al portmock-peer-celes (macOS)")
         except Exception:
             print("(En Linux/Windows, copiar manualmente)")
 

@@ -83,7 +83,7 @@ curl http://localhost:8080/health | jq '.summary'
 curl http://localhost:8080/health/peers | jq '.peers | keys'
 
 # Specific peer
-curl http://localhost:8080/health/peers/vimenca | jq
+curl http://localhost:8080/health/peers/mock-peer-a | jq
 ```
 
 ### Refresh Config After Changes

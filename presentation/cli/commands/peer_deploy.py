@@ -24,8 +24,8 @@ def deploy(ctx, peer_name: str, dry_run: bool, no_confirm: bool):
     Uses the active IaC provider (Pulumi, Terraform, or CloudFormation).
 
     Example:
-        vpnctl peer deploy vimenca
-        vpnctl peer deploy vimenca --dry-run
+        vpnctl peer deploy mock-peer-a
+        vpnctl peer deploy mock-peer-a --dry-run
     """
     service: PeerManagementService = ctx.obj.get('peer_service')
     config_manager = ctx.obj.get('config_manager')

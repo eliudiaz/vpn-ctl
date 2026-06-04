@@ -17,7 +17,7 @@ Layer 1: POD LAYER
   
   Creates Packet:
   Source: 172.31.x.x (Pod's own IP)
-  Destination: 172.16.70.1 (Vimenca) OR 192.168.100.8 (Organization-Legacy)
+  Destination: 172.16.70.1 (MockPeerA) OR 192.168.100.8 (Organization-Legacy)
   
   ↓ Packet exits pod eth0 interface
 
@@ -25,7 +25,7 @@ Layer 2: NODE LAYER (iptables SNAT Rewrite)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   ╔═════════════════════════════════════════════════════════════════════════╗
-  ║ VIMENCA PATH: WITH SNAT MASQUERADING                                    ║
+  ║ MOCK_PEER_A PATH: WITH SNAT MASQUERADING                                    ║
   ╚═════════════════════════════════════════════════════════════════════════╝
   
   iptables POSTROUTING evaluation:
@@ -39,7 +39,7 @@ Layer 2: NODE LAYER (iptables SNAT Rewrite)
   Packet BEFORE:  Source: 172.31.x.x     → Destination: 172.16.70.1
   Packet AFTER:   Source: 203.0.113.10   → Destination: 172.16.70.1
   
-  ⚠️  Vimenca firewall will see 203.0.113.10 as source
+  ⚠️  MockPeerA firewall will see 203.0.113.10 as source
   
   ─────────────────────────────────────────────────────────────────────────
   
@@ -72,7 +72,7 @@ Layer 3: VPC LAYER (Route Table)
   EKS VPC: vpc-0efe6f2c199a72f9a
   Route Table: rtb-0ab7fb95716fe9036
   
-  VIMENCA:
+  MOCK_PEER_A:
     Destination: 172.16.70.0/24  → Transit Gateway ✓
   
   ORGANIZATION-LEGACY:
@@ -88,7 +88,7 @@ Layer 4: TRANSIT GATEWAY (Routing Hub)
   TGW Route Table Query:
   
   Destination 172.16.70.0/24?
-    → Route to vpn-05ea9c12f40b67844 (Vimenca VPN)
+    → Route to vpn-05ea9c12f40b67844 (MockPeerA VPN)
   
   Destination 192.168.100.8/32?
     → Route to vpn-028ce4c7f59b83bdd (Organization-Legacy VPN)
@@ -98,7 +98,7 @@ Layer 4: TRANSIT GATEWAY (Routing Hub)
 Layer 5: VPN TUNNEL (IPsec Encryption)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   
-  VIMENCA VPN:
+  MOCK_PEER_A VPN:
     Tunnel: 3.151.94.15 (Active)
     PSK: iaTncJq5o6nUf1VIYbxj564663421sd2
     Encryption: AES-256-CBC
@@ -121,12 +121,12 @@ Layer 5: VPN TUNNEL (IPsec Encryption)
 Layer 6: CUSTOMER FIREWALL (Verification)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   
-  VIMENCA CHECKPOINT:
+  MOCK_PEER_A CHECKPOINT:
     Firewall IP: 191.97.106.141
     
     Firewall receives encrypted packet → Decrypts
     
-    Checks rule: "Allow EKS to Vimenca"
+    Checks rule: "Allow EKS to MockPeerA"
       Source: 203.0.113.10/32 ✓ MATCH (masqueraded IP)
       Destination: 172.16.70.0/24 ✓ MATCH
       → ACCEPT ✅
@@ -149,7 +149,7 @@ Layer 6: CUSTOMER FIREWALL (Verification)
 Layer 7: DESTINATION NETWORK
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   
-  VIMENCA:
+  MOCK_PEER_A:
     Server at 172.16.70.1 receives packet
     Server responds
     Response travels BACK through VPN
@@ -168,7 +168,7 @@ Layer 7: DESTINATION NETWORK
 KEY DIFFERENCES SUMMARY
 
 ╔════════════════════════════════════════════════════════════════════════════╗
-║ ASPECT                   │ VIMENCA                │ ORGANIZATION-LEGACY        ║
+║ ASPECT                   │ MOCK_PEER_A                │ ORGANIZATION-LEGACY        ║
 ╠════════════════════════════════════════════════════════════════════════════╣
 ║ Source IP (in transit)   │ 203.0.113.10 (masked)  │ 172.31.x.x (original)  ║
 ║ Firewall sees            │ Single static IP       │ Multiple pod IPs       ║
@@ -182,7 +182,7 @@ KEY DIFFERENCES SUMMARY
 
 WHY DIFFERENT APPROACHES?
 
-Vimenca wanted a single static IP (203.0.113.10):
+MockPeerA wanted a single static IP (203.0.113.10):
   ✓ Simpler firewall rules (whitelist 1 IP instead of /16)
   ✓ Better for auditing (all traffic appears from same IP)
   ✓ Works with strict firewall policies
@@ -199,13 +199,13 @@ Organization-Legacy using original pod IPs (172.31.0.0/16):
 
 DEBUGGING CHECKLIST FOR DEVELOPERS
 
-If traffic isn't reaching Vimenca (172.16.70.0/24):
+If traffic isn't reaching MockPeerA (172.16.70.0/24):
   1. ✓ Check pod has network connectivity: kubectl exec pod -- ping 8.8.8.8
   2. ✓ Check iptables rule is active: iptables -t nat -L POSTROUTING
   3. ✓ Check VPC route exists: aws ec2 describe-route-tables
   4. ✓ Check TGW route exists: aws ec2 search-transit-gateway-routes
   5. ✓ Check VPN tunnel is UP: aws ec2 describe-vpn-connections
-  6. ✓ Check Vimenca firewall allows 203.0.113.10
+  6. ✓ Check MockPeerA firewall allows 203.0.113.10
   7. ✓ Check VPN connection state is "available"
 
 If traffic isn't reaching Organization-Legacy (192.168.100.x):

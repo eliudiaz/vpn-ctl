@@ -30,7 +30,7 @@ class CloudWatchSNATVerifier:
             sys.exit(1)
 
     def check_vpn_tunnel_status(self) -> Dict[str, Any]:
-        """Check VPN tunnel status for Vimenca"""
+        """Check VPN tunnel status for MockPeerA"""
         print("\n[1/6] Checking VPN Tunnel Status...")
         try:
             response = self.ec2.describe_vpn_connections(
@@ -76,7 +76,7 @@ class CloudWatchSNATVerifier:
             snat_routes = [r for r in routes if '203.0.113.10' in r['DestinationCidrBlock']
                           or '172.16' in r['DestinationCidrBlock']]
 
-            print(f"  ✓ Found {len(snat_routes)} active routes for Vimenca CIDRs")
+            print(f"  ✓ Found {len(snat_routes)} active routes for MockPeerA CIDRs")
 
             for route in snat_routes:
                 print(f"    • {route['DestinationCidrBlock']} → {route['Type']}")
@@ -300,8 +300,8 @@ class CloudWatchSNATVerifier:
             print("✅ SNAT INFRASTRUCTURE OPERATIONAL")
             print()
             print("Evidence of masquerading:")
-            print("  • ✅ VPN tunnel active (Vimenca connectivity path open)")
-            print("  • ✅ TGW routes configured for all Vimenca CIDRs")
+            print("  • ✅ VPN tunnel active (MockPeerA connectivity path open)")
+            print("  • ✅ TGW routes configured for all MockPeerA CIDRs")
             print("  • ✅ SNAT instance deployed with source/dest check disabled")
             print("  • ✅ DaemonSet deployed on all EKS nodes")
             print()
@@ -344,7 +344,7 @@ fields @timestamp, srcaddr, dstaddr, bytes, action
 | filter srcaddr like /172.31.*/
 | stats sum(bytes) as total_bytes, count() as packets by srcaddr
 ''',
-            "3. See Vimenca responses (return traffic)": '''
+            "3. See MockPeerA responses (return traffic)": '''
 fields @timestamp, srcaddr, dstaddr, action
 | filter dstaddr = "203.0.113.10" and srcaddr like /172.16.*/
 | stats count() as response_packets by srcaddr

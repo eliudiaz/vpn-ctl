@@ -195,7 +195,7 @@ class InfrastructureCertifier:
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
-        peers_to_check = ["vimenca", "cibao", "apap", "internal-legacy-network"]
+        peers_to_check = ["mock-peer-a", "mock-peer-b", "mock-peer-c", "mock-peer-d"]
 
         all_good = True
         for peer_name in peers_to_check:

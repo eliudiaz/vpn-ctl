@@ -9,8 +9,8 @@ Quick visual guide comparing 4 architectural approaches.
 **Each peer contains its own tunnel profile definition.**
 
 ```
-┌─ vimenca.yaml (330 lines)
-│  ├─ metadata: { name: vimenca }
+┌─ mock-peer-a.yaml (330 lines)
+│  ├─ metadata: { name: mock-peer-a }
 │  ├─ spec:
 │  │  ├─ device: { type: Checkpoint... }
 │  │  ├─ tunnel:
@@ -22,8 +22,8 @@ Quick visual guide comparing 4 architectural approaches.
 │  │  └─ network: { ... }
 │  └─ status: { ... }
 │
-└─ cibao.yaml (330 lines)
-   ├─ metadata: { name: cibao }
+└─ mock-peer-b.yaml (330 lines)
+   ├─ metadata: { name: mock-peer-b }
    ├─ spec:
    │  ├─ device: { type: Checkpoint... }
    │  ├─ tunnel:
@@ -63,15 +63,15 @@ _tunnel_profiles:
     dpd: { ... }
 
 peers:
-  - name: vimenca
+  - name: mock-peer-a
     tunnel:
       profileDefinition: *checkpoint_r80_anchor  ← Reference anchor
   
-  - name: cibao
+  - name: mock-peer-b
     tunnel:
       profileDefinition: *checkpoint_r80_anchor  ← Same anchor
   
-  - name: apap
+  - name: mock-peer-c
     tunnel:
       profileDefinition: *fortigate_standard_anchor  ← Different anchor
 
@@ -104,19 +104,19 @@ config/
 │  └─ palo-alto-profiles.yaml
 │
 └─ peers/
-   ├─ vimenca.yaml
+   ├─ mock-peer-a.yaml
    │  └─ tunnel:
    │     └─ profileRef:
    │        ├─ vendor: checkpoint
    │        └─ name: r80    ← References external profile
    │
-   ├─ cibao.yaml
+   ├─ mock-peer-b.yaml
    │  └─ tunnel:
    │     └─ profileRef:
    │        ├─ vendor: checkpoint
    │        └─ name: r80    ← Same reference
    │
-   └─ apap.yaml
+   └─ mock-peer-c.yaml
       └─ tunnel:
          └─ profileRef:
             ├─ vendor: fortinet
@@ -152,25 +152,25 @@ config/
 │        └─ phase2: { ... }
 │
 └─ peers/
-   ├─ vimenca.yaml (280 lines)
+   ├─ mock-peer-a.yaml (280 lines)
    │  └─ spec:
    │     └─ tunnel:
    │        ├─ profile: checkpoint_r80  ← Reference
    │        └─ overrides: {}            ← No changes to base
    │
-   ├─ cibao.yaml (280 lines)
+   ├─ mock-peer-b.yaml (280 lines)
    │  └─ spec:
    │     └─ tunnel:
    │        ├─ profile: checkpoint_r80  ← Same reference
    │        └─ overrides: {}
    │
-   ├─ apap.yaml (280 lines)
+   ├─ mock-peer-c.yaml (280 lines)
    │  └─ spec:
    │     └─ tunnel:
    │        ├─ profile: fortigate_standard  ← Different reference
    │        └─ overrides: {}
    │
-   └─ internal-legacy-network.yaml (280 lines)
+   └─ mock-peer-d.yaml (280 lines)
       └─ spec:
          └─ tunnel:
             ├─ profile: checkpoint_r80
@@ -199,17 +199,17 @@ config/
 
 **Option 1 (Inline)**:
 ```bash
-# Edit vimenca.yaml
+# Edit mock-peer-a.yaml
 # Change: dpd.timeout: 30 → 15
-git add config/peers/vimenca.yaml
+git add config/peers/mock-peer-a.yaml
 
-# Edit cibao.yaml
+# Edit mock-peer-b.yaml
 # Change: dpd.timeout: 30 → 15
-git add config/peers/cibao.yaml
+git add config/peers/mock-peer-b.yaml
 
-# Edit internal-legacy-network.yaml
+# Edit mock-peer-d.yaml
 # Change: dpd.timeout: 30 → 15
-git add config/peers/internal-legacy-network.yaml
+git add config/peers/mock-peer-d.yaml
 
 # Commit
 git commit -m "fix: Update Checkpoint DPD timeout for security"
@@ -241,7 +241,7 @@ git commit -m "fix: Update Checkpoint DPD timeout for security"
 # ✅ Single file change
 # ✅ Clear this is a profile update (affects all referencing peers)
 # ✅ Peer files unchanged (they still reference checkpoint_r80)
-# ✅ When viewing vimenca.yaml history, no unnecessary changes
+# ✅ When viewing mock-peer-a.yaml history, no unnecessary changes
 # ✅ When viewing tunnel-profiles.yaml history, see all profile evolution
 ```
 
@@ -306,10 +306,10 @@ spec:
 **Option 1 (Inline)**:
 ```bash
 $ git log --oneline -10
-a1b2c3d Fix DPD timeout in vimenca
-b2c3d4e Update APAP tunnel config
-c3d4e5f Fix CIBAO network config
-d4e5f6g Update vimenca device version
+a1b2c3d Fix DPD timeout in mock-peer-a
+b2c3d4e Update MOCK_PEER_C tunnel config
+c3d4e5f Fix MOCK_PEER_B network config
+d4e5f6g Update mock-peer-a device version
 ...
 # ❌ Hard to tell what's profile change vs. peer config change
 # ❌ Interdependent changes (same profile) look separate
@@ -321,7 +321,7 @@ $ git log --oneline -10
 a1b2c3d fix: Update Checkpoint DPD timeout (affects 3 peers)
 b2c3d4e feat: Add new Fortinet peer customer-50
 c3d4e5f feat: Add new tunnel profile for Palo Alto
-d4e5f6g fix: Update APAP SNAT config
+d4e5f6g fix: Update MOCK_PEER_C SNAT config
 ...
 # ✅ Clear separation: profile changes vs. peer changes
 # ✅ Easy to see which peers are affected by profile updates
@@ -329,15 +329,15 @@ d4e5f6g fix: Update APAP SNAT config
 
 **Git log for specific peer**:
 ```bash
-$ git log config/peers/vimenca.yaml
-a1b2c3d Added vimenca peer (initial deployment)
-# Shows only vimenca-specific changes, not every DPD timeout update
+$ git log config/peers/mock-peer-a.yaml
+a1b2c3d Added mock-peer-a peer (initial deployment)
+# Shows only mock-peer-a-specific changes, not every DPD timeout update
 ```
 
 **Git log for profiles**:
 ```bash
 $ git log config/tunnel-profiles.yaml
-a1b2c3d fix: Update Checkpoint DPD timeout (affects vimenca, cibao, legacy)
+a1b2c3d fix: Update Checkpoint DPD timeout (affects mock-peer-a, mock-peer-b, legacy)
 b2c3d4e feat: Add new tunnel profile for Palo Alto
 c3d4e5f fix: Fortinet DPD timeout update
 # Shows all profile evolution without peer config noise

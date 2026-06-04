@@ -17,10 +17,10 @@ def run_cmd(cmd, cwd=None):
 def get_aws_resources(peer_name):
     """Get AWS resources for a peer."""
     peers_map = {
-        'vimenca': ['vpn-05ea9c12f40b67844', 'cgw-09e8da53ae18ef414'],
-        'cibao': ['vpn-0e751eec94d5d4743', 'cgw-0badc5b6e98ccc9df'],
-        'apap': ['vpn-0603daac887e7abed', 'cgw-0bd99b5d30b39f86f'],
-        'internal-legacy-network': ['vpn-08a56c49f3c27a1cc', 'cgw-0c066cb9b8e9ca969'],
+        'mock-peer-a': ['vpn-05ea9c12f40b67844', 'cgw-09e8da53ae18ef414'],
+        'mock-peer-b': ['vpn-0e751eec94d5d4743', 'cgw-0badc5b6e98ccc9df'],
+        'mock-peer-c': ['vpn-0603daac887e7abed', 'cgw-0bd99b5d30b39f86f'],
+        'mock-peer-d': ['vpn-08a56c49f3c27a1cc', 'cgw-0c066cb9b8e9ca969'],
     }
     return peers_map.get(peer_name, [])
 
@@ -71,7 +71,7 @@ def check_customer_gateway(cgw_id):
 def main():
     os.chdir('/Users/eliudiaz/Documents/code/AFF/dev-ctx-asg2-core/asg-infra/aff-atg')
     
-    peers = ['vimenca', 'cibao', 'apap', 'internal-legacy-network']
+    peers = ['mock-peer-a', 'mock-peer-b', 'mock-peer-c', 'mock-peer-d']
     
     print()
     print("=" * 100)

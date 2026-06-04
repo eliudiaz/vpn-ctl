@@ -16,10 +16,10 @@
 ### Extracted State
 - **Core Stack:** `pulumi/stacks/core/` → 22 resources
 - **Peer Stacks:**
-  - `peer-vimenca` → 5 resources
-  - `peer-cibao` → 3 resources  
-  - `peer-apap` → 3 resources
-  - `peer-internal-legacy-network` → 3 resources
+  - `peer-mock-peer-a` → 5 resources
+  - `peer-mock-peer-b` → 3 resources  
+  - `peer-mock-peer-c` → 3 resources
+  - `peer-mock-peer-d` → 3 resources
 
 **Total:** 36 resources ✅
 
@@ -27,7 +27,7 @@
 
 ## 🔗 Per-Peer Infrastructure Status
 
-### Vimenca ✅
+### MockPeerA ✅
 - **Status:** ENABLED
 - **Device:** Checkpoint Firewall R80.10
 - **Public IP:** 191.97.106.141
@@ -43,7 +43,7 @@
   - 2x Transit Gateway Routes
 - **Contacts:** 2 (Eric Frias, Fermir Quezada)
 
-### CIBAO ✅
+### MOCK_PEER_B ✅
 - **Status:** ENABLED
 - **Device:** Checkpoint Firewall R80.10
 - **Public IP:** 186.148.92.203
@@ -54,9 +54,9 @@
   - 1x Customer Gateway
   - 1x VPN Connection
   - 1x Transit Gateway Route
-- **Contacts:** 1 (CIBAO Operations)
+- **Contacts:** 1 (MOCK_PEER_B Operations)
 
-### APAP ✅
+### MOCK_PEER_C ✅
 - **Status:** ENABLED
 - **Device:** Fortinet FortiGate v7.2.10
 - **Public IP:** 4.152.100.174
@@ -70,7 +70,7 @@
 - **Tunnel Profile:** FortiGate with IKEv2 + PFS
 - **Contacts:** 2 (Operations, Support)
 
-### internal-legacy-network ✅
+### mock-peer-d ✅
 - **Status:** ENABLED
 - **Device:** Legacy Infrastructure
 - **Public IP:** 52.254.86.115
@@ -127,13 +127,13 @@ pulumi/
 └── stacks/                    ← NEW
     ├── core/
     │   └── Pulumi.yaml
-    ├── peer-vimenca/
+    ├── peer-mock-peer-a/
     │   └── Pulumi.yaml
-    ├── peer-cibao/
+    ├── peer-mock-peer-b/
     │   └── Pulumi.yaml
-    ├── peer-apap/
+    ├── peer-mock-peer-c/
     │   └── Pulumi.yaml
-    └── peer-internal-legacy-network/
+    └── peer-mock-peer-d/
         └── Pulumi.yaml
 
 .pulumi-backups/              ← NEW
@@ -164,13 +164,13 @@ pulumi/
 ### Per-Peer Operations
 ```bash
 # Check individual peer status
-vpn-ctl peer status vimenca
-vpn-ctl peer status cibao
-vpn-ctl peer status apap
-vpn-ctl peer status internal-legacy-network
+vpn-ctl peer status mock-peer-a
+vpn-ctl peer status mock-peer-b
+vpn-ctl peer status mock-peer-c
+vpn-ctl peer status mock-peer-d
 
 # Deploy specific peer (if changes needed)
-pulumi --cwd pulumi/stacks/peer-vimenca up -s peer-vimenca
+pulumi --cwd pulumi/stacks/peer-mock-peer-a up -s peer-mock-peer-a
 
 # Check tunnel status
 vpn-ctl tunnel status
@@ -211,10 +211,10 @@ Total Resources: 36
 │   ├── Security: 1
 │   └── Management: 3
 └── VPN Peers: 14 (39%)
-    ├── Vimenca: 5 (14%)
-    ├── CIBAO: 3 (8%)
-    ├── APAP: 3 (8%)
-    └── internal-legacy-network: 3 (8%)
+    ├── MockPeerA: 5 (14%)
+    ├── MOCK_PEER_B: 3 (8%)
+    ├── MOCK_PEER_C: 3 (8%)
+    └── mock-peer-d: 3 (8%)
 ```
 
 ---

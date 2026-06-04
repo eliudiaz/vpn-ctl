@@ -5,7 +5,7 @@
 ################################################################################
 #
 # Purpose: Comprehensive testing suite for VPN connectivity validation when
-#          a new peer (Vimenca/Checkpoint) joins the network
+#          a new peer (MockPeerA/Checkpoint) joins the network
 #
 # Usage:
 #   # Test a specific peer IP
@@ -27,9 +27,9 @@
 #   - AWS Side (Organization)
 #     ├─ EKS VPC (172.31.0.0/16)
 #     ├─ Transit Gateway
-#     └─ VPN Connection to Vimenca
+#     └─ VPN Connection to MockPeerA
 #
-#   - Remote Side (Vimenca)
+#   - Remote Side (MockPeerA)
 #     ├─ Checkpoint Firewall (191.97.106.141)
 #     ├─ Internal Network (172.16.70.0/24)
 #     └─ Test peer (passed as parameter)
@@ -122,7 +122,7 @@ ${BLUE}${BOLD}VPN PEER-TO-PEER TEST SCRIPT${NC}
 
 ${GREEN}PURPOSE:${NC}
   Comprehensive testing suite for validating VPN connectivity when a new
-  peer (Vimenca/Checkpoint) joins the network. Simply pass the peer's
+  peer (MockPeerA/Checkpoint) joins the network. Simply pass the peer's
   internal IP and the script handles all validation.
 
 ${GREEN}USAGE:${NC}
@@ -271,7 +271,7 @@ test_vpn_connection() {
     if [ "$t1_status" = "UP" ] || [ "$t2_status" = "UP" ]; then
         print_test "Tunnel Status" "PASS" "At least one tunnel is UP"
     else
-        print_test "Tunnel Status" "WARN" "Both tunnels DOWN - Vimenca may not be configured yet"
+        print_test "Tunnel Status" "WARN" "Both tunnels DOWN - MockPeerA may not be configured yet"
     fi
 }
 
@@ -306,19 +306,19 @@ test_transit_gateway() {
 test_routes() {
     print_subheader "Route Table Configuration"
 
-    local routes vimenca_route vpn_routes
+    local routes mock-peer-a_route vpn_routes
     routes=$(aws ec2 describe-route-tables \
         --query 'RouteTables[].Routes[?TransitGatewayId!=`null`]' \
         --region "$REGION" \
         --profile "$AWS_PROFILE" \
         --output json 2>/dev/null || echo "[]")
 
-    vimenca_route=$(echo "$routes" | jq -r '.[] | select(.DestinationCidrBlock=="172.16.70.0/24") | .DestinationCidrBlock' 2>/dev/null || echo "")
+    mock-peer-a_route=$(echo "$routes" | jq -r '.[] | select(.DestinationCidrBlock=="172.16.70.0/24") | .DestinationCidrBlock' 2>/dev/null || echo "")
 
-    if [ -n "$vimenca_route" ]; then
-        print_test "Route to Vimenca (172.16.70.0/24)" "PASS" "via Transit Gateway"
+    if [ -n "$mock-peer-a_route" ]; then
+        print_test "Route to MockPeerA (172.16.70.0/24)" "PASS" "via Transit Gateway"
     else
-        print_test "Route to Vimenca (172.16.70.0/24)" "FAIL" "Route not found"
+        print_test "Route to MockPeerA (172.16.70.0/24)" "FAIL" "Route not found"
     fi
 
     vpn_routes=$(echo "$routes" | jq '[.[] | select(.DestinationCidrBlock | startswith("172.33"))] | length' 2>/dev/null || echo "0")
@@ -614,7 +614,7 @@ done)
 
 2. If TCP tests fail, check:
    - Security group rules allow port traffic
-   - Vimenca firewall allows outbound on port
+   - MockPeerA firewall allows outbound on port
    - Target service is running
 
 3. If latency is high (>100ms), check:
@@ -630,7 +630,7 @@ done)
 ## Next Steps
 
 - [ ] Verify all infrastructure components
-- [ ] Check Vimenca Checkpoint configuration
+- [ ] Check MockPeerA Checkpoint configuration
 - [ ] Verify PSK exchange completed
 - [ ] Confirm route tables on both sides
 - [ ] Test additional services

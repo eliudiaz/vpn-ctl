@@ -11,8 +11,8 @@
 # =============================================================================
 
 providers:
-  # Vimenca Banking Services
-  - name: "Vimenca"
+  # MockPeerA Banking Services
+  - name: "MockPeerA"
     description: "Banking services provider - SNAT masqueraded to 203.0.113.10"
     enabled: true
     targets:
@@ -37,8 +37,8 @@ providers:
         timeout: 5
         enabled: true
 
-  # CIBAO Enterprise Network
-  - name: "CIBAO"
+  # MOCK_PEER_B Enterprise Network
+  - name: "MOCK_PEER_B"
     description: "Enterprise partner network - Original pod IPs visible"
     enabled: true
     targets:
@@ -75,7 +75,7 @@ providers:
     description: "Legacy MSSQL databases - Original pod IPs visible"
     enabled: true
     targets:
-      - name: "APAP-Produccion"
+      - name: "MOCK_PEER_C-Produccion"
         ip: "192.168.100.8"
         port: 1433
         protocol: "icmp"

@@ -1,11 +1,11 @@
 ================================================================================
-VIMENCA INTEGRATION - MASQUERADING PROOF EXECUTIVE SUMMARY
+MOCK_PEER_A INTEGRATION - MASQUERADING PROOF EXECUTIVE SUMMARY
 ================================================================================
 Date: 2026-03-10
 Status: ✅ INFRASTRUCTURE FULLY CONFIGURED FOR IP MASQUERADING (203.0.113.10)
 ================================================================================
 
-TO: Vimenca DevOps Team (Eric Frias / Fermir Quezada)
+TO: MockPeerA DevOps Team (Eric Frias / Fermir Quezada)
 FROM: Engineering Team
 RE: Proof that pod traffic will be masqueraded to 203.0.113.10
 
@@ -15,7 +15,7 @@ EXECUTIVE SUMMARY
 
 ✅ ALL INFRASTRUCTURE CONFIGURED FOR SOURCE IP MASQUERADING
 
-Pod traffic to Vimenca will appear from source IP: 203.0.113.10
+Pod traffic to MockPeerA will appear from source IP: 203.0.113.10
 
 This single masqueraded IP replaces the need to whitelist the entire pod CIDR
 (172.31.0.0/16 = 65,536 individual IPs) in your Checkpoint firewall.
@@ -34,7 +34,7 @@ Documentation:    MASQUERADING-VERIFICATION-REPORT.txt
 Components Verified:
   ✅ SNAT Instance (i-0b24f67baa6dd7ef3) - RUNNING
   ✅ EKS Routes (4 routes) - All ACTIVE → SNAT ENI
-  ✅ TGW Routes (4 routes) - All ACTIVE → Vimenca VPN
+  ✅ TGW Routes (4 routes) - All ACTIVE → MockPeerA VPN
   ✅ VPN Tunnel 1 - UP (3.151.94.15)
   ✅ iptables SNAT Rules - Applied
   ✅ Masquerading Target - 203.0.113.10 configured
@@ -43,7 +43,7 @@ Result:
   ✅ Every component verified to work together
   ✅ Traffic will reach SNAT instance
   ✅ SNAT instance will masquerade to 203.0.113.10
-  ✅ Masqueraded traffic will reach Vimenca via VPN
+  ✅ Masqueraded traffic will reach MockPeerA via VPN
 
 ════════════════════════════════════════════════════════════════════════════════
 
@@ -54,7 +54,7 @@ Evidence Type:    Step-by-step packet transformation
 Status:           ✅ Complete 11-step flow documented
 Documentation:    DATA-FLOW-MASQUERADING-PROOF.txt
 
-Proof Method:     Trace a packet from pod to Vimenca
+Proof Method:     Trace a packet from pod to MockPeerA
 
 Step 1:  Pod generates HTTP request to 172.16.82.28:8088
          Source: 172.31.45.67 (pod IP)
@@ -69,22 +69,22 @@ Step 4:  Source IP transformed: 172.31.45.67 → 203.0.113.10 ✅
          
 Step 5:  SNAT subnet route: 203.0.113.10/32 → TGW
          
-Step 6:  TGW route: 172.16.82.0/24 → Vimenca VPN
+Step 6:  TGW route: 172.16.82.0/24 → MockPeerA VPN
          
 Step 7:  IPsec encryption (AES-256 + SHA2-256)
          
 Step 8:  VPN tunnel transmission (Tunnel 1: UP)
          
-Step 9:  Vimenca Checkpoint receives packet
+Step 9:  MockPeerA Checkpoint receives packet
          Source: 203.0.113.10 ✅ (THIS IS WHAT YOU SEE)
          
-Step 10: Vimenca server responds
+Step 10: MockPeerA server responds
          
 Step 11: Response de-masqueraded and returned to pod
 
 Result:
   ✅ Every step documented with evidence
-  ✅ Logical path complete from pod to Vimenca
+  ✅ Logical path complete from pod to MockPeerA
   ✅ Source IP transformation proven at each layer
   ✅ Reverse path (return traffic) also proven
 
@@ -116,13 +116,13 @@ Example CloudWatch log entry (when traffic flows):
 
    Interpreted:
    ✅ Source: 203.0.113.10 (masqueraded)
-   ✅ Destination: 172.16.82.28 (Vimenca)
+   ✅ Destination: 172.16.82.28 (MockPeerA)
    ✅ 125 packets, 52KB transferred
    ✅ ACCEPT action
    ✅ THIS PROVES MASQUERADING IS WORKING
 
 Timeline to see this evidence:
-  1. Vimenca configures firewall rule (whitelists 203.0.113.10)
+  1. MockPeerA configures firewall rule (whitelists 203.0.113.10)
   2. Pod generates traffic (curl to test endpoint)
   3. CloudWatch captures logs (real-time)
   4. Evidence appears in logs (5-10 minutes)
@@ -141,16 +141,16 @@ iptables Rules Applied       ✅ DONE   Instance logs                 User data 
 Routes Active                ✅ DONE   AWS route tables              Route status
 VPN Tunnel Status            ✅ DONE   AWS VPN console               Tunnel 1: UP
 Masquerading Target          ✅ DONE   Pulumi configuration          IP: 203.0.113.10
-Firewall Rule (Vimenca)      ⏳ PEND   Vimenca Checkpoint            Whitelist 203.0.113.10
+Firewall Rule (MockPeerA)      ⏳ PEND   MockPeerA Checkpoint            Whitelist 203.0.113.10
 Live Traffic Evidence        ⏳ PEND   CloudWatch Logs               srcaddr=203.0.113.10
 ─────────────────────────────────────────────────────────────────────────────
-OVERALL STATUS: ✅ INFRASTRUCTURE PROVEN | ⏳ AWAITING VIMENCA FIREWALL
+OVERALL STATUS: ✅ INFRASTRUCTURE PROVEN | ⏳ AWAITING MOCK_PEER_A FIREWALL
 
 ================================================================================
-VIMENCA ACTION REQUIRED
+MOCK_PEER_A ACTION REQUIRED
 ================================================================================
 
-To complete the integration and enable pod-to-Vimenca traffic:
+To complete the integration and enable pod-to-MockPeerA traffic:
 
 1. CONFIGURE CHECKPOINT FIREWALL RULE
 
@@ -186,7 +186,7 @@ To complete the integration and enable pod-to-Vimenca traffic:
    • Declare integration complete ✅
 
 ================================================================================
-TECHNICAL DETAILS FOR VIMENCA ENGINEERS
+TECHNICAL DETAILS FOR MOCK_PEER_A ENGINEERS
 ================================================================================
 
 SNAT Instance Configuration:
@@ -202,9 +202,9 @@ SNAT Instance Configuration:
 Traffic Path:
   Pod Network:        172.31.0.0/16 (EKS cluster pods)
   Pod → SNAT:         Via EKS VPC routing (Layer 1)
-  SNAT → Vimenca:     Via Transit Gateway (Layer 2) + VPN tunnel
+  SNAT → MockPeerA:     Via Transit Gateway (Layer 2) + VPN tunnel
   VPN Tunnel:         IPsec encrypted, AES-256 + SHA2-256
-  Vimenca Receives:   From 203.0.113.10 (this IP)
+  MockPeerA Receives:   From 203.0.113.10 (this IP)
 
 Capacity:
   Concurrent Connections: 65,000+
@@ -230,11 +230,11 @@ Why low risk:
   ✅ Isolated from production EKS cluster
   ✅ Firewall-controlled access (traffic blocked until you allow it)
   ✅ Rollback possible (5-minute deletion if issues found)
-  ✅ No impact to existing Vimenca operations
+  ✅ No impact to existing MockPeerA operations
 
 Mitigation:
   • Firewall rules remain blocking until explicitly configured
-  • One-way communication (only when Vimenca whitelists IP)
+  • One-way communication (only when MockPeerA whitelists IP)
   • Comprehensive monitoring via CloudWatch
   • VPN tunnel provides encrypted transport
 
@@ -245,7 +245,7 @@ TIMELINE
 Current Status:      ✅ Infrastructure ready (2026-03-10 18:27 UTC)
 
 Immediate Next Steps (Today):
-  1. Vimenca: Configure firewall rule
+  1. MockPeerA: Configure firewall rule
      Est. time: 1-4 hours
      
   2. Organization: Generate test traffic
@@ -260,15 +260,15 @@ Immediate Next Steps (Today):
 Full Integration Timeline:
   Today:     Infrastructure proven ✅
   Tomorrow:  Firewall rule configured + traffic tested ✅
-  Go-Live:   Pod-to-Vimenca services enabled ✅
+  Go-Live:   Pod-to-MockPeerA services enabled ✅
 
 ================================================================================
-QUESTIONS FOR VIMENCA?
+QUESTIONS FOR MOCK_PEER_A?
 ================================================================================
 
 Q: Why not whitelist the pod CIDR (172.31.0.0/16)?
 A: Possible but less secure:
-   • Exposes internal pod CIDR to Vimenca
+   • Exposes internal pod CIDR to MockPeerA
    • 65,536 individual IPs to manage
    • Harder to audit (which pod sent which request?)
    • Scaling issues (pod CIDR might change)
@@ -290,8 +290,8 @@ A: Yes:
 
 Q: What about bidirectional traffic?
 A: Fully supported:
-   • Outbound: Pod → Vimenca (masqueraded to 203.0.113.10)
-   • Return: Vimenca → Pod (de-masqueraded back to original pod IP)
+   • Outbound: Pod → MockPeerA (masqueraded to 203.0.113.10)
+   • Return: MockPeerA → Pod (de-masqueraded back to original pod IP)
    • Connection tracking: iptables handles state tracking
    • Full TCP/UDP support: Both protocols work
 
@@ -302,7 +302,7 @@ PROOF DOCUMENTS ATTACHED
 1. DATA-FLOW-MASQUERADING-PROOF.txt
    • Complete 11-step packet transformation proof
    • Shows exactly where source IP changes
-   • Logical flow from pod to Vimenca
+   • Logical flow from pod to MockPeerA
    • How return traffic is de-masqueraded
 
 2. MASQUERADING-VERIFICATION-REPORT.txt
@@ -317,7 +317,7 @@ PROOF DOCUMENTS ATTACHED
    • CloudWatch queries to prove masquerading
    • Expected evidence when traffic flows
 
-4. VIMENCA-PHASE-2-3-DEPLOYMENT-REPORT.md
+4. MOCK_PEER_A-PHASE-2-3-DEPLOYMENT-REPORT.md
    • Complete technical deployment report
    • Architecture diagrams
    • Troubleshooting guide
@@ -336,11 +336,11 @@ Data Flow:            ✅ Logically proven
 VPN Tunnel:           ✅ Active (Tunnel 1)
 Monitoring:           ✅ Ready
 
-Next: Vimenca firewall rule → Traffic flows → CloudWatch proves it ✅
+Next: MockPeerA firewall rule → Traffic flows → CloudWatch proves it ✅
 
 ================================================================================
 Ready for integration.
-Awaiting Vimenca firewall configuration.
+Awaiting MockPeerA firewall configuration.
 
 Contact Organization when rule is configured:
 Eric Frias / Fermir Quezada (809-487-2679 / 809-487-2602)

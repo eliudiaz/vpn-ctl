@@ -1,9 +1,9 @@
 """
-Peer Stack: Vimenca (Checkpoint R80.10)
+Peer Stack: MockPeerA (Checkpoint R80.10)
 
 INDEPENDENT peer stack that creates:
-- Transit Gateway routes (to Vimenca destination CIDRs)
-- VPC routes (EKS cluster routes to Vimenca)
+- Transit Gateway routes (to MockPeerA destination CIDRs)
+- VPC routes (EKS cluster routes to MockPeerA)
 
 DOES NOT create:
 - VPN Connection (managed by vpnctl via config/vpn-peers.yaml)
@@ -33,7 +33,7 @@ ec2_client = session.client("ec2")
 pulumi_config = pulumi.Config()
 environment = pulumi_config.get("environment") or "dev"
 
-# Detect peer name from Pulumi stack name (e.g., "peer-vimenca" → "vimenca")
+# Detect peer name from Pulumi stack name (e.g., "peer-mock-peer-a" → "mock-peer-a")
 stack_name = pulumi.get_stack()
 if stack_name.startswith("peer-"):
     peer_name = stack_name.replace("peer-", "")
@@ -66,7 +66,7 @@ def load_peer_config(peer_name: str) -> Dict:
         print(f"⚠ Error loading peer config: {e}")
         return {}
 
-# Load Vimenca config
+# Load MockPeerA config
 peer_config = load_peer_config(peer_name)
 if not peer_config:
     raise Exception(f"Could not load config for {peer_name}")

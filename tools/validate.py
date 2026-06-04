@@ -346,7 +346,7 @@ def main():
         print("  1. Probar conectividad desde un pod:")
         print("     kubectl run test --rm -it --image=amazonlinux:2 -- bash")
         print("  2. Verificar pull de imágenes ECR")
-        print("  3. Verificar conectividad a Vimenca (ping 172.16.70.1)")
+        print("  3. Verificar conectividad a MockPeerA (ping 172.16.70.1)")
     else:
         print(f"\n{Colors.RED}{Colors.BOLD}❌ ALGUNAS VALIDACIONES FALLARON{Colors.END}")
         print("\nPor favor revise los errores arriba y corrija la configuración.")

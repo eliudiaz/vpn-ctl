@@ -30,12 +30,12 @@ DETAILED FINDINGS
        iptables -t nat -A POSTROUTING -d 172.16.82.0/24  -j SNAT --to-source 203.0.113.10
        iptables -t nat -A POSTROUTING -d 203.0.113.10/32 -j SNAT --to-source 203.0.113.10
 
-   ✅ These rules affect ONLY Vimenca traffic (172.16.x.x networks)
+   ✅ These rules affect ONLY MockPeerA traffic (172.16.x.x networks)
    ✅ Organization-legacy-network traffic (192.168.100.x) NOT matched by ANY rule
 
 3. PACKET FLOW ANALYSIS
 
-   For Vimenca Traffic (172.16.70.0/24):
+   For MockPeerA Traffic (172.16.70.0/24):
    ─────────────────────────────────────
    Pod (172.31.x.x) 
      ↓
@@ -45,9 +45,9 @@ DETAILED FINDINGS
      ↓
    SNAT rewrite: src_ip = 203.0.113.10 (masqueraded)
      ↓
-   VPC → TGW → VPN → Vimenca Firewall
+   VPC → TGW → VPN → MockPeerA Firewall
      ↓
-   Vimenca sees source IP: 203.0.113.10 ✅
+   MockPeerA sees source IP: 203.0.113.10 ✅
 
    For Organization-Legacy-Network Traffic (192.168.100.x):
    ───────────────────────────────────────────────────
@@ -68,8 +68,8 @@ DETAILED FINDINGS
 4. ROUTING VERIFICATION
    ✅ VPC routes exist for 192.168.100.8/32, 192.168.100.11/32, 192.168.100.12/32
    ✅ Routes point to Transit Gateway (TGW)
-   ✅ TGW routes configured for internal-legacy-network VPN connection
-   ✅ VPN connection status: vpn-028ce4c7f59b83bdd (internal-legacy-network)
+   ✅ TGW routes configured for mock-peer-d VPN connection
+   ✅ VPN connection status: vpn-028ce4c7f59b83bdd (mock-peer-d)
 
 5. SECURITY GROUPS & FIREWALL RULES
    ✅ EKS worker node security groups: Allow all outbound traffic (default)
@@ -84,16 +84,16 @@ The vpn-snat-config-v2 DaemonSet correctly implements provider-specific SNAT:
 
   Provider      | Traffic CIDR        | SNAT To      | Status
   ─────────────────────────────────────────────────────────────────
-  Vimenca       | 172.16.70.0/24      | 203.0.113.10 | ✅ APPLIED
-  Vimenca       | 172.16.65.21/32     | 203.0.113.10 | ✅ APPLIED
-  Vimenca       | 172.16.82.0/24      | 203.0.113.10 | ✅ APPLIED
+  MockPeerA       | 172.16.70.0/24      | 203.0.113.10 | ✅ APPLIED
+  MockPeerA       | 172.16.65.21/32     | 203.0.113.10 | ✅ APPLIED
+  MockPeerA       | 172.16.82.0/24      | 203.0.113.10 | ✅ APPLIED
   Organization-Leg  | 192.168.100.0/24    | (no SNAT)    | ✅ CORRECT
-  CIBAO         | 172.17.0.0/16       | (no SNAT)    | ✅ CORRECT
+  MOCK_PEER_B         | 172.17.0.0/16       | (no SNAT)    | ✅ CORRECT
 
 Each provider gets the networking treatment it needs:
-  - Vimenca: Masqueraded to single IP (as required by their firewall)
+  - MockPeerA: Masqueraded to single IP (as required by their firewall)
   - Organization-Legacy: Original pod IP (as required by legacy infrastructure)
-  - CIBAO: Original pod IP (as configured)
+  - MOCK_PEER_B: Original pod IP (as configured)
 
 ================================================================================
 EXPECTED BEHAVIOR AFTER LEGACY FIREWALL RULE DEPLOYMENT
@@ -122,12 +122,12 @@ RECOMMENDATIONS FROM AWS NETWORKING ENGINEER
 2. ✅ VERIFIED: Firewall rule requirement is correct
    - Source: 172.31.0.0/16 (EKS pod CIDR)
    - Destination: 192.168.100.8, 192.168.100.11, 192.168.100.12
-   - NOT: 203.0.113.10 (that's Vimenca only)
+   - NOT: 203.0.113.10 (that's MockPeerA only)
 
 3. ✅ WAIT for legacy network team to apply firewall rules
 
 4. ✅ THEN: Run connectivity tests to confirm:
-   ./scripts/test-internal-legacy-network.sh all
+   ./scripts/test-mock-peer-d.sh all
 
 ================================================================================
 CONCLUSION
@@ -136,7 +136,7 @@ CONCLUSION
 ✅ Organization-Legacy-Network is correctly configured to send packets with 
    ORIGINAL pod IP (172.31.x.x)
 
-✅ NO masquerading is applied to internal-legacy-network traffic
+✅ NO masquerading is applied to mock-peer-d traffic
 
 ✅ The DaemonSet (vpn-snat-config-v2) is correctly implementing 
    provider-specific SNAT rules

@@ -1,5 +1,5 @@
 ================================================================================
-ROUTING ARCHITECTURE: VIMENCA vs ORGANIZATION-LEGACY-NETWORK
+ROUTING ARCHITECTURE: MOCK_PEER_A vs ORGANIZATION-LEGACY-NETWORK
 Mind Map & Visual Guide for Developers
 ================================================================================
 
@@ -11,7 +11,7 @@ Mind Map & Visual Guide for Developers
                                 ┌─────────────────────┼─────────────────────┐
                                 │                     │                     │
                         ┌───────▼──────────┐  ┌──────▼──────────┐  ┌──────▼──────────┐
-                        │  VIMENCA VPN     │  │  CIBAO VPN      │  │ ORGANIZATION-LEGACY  │
+                        │  MOCK_PEER_A VPN     │  │  MOCK_PEER_B VPN      │  │ ORGANIZATION-LEGACY  │
                         │  (ACTIVE)        │  │  (CONFIGURED)   │  │ (CONFIGURED)     │
                         └──────────────────┘  └─────────────────┘  └──────────────────┘
                                 │
@@ -50,10 +50,10 @@ DETAILED ROUTING FLOW COMPARISON
 ================================================================================
 
 ════════════════════════════════════════════════════════════════════════════════
-SCENARIO 1: VIMENCA VPN (WITH SNAT MASQUERADING)
+SCENARIO 1: MOCK_PEER_A VPN (WITH SNAT MASQUERADING)
 ════════════════════════════════════════════════════════════════════════════════
 
-Destination: VIMENCA Server at 172.16.70.1 (Banca Vimenca)
+Destination: MOCK_PEER_A Server at 172.16.70.1 (Banca MockPeerA)
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ LAYER 1: POD → PACKET CREATION                                              │
@@ -67,7 +67,7 @@ Destination: VIMENCA Server at 172.16.70.1 (Banca Vimenca)
 │  Packet created:                                                            │
 │  ┌──────────────────────────────────────────────┐                          │
 │  │ Source IP:      172.31.4.63 ← Pod's own IP  │                          │
-│  │ Destination IP: 172.16.70.1 ← Vimenca server│                          │
+│  │ Destination IP: 172.16.70.1 ← MockPeerA server│                          │
 │  │ Protocol:       TCP port 443                 │                          │
 │  │ Data:           "GET / HTTP/1.1..."          │                          │
 │  └──────────────────────────────────────────────┘                          │
@@ -75,7 +75,7 @@ Destination: VIMENCA Server at 172.16.70.1 (Banca Vimenca)
 └─────────────────────────────────────────────────────────────────────────────┘
                                     ↓
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ LAYER 2: NODE → IPTABLES SNAT REWRITE (VIMENCA ONLY!)                       │
+│ LAYER 2: NODE → IPTABLES SNAT REWRITE (MOCK_PEER_A ONLY!)                       │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  Packet exits pod eth0 interface → reaches worker node                      │
@@ -100,7 +100,7 @@ Destination: VIMENCA Server at 172.16.70.1 (Banca Vimenca)
 │  │ Data:           "GET / HTTP/1.1..." ← unchanged   │                      │
 │  └──────────────────────────────────────────────────┘                      │
 │                                                                              │
-│  ⚠️  KEY POINT: Vimenca firewall will see 203.0.113.10 as source!          │
+│  ⚠️  KEY POINT: MockPeerA firewall will see 203.0.113.10 as source!          │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     ↓
@@ -134,13 +134,13 @@ Destination: VIMENCA Server at 172.16.70.1 (Banca Vimenca)
 │  TGW Query: "Where do I send packets to 172.16.70.1?"                      │
 │  ┌──────────────────────────────────────────────────────────────┐           │
 │  │ TGW Routes:                                                  │           │
-│  │  172.16.70.0/24   → vpn-05ea9c12f40b67844 (Vimenca) ← MATCH│           │
-│  │  172.16.65.21/32  → vpn-05ea9c12f40b67844 (Vimenca)        │           │
-│  │  172.16.82.0/24   → vpn-05ea9c12f40b67844 (Vimenca)        │           │
-│  │  172.17.0.0/16    → vpn-0e751eec94d5d4743 (CIBAO)          │           │
+│  │  172.16.70.0/24   → vpn-05ea9c12f40b67844 (MockPeerA) ← MATCH│           │
+│  │  172.16.65.21/32  → vpn-05ea9c12f40b67844 (MockPeerA)        │           │
+│  │  172.16.82.0/24   → vpn-05ea9c12f40b67844 (MockPeerA)        │           │
+│  │  172.17.0.0/16    → vpn-0e751eec94d5d4743 (MOCK_PEER_B)          │           │
 │  │  192.168.100.0/24 → vpn-028ce4c7f59b83bdd (Organization-Legacy)│           │
 │  │                                                              │           │
-│  │ Decision: Send via VIMENCA VPN CONNECTION                   │           │
+│  │ Decision: Send via MOCK_PEER_A VPN CONNECTION                   │           │
 │  └──────────────────────────────────────────────────────────────┘           │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -149,9 +149,9 @@ Destination: VIMENCA Server at 172.16.70.1 (Banca Vimenca)
 │ LAYER 5: VPN TUNNEL → IPsec ENCRYPTION                                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│  Vimenca VPN Connection: vpn-05ea9c12f40b67844                             │
+│  MockPeerA VPN Connection: vpn-05ea9c12f40b67844                             │
 │                                                                              │
-│  Tunnel 1 (Active): 3.151.94.15 (AWS side) ↔ 191.97.106.141 (Vimenca)   │
+│  Tunnel 1 (Active): 3.151.94.15 (AWS side) ↔ 191.97.106.141 (MockPeerA)   │
 │                                                                              │
 │  IPsec Encryption:                                                          │
 │  • Encryption: AES-256-CBC                                                 │
@@ -163,12 +163,12 @@ Destination: VIMENCA Server at 172.16.70.1 (Banca Vimenca)
 │  Source: 203.0.113.10 (SNAT IP - already rewritten by iptables)           │
 │  Destination: 172.16.70.1                                                   │
 │                                                                              │
-│  Encrypted packet sent across Internet to Vimenca's Checkpoint firewall   │
+│  Encrypted packet sent across Internet to MockPeerA's Checkpoint firewall   │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     ↓
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ LAYER 6: VIMENCA CHECKPOINT FIREWALL → RULE EVALUATION                      │
+│ LAYER 6: MOCK_PEER_A CHECKPOINT FIREWALL → RULE EVALUATION                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  Checkpoint Firewall at 191.97.106.141                                      │
@@ -182,7 +182,7 @@ Destination: VIMENCA Server at 172.16.70.1 (Banca Vimenca)
 │                                                                              │
 │  Firewall Rules Check:                                                      │
 │  ┌────────────────────────────────────────────────────────┐               │
-│  │ Rule: "Allow EKS to Vimenca"                           │               │
+│  │ Rule: "Allow EKS to MockPeerA"                           │               │
 │  │   Source:      203.0.113.10/32 ← MATCH! (masqueraded IP)│             │
 │  │   Destination: 172.16.70.0/24  ← MATCH!               │               │
 │  │   Port:        All             ← MATCH!               │               │
@@ -194,10 +194,10 @@ Destination: VIMENCA Server at 172.16.70.1 (Banca Vimenca)
 └─────────────────────────────────────────────────────────────────────────────┘
                                     ↓
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ LAYER 7: VIMENCA INTERNAL NETWORK → DESTINATION SERVER                      │
+│ LAYER 7: MOCK_PEER_A INTERNAL NETWORK → DESTINATION SERVER                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│  Packet delivered to Vimenca server at 172.16.70.1                         │
+│  Packet delivered to MockPeerA server at 172.16.70.1                         │
 │  Server responds → Packet travels BACK through VPN tunnel                   │
 │  Response is REVERSE-NATed by Checkpoint firewall                           │
 │  Returns to AWS with source 172.16.70.1, destination 203.0.113.10         │
@@ -242,16 +242,16 @@ Destination: Legacy MSSQL Server at 192.168.100.8
 │                                                                              │
 │  iptables POSTROUTING chain evaluates:                                      │
 │  ┌──────────────────────────────────────────────────────────────┐           │
-│  │ Rule 1: -d 172.16.70.0/24   → SNAT to 203.0.113.10 (Vimenca)│           │
+│  │ Rule 1: -d 172.16.70.0/24   → SNAT to 203.0.113.10 (MockPeerA)│           │
 │  │         Destination 192.168.100.8? ✗ NO - No match          │           │
 │  │                                                              │           │
-│  │ Rule 2: -d 172.16.65.21/32  → SNAT to 203.0.113.10 (Vimenca)│           │
+│  │ Rule 2: -d 172.16.65.21/32  → SNAT to 203.0.113.10 (MockPeerA)│           │
 │  │         Destination 192.168.100.8? ✗ NO - No match          │           │
 │  │                                                              │           │
-│  │ Rule 3: -d 172.16.82.0/24   → SNAT to 203.0.113.10 (Vimenca)│           │
+│  │ Rule 3: -d 172.16.82.0/24   → SNAT to 203.0.113.10 (MockPeerA)│           │
 │  │         Destination 192.168.100.8? ✗ NO - No match          │           │
 │  │                                                              │           │
-│  │ Rule 4: -d 203.0.113.10/32  → SNAT to 203.0.113.10 (Vimenca)│           │
+│  │ Rule 4: -d 203.0.113.10/32  → SNAT to 203.0.113.10 (MockPeerA)│           │
 │  │         Destination 192.168.100.8? ✗ NO - No match          │           │
 │  │                                                              │           │
 │  │ Result: NO SNAT RULES MATCH!                                │           │
@@ -302,10 +302,10 @@ Destination: Legacy MSSQL Server at 192.168.100.8
 │  TGW Query: "Where do I send packets to 192.168.100.8?"                    │
 │  ┌──────────────────────────────────────────────────────────────┐           │
 │  │ TGW Routes:                                                  │           │
-│  │  172.16.70.0/24   → vpn-05ea9c12f40b67844 (Vimenca)        │           │
-│  │  172.16.65.21/32  → vpn-05ea9c12f40b67844 (Vimenca)        │           │
-│  │  172.16.82.0/24   → vpn-05ea9c12f40b67844 (Vimenca)        │           │
-│  │  172.17.0.0/16    → vpn-0e751eec94d5d4743 (CIBAO)          │           │
+│  │  172.16.70.0/24   → vpn-05ea9c12f40b67844 (MockPeerA)        │           │
+│  │  172.16.65.21/32  → vpn-05ea9c12f40b67844 (MockPeerA)        │           │
+│  │  172.16.82.0/24   → vpn-05ea9c12f40b67844 (MockPeerA)        │           │
+│  │  172.17.0.0/16    → vpn-0e751eec94d5d4743 (MOCK_PEER_B)          │           │
 │  │  192.168.100.8/32 → vpn-028ce4c7f59b83bdd (Organization) ← MATCH│          │
 │  │  192.168.100.11/32→ vpn-028ce4c7f59b83bdd (Organization)        │           │
 │  │  192.168.100.12/32→ vpn-028ce4c7f59b83bdd (Organization)        │           │

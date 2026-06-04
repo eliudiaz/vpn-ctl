@@ -17,8 +17,8 @@ class IacProviderFactory:
 
     Usage:
         # Create provider for specific peer
-        config = config_manager.get_peer_config('vimenca')
-        provider = IacProviderFactory.get_active_provider('vimenca', config)
+        config = config_manager.get_peer_config('mock-peer-a')
+        provider = IacProviderFactory.get_active_provider('mock-peer-a', config)
 
         # Now use provider (same interface regardless of implementation)
         provider.add_route('172.16.80.0/24')
@@ -53,7 +53,7 @@ class IacProviderFactory:
         """Create provider instance.
 
         Args:
-            peer_name: 'vimenca', 'cibao', etc.
+            peer_name: 'mock-peer-a', 'mock-peer-b', etc.
             provider_name: 'pulumi', 'terraform', 'cloudformation'
             config: Configuration for this peer
 

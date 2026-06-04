@@ -205,7 +205,7 @@ vpn-ctl/
 │   ├── ARCHITECTURE.md               # Architecture deep-dive
 │   ├── API.md                        # API reference
 │   ├── VPN_POOL_GUIDE.md            # Pool management guide
-│   ├── VIMENCA_VPN_SETUP.md         # Case study: Vimenca setup
+│   ├── MOCK_PEER_A_VPN_SETUP.md         # Example scenario: MockPeerA setup
 │   └── DOCUMENTATION_INDEX.md        # Full docs index
 │
 ├── infra-config.json                 # 💾 Exported infrastructure state
@@ -225,7 +225,7 @@ Define VPN infrastructure in YAML, apply changes like Kubernetes:
 ```yaml
 # config/vpn-peers.yaml
 peers:
-  - name: Vimenca
+  - name: MockPeerA
     region: us-east-2
     bgp_asn: 65000
     on_prem_cidr: 172.16.70.0/24
@@ -282,13 +282,13 @@ Kubernetes-deployed microservice with:
 vpnctl tunnel info
 
 # Get specific tunnel details
-vpnctl tunnel info vimenca
+vpnctl tunnel info mock-peer-a
 
 # Test tunnel connectivity
-vpnctl tunnel test vimenca
+vpnctl tunnel test mock-peer-a
 
 # Show tunnel diagnostics
-vpnctl tunnel diagnose vimenca
+vpnctl tunnel diagnose mock-peer-a
 ```
 
 #### **Peer Management**
@@ -300,13 +300,13 @@ vpnctl peer list
 vpnctl peer add
 
 # Update peer configuration
-vpnctl peer update vimenca --bgp-asn 65001
+vpnctl peer update mock-peer-a --bgp-asn 65001
 
 # Remove peer
-vpnctl peer remove vimenca
+vpnctl peer remove mock-peer-a
 
 # Get peer details
-vpnctl peer get vimenca
+vpnctl peer get mock-peer-a
 ```
 
 #### **Infrastructure Management**
@@ -318,7 +318,7 @@ vpnctl infra export-config
 vpnctl infra export-config --output prod-config.json --region us-east-2
 
 # Export specific peers
-vpnctl infra export-config --peers vimenca,apap
+vpnctl infra export-config --peers mock-peer-a,mock-peer-c
 ```
 
 #### **Health Monitoring**
@@ -354,13 +354,13 @@ vpnctl apply --spec vpn-spec.yaml --dry-run
 #### **Certification**
 ```bash
 # Generate TLS certificates
-vpnctl certify generate --peer vimenca
+vpnctl certify generate --peer mock-peer-a
 
 # List certificates
 vpnctl certify list
 
 # Rotate certificate
-vpnctl certify rotate --peer vimenca
+vpnctl certify rotate --peer mock-peer-a
 ```
 
 ---
@@ -372,7 +372,7 @@ vpnctl certify rotate --peer vimenca
 ```yaml
 # config/vpn-peers.yaml
 peers:
-  - name: Vimenca                    # Unique peer identifier
+  - name: MockPeerA                    # Unique peer identifier
     region: us-east-2                # AWS region
     bgp_asn: 65000                   # BGP Autonomous System Number
     on_prem_cidr: 172.16.70.0/24     # On-premise network CIDR
@@ -385,10 +385,10 @@ peers:
       endpoints:
         - target: 172.16.70.5
           protocol: ping
-        - target: api.vimenca.com
+        - target: api.mock-peer-a.com
           protocol: tcp
           port: 443
-        - target: vimenca.example.com
+        - target: mock-peer-a.example.com
           protocol: dns
 ```
 
@@ -609,12 +609,12 @@ GET  /metrics             # Prometheus metrics
 
 ```
 # Tunnel status
-vpn_tunnel_status{peer="vimenca",tunnel="1"} 1      # 1=up, 0=down
-vpn_tunnel_latency_ms{peer="vimenca",tunnel="1"} 15 # Latency
+vpn_tunnel_status{peer="mock-peer-a",tunnel="1"} 1      # 1=up, 0=down
+vpn_tunnel_latency_ms{peer="mock-peer-a",tunnel="1"} 15 # Latency
 
 # Endpoint testing
-vpn_test_success{peer="vimenca",endpoint="api.vimenca.com"} 1
-vpn_test_latency_ms{peer="vimenca",endpoint="api.vimenca.com"} 42
+vpn_test_success{peer="mock-peer-a",endpoint="api.mock-peer-a.com"} 1
+vpn_test_latency_ms{peer="mock-peer-a",endpoint="api.mock-peer-a.com"} 42
 ```
 
 ### Logging
@@ -624,7 +624,7 @@ vpn_test_latency_ms{peer="vimenca",endpoint="api.vimenca.com"} 42
 import logging
 logger = logging.getLogger(__name__)
 logger.info("VPN tunnel status", extra={
-    "peer": "vimenca",
+    "peer": "mock-peer-a",
     "tunnel_id": "vpn-123",
     "status": "up"
 })
@@ -656,7 +656,7 @@ kubectl get configmap -n vpn-system vpn-health-config
 
 ```bash
 # Check VPN connection status
-vpnctl tunnel info vimenca
+vpnctl tunnel info mock-peer-a
 
 # Verify TGW attachment
 aws ec2 describe-transit-gateway-attachments \
@@ -666,7 +666,7 @@ aws ec2 describe-transit-gateway-attachments \
 aws ec2 describe-transit-gateway-route-tables
 
 # Test BGP session
-vpnctl tunnel diagnose vimenca
+vpnctl tunnel diagnose mock-peer-a
 ```
 
 #### Config Export Issues
@@ -728,10 +728,10 @@ vpnctl apply --spec acme-spec.yaml
 
 ```bash
 # View current tunnel config
-vpnctl tunnel info vimenca
+vpnctl tunnel info mock-peer-a
 
 # Update phase1 encryption
-vpnctl tunnel update vimenca \
+vpnctl tunnel update mock-peer-a \
   --phase1-encryption AES256 \
   --phase1-dh-group 20
 
@@ -874,7 +874,7 @@ Complete documentation is available in the `docs/` directory:
 
 - **ARCHITECTURE.md** - Detailed architecture documentation
 - **VPN_POOL_GUIDE.md** - Pool and scaling management
-- **VIMENCA_VPN_SETUP.md** - Real-world case study
+- **MOCK_PEER_A_VPN_SETUP.md** - Example case study
 - **DEPLOYMENT_QUICK_START.md** - Quick deployment guide
 - **DEPLOYMENT_STATUS.md** - Implementation status checklist
 

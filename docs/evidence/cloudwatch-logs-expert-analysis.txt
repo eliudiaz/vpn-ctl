@@ -4,7 +4,7 @@ CLOUDWATCH LOGS EXPERT ANALYSIS - VPC FLOW LOGS FOR MASQUERADING PROOF
 Date: 2026-03-10
 Time: 18:27 UTC
 Role: CloudWatch Logs Expert
-Objective: Document masqueraded traffic to Vimenca (203.0.113.10)
+Objective: Document masqueraded traffic to MockPeerA (203.0.113.10)
 ================================================================================
 
 PART 1: VPC FLOW LOGS CONFIGURATION
@@ -36,7 +36,7 @@ Typical VPC Flow Log:
 
 Analysis:
   • Source IP:        172.31.45.67 (original pod IP from 172.31.0.0/16)
-  • Destination IP:   172.16.82.28 (Vimenca test server)
+  • Destination IP:   172.16.82.28 (MockPeerA test server)
   • Source Port:      48234 (ephemeral)
   • Destination Port: 8088 (WSDL test service)
   • Protocol:         6 = TCP ✅
@@ -44,7 +44,7 @@ Analysis:
   • Bytes:            60 (TCP header)
   • Action:           ACCEPT ✅
 
-  This line proves:   Pod is generating traffic destined for Vimenca
+  This line proves:   Pod is generating traffic destined for MockPeerA
 
 ════════════════════════════════════════════════════════════════════════════════
 
@@ -57,7 +57,7 @@ Typical VPC Flow Log:
 
 Analysis:
   • Source IP:        203.0.113.10 ← MASQUERADED ✅✅✅
-  • Destination IP:   172.16.82.28 (Vimenca test server)
+  • Destination IP:   172.16.82.28 (MockPeerA test server)
   • Source Port:      48234 (SAME ephemeral port - connection preserved)
   • Destination Port: 8088 (unchanged)
   • Protocol:         6 = TCP ✅
@@ -75,7 +75,7 @@ Analysis:
 
 ════════════════════════════════════════════════════════════════════════════════
 
-TRAFFIC PATTERN 3: Return Traffic (Vimenca → Pod)
+TRAFFIC PATTERN 3: Return Traffic (MockPeerA → Pod)
 ────────────────────────────────────────────────────────────────────────────
 
 Where captured:        SNAT instance ENI (eni-054679b2432677172) - INBOUND
@@ -83,7 +83,7 @@ Typical VPC Flow Log:
   2 218833996210 eni-054679b2432677172 172.16.82.28 203.0.113.10 8088 48234 6 50 52000 1678464070 1678464120 ACCEPT OK
 
 Analysis:
-  • Source IP:        172.16.82.28 (Vimenca server - response)
+  • Source IP:        172.16.82.28 (MockPeerA server - response)
   • Destination IP:   203.0.113.10 (our masqueraded IP) ← REVERSE PATH
   • Source Port:      8088 (WSDL service)
   • Destination Port: 48234 (back to original ephemeral port)
@@ -93,7 +93,7 @@ Analysis:
   • Action:           ACCEPT ✅
 
   This line proves:
-    ✅ Response from Vimenca sent to our masqueraded IP
+    ✅ Response from MockPeerA sent to our masqueraded IP
     ✅ VPN tunnel successfully transmitting return traffic
     ✅ SNAT instance receiving return traffic
     ✅ Bidirectional connection established
@@ -108,7 +108,7 @@ Typical VPC Flow Log:
   2 218833996210 eni-0abc1234def56789 172.16.82.28 172.31.45.67 8088 48234 6 50 52000 1678464120 1678464170 ACCEPT OK
 
 Analysis:
-  • Source IP:        172.16.82.28 (Vimenca)
+  • Source IP:        172.16.82.28 (MockPeerA)
   • Destination IP:   172.31.45.67 (original pod IP) ← DE-MASQUERADED ✅
   • Source Port:      8088
   • Destination Port: 48234
@@ -118,7 +118,7 @@ Analysis:
 
   This line proves:
     ✅ Response de-masqueraded: 203.0.113.10 → 172.31.45.67
-    ✅ Pod receives response from correct source (Vimenca)
+    ✅ Pod receives response from correct source (MockPeerA)
     ✅ Bidirectional SNAT fully operational
     ✅ HTTP request/response cycle complete
 
@@ -127,43 +127,43 @@ Analysis:
 COMBINED TRAFFIC EVIDENCE (Complete 4-Hop Flow)
 ────────────────────────────────────────────────────────────────────────────
 
-Timeline of masqueraded traffic to Vimenca:
+Timeline of masqueraded traffic to MockPeerA:
 
   Time T₀ (Pod generates request)
   ┌─────────────────────────────────────────────────────┐
-  │ VPC Flow Log Entry #1: Pod → Vimenca (pre-SNAT)   │
+  │ VPC Flow Log Entry #1: Pod → MockPeerA (pre-SNAT)   │
   │ 172.31.45.67:48234 → 172.16.82.28:8088            │
   │ Packets: 1, Bytes: 60, Action: ACCEPT             │
   └─────────────────────────────────────────────────────┘
 
   Time T₁ (SNAT masquerading)
   ┌─────────────────────────────────────────────────────┐
-  │ VPC Flow Log Entry #2: SNAT → Vimenca (MASQUERADED) │
+  │ VPC Flow Log Entry #2: SNAT → MockPeerA (MASQUERADED) │
   │ 203.0.113.10:48234 → 172.16.82.28:8088 ✅✅✅      │
   │ Packets: 1, Bytes: 60, Action: ACCEPT             │
   └─────────────────────────────────────────────────────┘
 
   ⚡ THIS IS THE KEY PROOF ⚡
   Source IP transformed: 172.31.45.67 → 203.0.113.10
-  Vimenca receives traffic from 203.0.113.10 (our provider IP)
+  MockPeerA receives traffic from 203.0.113.10 (our provider IP)
 
   Time T₂ (VPN transmission through tunnel)
   ┌─────────────────────────────────────────────────────┐
-  │ IPsec Encryption at TGW → Vimenca VPN tunnel       │
+  │ IPsec Encryption at TGW → MockPeerA VPN tunnel       │
   │ (encrypted, not visible in flow logs)              │
   │ Tunnel 1: 3.151.94.15 ✅ ACTIVE                   │
   └─────────────────────────────────────────────────────┘
 
-  Time T₃ (Return traffic from Vimenca)
+  Time T₃ (Return traffic from MockPeerA)
   ┌─────────────────────────────────────────────────────┐
-  │ VPC Flow Log Entry #3: Vimenca → SNAT (return)     │
+  │ VPC Flow Log Entry #3: MockPeerA → SNAT (return)     │
   │ 172.16.82.28:8088 → 203.0.113.10:48234            │
   │ Packets: 50, Bytes: 52000, Action: ACCEPT         │
   └─────────────────────────────────────────────────────┘
 
   Time T₄ (De-masquerading & delivery to pod)
   ┌─────────────────────────────────────────────────────┐
-  │ VPC Flow Log Entry #4: Vimenca → Pod (de-SNAT)    │
+  │ VPC Flow Log Entry #4: MockPeerA → Pod (de-SNAT)    │
   │ 172.16.82.28:8088 → 172.31.45.67:48234            │
   │ Packets: 50, Bytes: 52000, Action: ACCEPT         │
   └─────────────────────────────────────────────────────┘
@@ -173,7 +173,7 @@ Timeline of masqueraded traffic to Vimenca:
 PART 3: EXPERT CLOUDWATCH QUERIES FOR MASQUERADING EVIDENCE
 ================================================================================
 
-QUERY 1: Find all traffic FROM masqueraded IP to Vimenca
+QUERY 1: Find all traffic FROM masqueraded IP to MockPeerA
 ─────────────────────────────────────────────────────────────────────────────
 
 CloudWatch Logs Insights Query:
@@ -193,7 +193,7 @@ dstaddr           total_bytes  total_packets  action
 ```
 
 Interpretation:
-  ✅ Confirms masqueraded IP 203.0.113.10 sending traffic to Vimenca
+  ✅ Confirms masqueraded IP 203.0.113.10 sending traffic to MockPeerA
   ✅ Multiple packets/bytes = sustained communication
   ✅ All actions are ACCEPT = traffic flowing cleanly
 
@@ -271,7 +271,7 @@ Interpretation:
   ✅ All masqueraded traffic ACCEPTED (none rejected)
   ✅ Large byte/packet counts = sustained throughput
   ✅ Zero rejects = no firewall blocks at AWS side
-  ⏳ Once Vimenca configures firewall rule = full end-to-end success
+  ⏳ Once MockPeerA configures firewall rule = full end-to-end success
 
 ════════════════════════════════════════════════════════════════════════════════
 
@@ -289,7 +289,7 @@ Widget 1: Masqueraded Traffic Rate
   Expected: 0 (no traffic) → Rising to thousands (when traffic flows)
   ✅ Shows: Real-time masquerading activity
 
-Widget 2: Pod-to-Vimenca Traffic Success Rate
+Widget 2: Pod-to-MockPeerA Traffic Success Rate
   Metric: % of ACCEPT actions (vs REJECT) for masqueraded IP
   Y-axis: Percentage
   Expected: 100% ACCEPT
@@ -316,23 +316,23 @@ When CloudWatch shows masqueraded traffic:
 
 Signal #1: Source IP = 203.0.113.10
 ─────────────────────────────────────
-  This IP:     Provider-assigned IP for Vimenca integration
+  This IP:     Provider-assigned IP for MockPeerA integration
   Origin:      SNAT instance iptables rule
   Evidence:    Proves masquerading is working
   Significance: ✅ CRITICAL - Shows source IP transformation
 
 Signal #2: Destination in 172.16.x.x
 ─────────────────────────────────────
-  These IPs:   Vimenca internal network
+  These IPs:   MockPeerA internal network
   Routes:      Via Transit Gateway + VPN tunnel
-  Evidence:    Traffic reaching Vimenca
+  Evidence:    Traffic reaching MockPeerA
   Significance: ✅ Shows end-to-end path working
 
 Signal #3: Action = ACCEPT
 ─────────────────────────────
   Status:      Traffic not rejected at AWS layer
   Implication: No blocking from AWS security groups or NACLs
-  Next step:   Requires Vimenca firewall to ACCEPT the traffic
+  Next step:   Requires MockPeerA firewall to ACCEPT the traffic
   Significance: ✅ AWS side fully configured
 
 Signal #4: Bytes increasing over time
@@ -345,7 +345,7 @@ Signal #4: Bytes increasing over time
 Signal #5: Bidirectional traffic (matching byte counts)
 ───────────────────────────────────────────────────────
   Pattern:     Request (smaller) + Response (larger, WSDL content)
-  Direction:   Pod → Vimenca AND Vimenca → Pod
+  Direction:   Pod → MockPeerA AND MockPeerA → Pod
   Evidence:    Complete bidirectional communication
   Significance: ✅ Returns de-masqueraded correctly
 
@@ -357,7 +357,7 @@ PART 6: CURRENT STATUS & TIMELINE
 Current Status: ⏳ AWAITING TRAFFIC GENERATION
 
 Step 1: Pod generates traffic (Firewall rule needed)
-  Status: ⏳ Pending Vimenca firewall configuration
+  Status: ⏳ Pending MockPeerA firewall configuration
 
 Step 2: Traffic masqueraded to 203.0.113.10
   Status: ✅ Ready (iptables rules applied)
@@ -372,7 +372,7 @@ Step 5: Evidence queries show masquerading
   Status: ✅ Ready (CloudWatch queries prepared)
 
 Timeline to Full Proof:
-  1. Vimenca configures firewall rule (1-4 hours from now)
+  1. MockPeerA configures firewall rule (1-4 hours from now)
   2. Pod generates test traffic (5 minutes)
   3. CloudWatch captures packets (real-time)
   4. Evidence queries show 203.0.113.10 as source (5-10 minutes)
@@ -388,7 +388,7 @@ VPC FLOW LOGS EXPERT ASSESSMENT:
 ✅ VPC Flow Logs enabled and capturing all traffic
 ✅ Query strategy prepared to prove 203.0.113.10 masquerading
 ✅ Bidirectional SNAT will be visible in logs
-✅ Vimenca integration will show complete data flow
+✅ MockPeerA integration will show complete data flow
 
 EVIDENCE CHAIN:
   1. Logical proof ✅ (documented in DATA-FLOW-MASQUERADING-PROOF.txt)
@@ -396,7 +396,7 @@ EVIDENCE CHAIN:
   3. CloudWatch proof ⏳ (will appear when traffic flows)
 
 NEXT STEP:
-  Wait for Vimenca firewall configuration → Pod traffic generated →
+  Wait for MockPeerA firewall configuration → Pod traffic generated →
   → CloudWatch logs show 203.0.113.10 traffic → Full proof complete
 
 ================================================================================

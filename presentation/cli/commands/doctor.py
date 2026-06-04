@@ -106,7 +106,7 @@ def _check_specs(verbose: bool) -> Dict:
     try:
         # This would normally load and validate specs
         # For now, returning mock data
-        specs_found = ['vimenca', 'cibao', 'apap', 'internal-legacy-network']
+        specs_found = ['mock-peer-a', 'mock-peer-b', 'mock-peer-c', 'mock-peer-d']
         invalid_specs = []
 
         return {
@@ -133,10 +133,10 @@ def _check_pulumi_state(verbose: bool) -> Dict:
         # Mock check - would call pulumi stack list
         stacks = {
             'core': 'initialized',
-            'peer-vimenca': 'initialized',
-            'peer-cibao': 'initialized',
-            'peer-apap': 'initialized',
-            'peer-internal-legacy-network': 'initialized'
+            'peer-mock-peer-a': 'initialized',
+            'peer-mock-peer-b': 'initialized',
+            'peer-mock-peer-c': 'initialized',
+            'peer-mock-peer-d': 'initialized'
         }
 
         return {
@@ -183,10 +183,10 @@ def _check_tunnel_status(verbose: bool) -> Dict:
     """Check VPN tunnel status for all peers."""
     try:
         tunnel_status = {
-            'vimenca': {'tunnel1': 'UP', 'tunnel2': 'UP'},
-            'cibao': {'tunnel1': 'UP', 'tunnel2': 'UP'},
-            'apap': {'tunnel1': 'DOWN', 'tunnel2': 'DOWN'},
-            'internal-legacy-network': {'tunnel1': 'UP', 'tunnel2': 'DOWN'}
+            'mock-peer-a': {'tunnel1': 'UP', 'tunnel2': 'UP'},
+            'mock-peer-b': {'tunnel1': 'UP', 'tunnel2': 'UP'},
+            'mock-peer-c': {'tunnel1': 'DOWN', 'tunnel2': 'DOWN'},
+            'mock-peer-d': {'tunnel1': 'UP', 'tunnel2': 'DOWN'}
         }
 
         all_up = all(
@@ -223,10 +223,10 @@ def _check_state_sync(verbose: bool) -> Dict:
     """Check if specs are in sync with infrastructure state."""
     try:
         sync_status = {
-            'vimenca': 'in_sync',
-            'cibao': 'in_sync',
-            'apap': 'out_of_sync',
-            'internal-legacy-network': 'in_sync'
+            'mock-peer-a': 'in_sync',
+            'mock-peer-b': 'in_sync',
+            'mock-peer-c': 'out_of_sync',
+            'mock-peer-d': 'in_sync'
         }
 
         out_of_sync = sum(1 for status in sync_status.values() if status != 'in_sync')

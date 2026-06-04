@@ -182,7 +182,7 @@ Backup PSK Method:    Backup IP: 200.88.116.100
 
 ## NOTES
 ============================================================
-- CIBA-VPN uses the same tunnel profile as Vimenca (checkpoint_r80)
+- CIBA-VPN uses the same tunnel profile as MockPeerA (checkpoint_r80)
 - Configuration is entirely YAML-driven - no Python code changes needed
 - PSKs are managed separately - follow security best practices
 - The backup IP (200.88.116.100) can be configured as secondary tunnel endpoint

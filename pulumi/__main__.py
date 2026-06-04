@@ -102,7 +102,7 @@ def get_vpn_tunnel_status(vpn_connection_id: str, region: str = "us-east-2") -> 
 
 @dataclass
 class VpnPeerConfig:
-    """Configuración de un peer VPN (ej: Vimenca)."""
+    """Configuración de un peer VPN (ej: MockPeerA)."""
     name: str
     public_ip: str
     bgp_asn: int
@@ -243,10 +243,10 @@ class VpnConfigManager:
             self._create_default_profile()
 
     def _create_default_profile(self):
-        """Create default Checkpoint R80.10 profile (Vimenca standard)."""
+        """Create default Checkpoint R80.10 profile (MockPeerA standard)."""
         self.tunnel_profiles['checkpoint_r80'] = TunnelProfile(
             name='checkpoint_r80',
-            description='Checkpoint R80.10 compatible (Vimenca standard)',
+            description='Checkpoint R80.10 compatible (MockPeerA standard)',
             ike_versions=['ikev2'],
             phase1_encryption=['AES256'],
             phase1_integrity=['SHA2-256'],
@@ -452,7 +452,7 @@ class EksClusterConnector(InfrastructureComponent):
 
     Crea:
     - Transit Gateway Attachment
-    - Rutas hacia destinos (Vimenca, otras VPCs)
+    - Rutas hacia destinos (MockPeerA, otras VPCs)
     - Security Groups adicionales
     """
 
@@ -860,7 +860,7 @@ echo "Packets to {', '.join(self.peer_destination_cidrs)} will be SNAT'd to {sel
 
 class VpnConnector(InfrastructureComponent):
     """
-    Crea VPN Site-to-Site a un peer externo (ej: Vimenca).
+    Crea VPN Site-to-Site a un peer externo (ej: MockPeerA).
 
     Incluye:
     - Customer Gateway
@@ -887,7 +887,7 @@ class VpnConnector(InfrastructureComponent):
         self.peer_config = peer_config
         self.tunnel_profile = tunnel_profile or TunnelProfile(
             name='default',
-            description='Default Vimenca standard',
+            description='Default MockPeerA standard',
             ike_versions=['ikev2'],
             phase1_encryption=['AES256'],
             phase1_integrity=['SHA2-256'],
@@ -1480,11 +1480,11 @@ if not is_peer_specific_stack:
 logger.info("=" * 80)
 
 # =============================================================================
-# 4a. IMPORT EXISTING TGW ROUTES (Pre-existing Vimenca routes from AWS)
+# 4a. IMPORT EXISTING TGW ROUTES (Pre-existing MockPeerA routes from AWS)
 # =============================================================================
 # Only import these routes in dev/core stacks, not in peer-specific stacks
 
-# Vimenca routes are now managed by PeerStack (included in vpn_peers)
+# MockPeerA routes are now managed by PeerStack (included in vpn_peers)
 # Routes will be created/updated as part of the VpnConnector deployment above
 
 
@@ -1551,7 +1551,7 @@ if vpn_tunnel_status_outputs:
     )
     pulumi.export("vpn_tunnel_status", tunnel_status_combined)
 
-# DEPRECATION: Remove old CIBA outputs (renamed to CIBAO)
+# DEPRECATION: Remove old CIBA outputs (renamed to MOCK_PEER_B)
 # These exports are null to signal Pulumi to remove them from the stack
 pulumi.export("vpn_ciba", None)
 pulumi.export("vpn_ciba_tunnel1", None)

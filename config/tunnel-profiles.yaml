@@ -22,7 +22,7 @@ profiles:
   # =============================================================================
   checkpoint_r80:
   # =============================================================================
-  # Checkpoint R80.10 compatible profile (used by Vimenca, CIBAO)
+  # Checkpoint R80.10 compatible profile (used by MockPeerA, MOCK_PEER_B)
   #
   # Characteristics:
   #   - IKEv2 only (no IKEv1)
@@ -31,7 +31,7 @@ profiles:
   #   - Static routes only (no BGP)
   #   - DPD with restart action
   #
-    description: "Checkpoint R80.10 compatible (Vimenca standard)"
+    description: "Checkpoint R80.10 compatible (MockPeerA standard)"
     ike_versions: ["ikev2"]
     phase1:
       encryption: ["AES256"]
@@ -122,7 +122,7 @@ profiles:
 #
 # 2. REUSABILITY:
 #    - Each profile can be used by multiple peers
-#    - Example: checkpoint_r80 used by Vimenca, CIBAO
+#    - Example: checkpoint_r80 used by MockPeerA, MOCK_PEER_B
 #
 # 3. CUSTOMIZATION:
 #    - If a peer needs different settings, use spec.tunnel.overrides in peer manifest

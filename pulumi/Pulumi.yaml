@@ -3,21 +3,21 @@ runtime:
   name: python
   options:
     virtualenv: venv
-description: Conecta EKS a Transit Gateway sin NAT. VPN Site-to-Site a Vimenca.
+description: Conecta EKS a Transit Gateway sin NAT. VPN Site-to-Site a MockPeerA.
 
 config:
   aff-atg:eks_cluster_name:
     description: Nombre del cluster EKS existente
   aff-atg:transit_gateway_id:
     description: ID del Transit Gateway existente (tgw-xxxxx)
-  aff-atg:vimenca_cidr:
-    description: CIDR de la red de Vimenca
+  aff-atg:mock-peer-a_cidr:
+    description: CIDR de la red de MockPeerA
     default: "172.16.70.0/24"
-  aff-atg:vimenca_vpn_ip:
-    description: IP pública del dispositivo VPN de Vimenca (Checkpoint)
+  aff-atg:mock-peer-a_vpn_ip:
+    description: IP pública del dispositivo VPN de MockPeerA (Checkpoint)
     default: "191.97.106.141"
-  aff-atg:vimenca_bgp_asn:
-    description: BGP ASN de Vimenca
+  aff-atg:mock-peer-a_bgp_asn:
+    description: BGP ASN de MockPeerA
     default: 65000
   aff-atg:aws_bgp_asn:
     description: BGP ASN de AWS

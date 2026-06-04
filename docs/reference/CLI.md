@@ -127,9 +127,9 @@ vpn-ctl peer list
 ```
 📋 VPN Peers (4 total)
 
-  • vimenca (191.97.106.141) - checkpoint
-  • cibao (191.97.106.142) - checkpoint
-  • apap (191.97.106.143) - fortigate
+  • mock-peer-a (191.97.106.141) - checkpoint
+  • mock-peer-b (191.97.106.142) - checkpoint
+  • mock-peer-c (191.97.106.143) - fortigate
   • customer-x (203.0.113.50) - checkpoint
 ```
 
@@ -149,9 +149,9 @@ vpn-ctl spec validate
 ```
 ✓ Validating 4 peers...
 
-  ✓ vimenca
-  ✓ cibao
-  ✓ apap
+  ✓ mock-peer-a
+  ✓ mock-peer-b
+  ✓ mock-peer-c
   ✓ customer-x
 ✅ All specs valid
 ```
@@ -174,9 +174,9 @@ vpn-ctl spec sync --auto-fix         # Automatically fix conflicts
 ```
 📊 Comparing spec files with live state...
 
-  ✓ vimenca: IN SYNC
-  ✓ cibao: IN SYNC
-  ✓ apap: OUT OF SYNC (PSK changed)
+  ✓ mock-peer-a: IN SYNC
+  ✓ mock-peer-b: IN SYNC
+  ✓ mock-peer-c: OUT OF SYNC (PSK changed)
   ❓ customer-new: UNDEPLOYED (spec ready)
 
 Summary:
@@ -185,7 +185,7 @@ Summary:
   Undeployed: 1/4
 
 ? Auto-fix conflicts? [y/N]: y
-  ✓ Synced: apap (PSK updated)
+  ✓ Synced: mock-peer-c (PSK updated)
   ? customer-new - Deploy now? [y/N]: y
     ✓ Deploying customer-new...
 ✅ All specs synced with state!
@@ -211,14 +211,14 @@ vpn-ctl tunnel status customer-x      # Specific peer
 ┌────────────────────┬──────────┬──────────┐
 │ Peer               │ Tunnel 1 │ Tunnel 2 │
 ├────────────────────┼──────────┼──────────┤
-│ vimenca            │ UP ✓     │ UP ✓     │
-│ cibao              │ UP ✓     │ UP ✓     │
-│ apap               │ DOWN     │ DOWN     │
+│ mock-peer-a            │ UP ✓     │ UP ✓     │
+│ mock-peer-b              │ UP ✓     │ UP ✓     │
+│ mock-peer-c               │ DOWN     │ DOWN     │
 │ customer-x         │ DOWN     │ DOWN     │
 └────────────────────┴──────────┴──────────┘
 
 ⚠️  Alerts:
-  • apap: Both tunnels DOWN (6+ hours)
+  • mock-peer-c: Both tunnels DOWN (6+ hours)
     → Check customer configuration
   • customer-x: Both tunnels DOWN (1+ hour)
     → Customer configuration pending
@@ -361,10 +361,10 @@ vpn-ctl spec sync --report-only
 
 ```bash
 # Show peer details
-vpn-ctl peer status vimenca
+vpn-ctl peer status mock-peer-a
 
 # Check tunnel status
-vpn-ctl tunnel status vimenca
+vpn-ctl tunnel status mock-peer-a
 
 # Validate peer spec
 vpn-ctl spec validate

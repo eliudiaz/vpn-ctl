@@ -18,11 +18,11 @@ if TYPE_CHECKING:
 def add_route(ctx, peer_name: str, cidr: str):
     """Add destination CIDR route to peer.
 
-    PEER_NAME: Name of peer (e.g., vimenca, cibao)
+    PEER_NAME: Name of peer (e.g., mock-peer-a, mock-peer-b)
     CIDR: Destination CIDR (e.g., 172.16.80.0/24)
 
     Example:
-        vpnctl peer add-route vimenca 172.16.80.0/24
+        vpnctl peer add-route mock-peer-a 172.16.80.0/24
     """
     service: PeerManagementService = ctx.obj.get('peer_service')
     config_manager = ctx.obj.get('config_manager')
