@@ -456,7 +456,7 @@ from observability.logging import get_logger, log_operation
 logger = get_logger(__name__)
 logger.info("Something happened")
 
-log_operation("deploy", peer_name="mock-peer-a", status="success")
+log_operation("deploy", peer_name="example-peer", status="success")
 ```
 
 ---

@@ -127,7 +127,7 @@ vpn-ctl peer list
 ```
 📋 VPN Peers (4 total)
 
-  • mock-peer-a (191.97.106.141) - checkpoint
+  • example-peer (191.97.106.141) - checkpoint
   • mock-peer-b (191.97.106.142) - checkpoint
   • mock-peer-c (191.97.106.143) - fortigate
   • customer-x (203.0.113.50) - checkpoint
@@ -149,7 +149,7 @@ vpn-ctl spec validate
 ```
 ✓ Validating 4 peers...
 
-  ✓ mock-peer-a
+  ✓ example-peer
   ✓ mock-peer-b
   ✓ mock-peer-c
   ✓ customer-x
@@ -174,7 +174,7 @@ vpn-ctl spec sync --auto-fix         # Automatically fix conflicts
 ```
 📊 Comparing spec files with live state...
 
-  ✓ mock-peer-a: IN SYNC
+  ✓ example-peer: IN SYNC
   ✓ mock-peer-b: IN SYNC
   ✓ mock-peer-c: OUT OF SYNC (PSK changed)
   ❓ customer-new: UNDEPLOYED (spec ready)
@@ -211,7 +211,7 @@ vpn-ctl tunnel status customer-x      # Specific peer
 ┌────────────────────┬──────────┬──────────┐
 │ Peer               │ Tunnel 1 │ Tunnel 2 │
 ├────────────────────┼──────────┼──────────┤
-│ mock-peer-a            │ UP ✓     │ UP ✓     │
+│ example-peer            │ UP ✓     │ UP ✓     │
 │ mock-peer-b              │ UP ✓     │ UP ✓     │
 │ mock-peer-c               │ DOWN     │ DOWN     │
 │ customer-x         │ DOWN     │ DOWN     │
@@ -361,10 +361,10 @@ vpn-ctl spec sync --report-only
 
 ```bash
 # Show peer details
-vpn-ctl peer status mock-peer-a
+vpn-ctl peer status example-peer
 
 # Check tunnel status
-vpn-ctl tunnel status mock-peer-a
+vpn-ctl tunnel status example-peer
 
 # Validate peer spec
 vpn-ctl spec validate

@@ -49,7 +49,7 @@ mkdir -p config/peers
 ### Step 1.3: Create Individual Peer Manifests
 
 **Files** (one per peer):
-- `config/peers/mock-peer-a.yaml` ✅ Created
+- `config/peers/example-peer.yaml` ✅ Created
 - `config/peers/mock-peer-b.yaml` ✅ Created
 - `config/peers/mock-peer-c.yaml` ✅ Created
 - `config/peers/mock-peer-d.yaml` ✅ Created
@@ -146,7 +146,7 @@ cd pulumi
 python3 -c "
 from vpn_manifest_loader import VpnManifestLoader
 loader = VpnManifestLoader('../config')
-peer = loader.load_peer('mock-peer-a')
+peer = loader.load_peer('example-peer')
 print(f'Loaded: {peer[\"metadata\"][\"name\"]}')
 print(f'Status: {peer[\"status\"][\"conditions\"][0][\"status\"]}')
 "
@@ -154,7 +154,7 @@ print(f'Status: {peer[\"status\"][\"conditions\"][0][\"status\"]}')
 
 **Expected output**:
 ```
-Loaded: mock-peer-a
+Loaded: example-peer
 Status: True
 ```
 
@@ -174,7 +174,7 @@ for p in peers:
 **Expected output**:
 ```
 Loaded 4 enabled peers:
-  - mock-peer-a: Checkpoint Firewall
+  - example-peer: Checkpoint Firewall
   - mock-peer-b: Checkpoint Firewall
   - mock-peer-c: Firewall Fortinet
   - mock-peer-d: Legacy Infrastructure
@@ -223,7 +223,7 @@ print(f'Peers: {sorted(names)}')
 **Expected output**:
 ```
 Total peers: 5 (or 4 if monolithic is removed)
-Peers: ['mock-peer-d', 'mock-peer-c', 'mock-peer-b', 'mock-peer-a']
+Peers: ['mock-peer-d', 'mock-peer-c', 'mock-peer-b', 'example-peer']
 ```
 
 ### Step 4.5: Verify Backward Compatibility
@@ -236,12 +236,12 @@ from vpn_manifest_loader import VpnManifestLoader, VpnConfigLoader
 
 # Load from manifest
 manifest_loader = VpnManifestLoader('../config')
-manifest_peer = manifest_loader.load_peer('mock-peer-a')
+manifest_peer = manifest_loader.load_peer('example-peer')
 manifest_config = manifest_loader.extract_vpn_config(manifest_peer)
 
 # Load from unified (which tries manifest first)
 config_loader = VpnConfigLoader('../config')
-unified_config = config_loader.load_peer('mock-peer-a')
+unified_config = config_loader.load_peer('example-peer')
 
 # Compare key fields
 assert manifest_config['name'] == unified_config['name']
@@ -363,12 +363,12 @@ vpn-ctl peer status --condition "type=Ready,status=True"
 
 ```bash
 # Check if manifest file exists
-ls -la config/peers/mock-peer-a.yaml
+ls -la config/peers/example-peer.yaml
 
 # Validate YAML syntax
 python3 -c "
 import yaml
-with open('config/peers/mock-peer-a.yaml') as f:
+with open('config/peers/example-peer.yaml') as f:
     doc = yaml.safe_load(f)
     print('Valid YAML')
 "
@@ -377,7 +377,7 @@ with open('config/peers/mock-peer-a.yaml') as f:
 python3 -c "
 from vpn_manifest_loader import VpnManifestLoader
 loader = VpnManifestLoader('../config')
-peer = loader.load_peer('mock-peer-a')
+peer = loader.load_peer('example-peer')
 if peer:
     print('✓ Manifest loaded')
 else:
@@ -392,7 +392,7 @@ else:
 ls -la config/tunnel-profiles.yaml
 
 # Verify profile name in peer matches profile name in tunnel-profiles.yaml
-grep "profile:" config/peers/mock-peer-a.yaml
+grep "profile:" config/peers/example-peer.yaml
 grep -A2 "checkpoint_r80:" config/tunnel-profiles.yaml
 ```
 
@@ -420,9 +420,9 @@ print(f'SNAT IP: {config[\"snat_provider_ip\"]}')
 
 ### New Files
 - ✅ `config/tunnel-profiles.yaml` — Shared tunnel profiles
-- ✅ `config/peers/mock-peer-a.yaml` — MockPeerA peer manifest
-- ✅ `config/peers/mock-peer-b.yaml` — MOCK_PEER_B peer manifest
-- ✅ `config/peers/mock-peer-c.yaml` — MOCK_PEER_C peer manifest with SNAT
+- ✅ `config/peers/example-peer.yaml` — MockPeerA peer manifest
+- ✅ `config/peers/mock-peer-b.yaml` — EXAMPLE_PEER_B peer manifest
+- ✅ `config/peers/mock-peer-c.yaml` — EXAMPLE_PEER_C peer manifest with SNAT
 - ✅ `config/peers/mock-peer-d.yaml` — Legacy network peer
 - ✅ `pulumi/vpn_manifest_loader.py` — Manifest loading code
 

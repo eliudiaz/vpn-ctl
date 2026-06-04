@@ -166,7 +166,7 @@ Creates provider instances without exposing instantiation logic.
 IacProviderFactory.register('pulumi', PulumiProvider)
 IacProviderFactory.register('terraform', TerraformProvider)
 
-provider = IacProviderFactory.get_active_provider('mock-peer-a', config)
+provider = IacProviderFactory.get_active_provider('example-peer', config)
 ```
 
 ### 3. Dependency Injection
@@ -280,7 +280,7 @@ def bootstrap_providers():
 ### Step 3: Configure to Use It
 
 ```yaml
-# Pulumi.mock-peer-a.yaml
+# Pulumi.example-peer.yaml
 
 iac_provider: terraform  # Switch to Terraform
 

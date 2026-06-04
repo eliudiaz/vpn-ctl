@@ -54,11 +54,11 @@ Dead Peer Detection:
 
 ## Scenario 1: Multiple Peers, Same Device Type
 
-**Real situation**: MockPeerA and MOCK_PEER_B both have **Checkpoint R80.10** firewalls.
+**Real situation**: MockPeerA and EXAMPLE_PEER_B both have **Checkpoint R80.10** firewalls.
 
 ### WITHOUT Tunnel Profiles
 
-**File**: `config/peers/mock-peer-a.yaml` (330 lines)
+**File**: `config/peers/example-peer.yaml` (330 lines)
 ```yaml
 spec:
   tunnel:
@@ -124,7 +124,7 @@ profiles:
       action: "restart"
 ```
 
-**File**: `config/peers/mock-peer-a.yaml` (280 lines)
+**File**: `config/peers/example-peer.yaml` (280 lines)
 ```yaml
 spec:
   tunnel:
@@ -147,7 +147,7 @@ spec:
 **Hypothetical situation**: You have 5 peers, each with **completely different** IPsec requirements:
 
 - MockPeerA (Checkpoint R80.10): AES256, SHA2-256, DPD: 30
-- MOCK_PEER_C (FortiGate 7.2): AES256, SHA2-256, PFS, DPD: 30
+- EXAMPLE_PEER_C (FortiGate 7.2): AES256, SHA2-256, PFS, DPD: 30
 - Customer-X (Legacy device): AES128, SHA1, DH: 2 (old security)
 - Customer-Y (Palo Alto): AES256, SHA2-256, aggressive mode
 - Customer-Z (custom): AES-GCM, ChaCha20, DH: 20
@@ -179,10 +179,10 @@ Let's look at **actual peers**:
 
 | Peer | Device | Profile | Reuse? |
 |------|--------|---------|--------|
-| MockPeerA | Checkpoint R80.10 | checkpoint_r80 | ✅ Reused by MOCK_PEER_B |
-| MOCK_PEER_B | Checkpoint R80.10 | checkpoint_r80 | ✅ Shared with MockPeerA |
-| MOCK_PEER_C | FortiGate 7.2.10 | fortigate_standard | ✅ Reused by future FortiGate peers |
-| mock-peer-d | Legacy | checkpoint_r80 | ✅ Shared with MockPeerA & MOCK_PEER_B |
+| MockPeerA | Checkpoint R80.10 | checkpoint_r80 | ✅ Reused by EXAMPLE_PEER_B |
+| EXAMPLE_PEER_B | Checkpoint R80.10 | checkpoint_r80 | ✅ Shared with MockPeerA |
+| EXAMPLE_PEER_C | FortiGate 7.2.10 | fortigate_standard | ✅ Reused by future FortiGate peers |
+| mock-peer-d | Legacy | checkpoint_r80 | ✅ Shared with MockPeerA & EXAMPLE_PEER_B |
 
 **Result**: 3 peers share `checkpoint_r80`, 1 peer uses `fortigate_standard`.
 
@@ -286,7 +286,7 @@ Do you expect to scale beyond 10 peers?
 
 ✅ **YES, for these reasons**:
 
-1. **Multiple Checkpoint peers**: MockPeerA + MOCK_PEER_B + legacy-network all use checkpoint_r80
+1. **Multiple Checkpoint peers**: MockPeerA + EXAMPLE_PEER_B + legacy-network all use checkpoint_r80
    - Without profile: 150 lines of duplication
    - With profile: Single 50-line definition
 

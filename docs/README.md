@@ -42,7 +42,7 @@ vpn-ctl tunnel status
 ┌────────────────────┬──────────┬──────────┐
 │ Peer               │ Tunnel 1 │ Tunnel 2 │
 ├────────────────────┼──────────┼──────────┤
-│ mock-peer-a            │ UP ✓     │ UP ✓     │
+│ example-peer            │ UP ✓     │ UP ✓     │
 │ customer-x         │ DOWN     │ DOWN     │
 └────────────────────┴──────────┴──────────┘
 ```
@@ -53,7 +53,7 @@ vpn-ctl tunnel status
 vpn-ctl spec validate
 
 ✓ Validating 4 peers...
-  ✓ mock-peer-a
+  ✓ example-peer
   ✓ mock-peer-b
   ✓ mock-peer-c
   ✓ customer-x
@@ -66,7 +66,7 @@ vpn-ctl spec validate
 vpn-ctl spec sync
 
 📊 Comparing spec files with live state...
-  ✓ mock-peer-a: IN SYNC
+  ✓ example-peer: IN SYNC
   ✓ mock-peer-b: IN SYNC
   ✓ mock-peer-c: IN SYNC
   ✓ customer-x: IN SYNC

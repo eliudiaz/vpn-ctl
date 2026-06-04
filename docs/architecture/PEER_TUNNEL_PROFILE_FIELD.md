@@ -12,7 +12,7 @@
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: mock-peer-a
+  name: example-peer
 spec:
   tunnel:
     profile: checkpoint_r80        # ← Profile reference (clear but could be more explicit)
@@ -31,7 +31,7 @@ spec:
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: mock-peer-a
+  name: example-peer
   labels:
     tunnel-profile: checkpoint_r80  # ← Explicit label for easier querying
     tunnel-vendor: checkpoint       # ← Quick vendor identification
@@ -165,7 +165,7 @@ spec:
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: mock-peer-a
+  name: example-peer
   labels:
     tunnel-profile: checkpoint_r80  # For querying all peers with this profile
     tunnel-vendor: checkpoint
@@ -243,12 +243,12 @@ vpn-ctl peer list --tunnel-profile=checkpoint_r80 --action=update-dpd
 
 **Apply Option A (recommended) to all peers**:
 
-### mock-peer-a.yaml
+### example-peer.yaml
 ```yaml
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: mock-peer-a
+  name: example-peer
   labels:
     tunnel-profile: checkpoint_r80
     tunnel-vendor: checkpoint

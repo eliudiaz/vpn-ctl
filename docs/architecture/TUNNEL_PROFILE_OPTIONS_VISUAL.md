@@ -9,8 +9,8 @@ Quick visual guide comparing 4 architectural approaches.
 **Each peer contains its own tunnel profile definition.**
 
 ```
-┌─ mock-peer-a.yaml (330 lines)
-│  ├─ metadata: { name: mock-peer-a }
+┌─ example-peer.yaml (330 lines)
+│  ├─ metadata: { name: example-peer }
 │  ├─ spec:
 │  │  ├─ device: { type: Checkpoint... }
 │  │  ├─ tunnel:
@@ -63,7 +63,7 @@ _tunnel_profiles:
     dpd: { ... }
 
 peers:
-  - name: mock-peer-a
+  - name: example-peer
     tunnel:
       profileDefinition: *checkpoint_r80_anchor  ← Reference anchor
   
@@ -104,7 +104,7 @@ config/
 │  └─ palo-alto-profiles.yaml
 │
 └─ peers/
-   ├─ mock-peer-a.yaml
+   ├─ example-peer.yaml
    │  └─ tunnel:
    │     └─ profileRef:
    │        ├─ vendor: checkpoint
@@ -152,7 +152,7 @@ config/
 │        └─ phase2: { ... }
 │
 └─ peers/
-   ├─ mock-peer-a.yaml (280 lines)
+   ├─ example-peer.yaml (280 lines)
    │  └─ spec:
    │     └─ tunnel:
    │        ├─ profile: checkpoint_r80  ← Reference
@@ -199,9 +199,9 @@ config/
 
 **Option 1 (Inline)**:
 ```bash
-# Edit mock-peer-a.yaml
+# Edit example-peer.yaml
 # Change: dpd.timeout: 30 → 15
-git add config/peers/mock-peer-a.yaml
+git add config/peers/example-peer.yaml
 
 # Edit mock-peer-b.yaml
 # Change: dpd.timeout: 30 → 15
@@ -241,7 +241,7 @@ git commit -m "fix: Update Checkpoint DPD timeout for security"
 # ✅ Single file change
 # ✅ Clear this is a profile update (affects all referencing peers)
 # ✅ Peer files unchanged (they still reference checkpoint_r80)
-# ✅ When viewing mock-peer-a.yaml history, no unnecessary changes
+# ✅ When viewing example-peer.yaml history, no unnecessary changes
 # ✅ When viewing tunnel-profiles.yaml history, see all profile evolution
 ```
 
@@ -306,10 +306,10 @@ spec:
 **Option 1 (Inline)**:
 ```bash
 $ git log --oneline -10
-a1b2c3d Fix DPD timeout in mock-peer-a
-b2c3d4e Update MOCK_PEER_C tunnel config
-c3d4e5f Fix MOCK_PEER_B network config
-d4e5f6g Update mock-peer-a device version
+a1b2c3d Fix DPD timeout in example-peer
+b2c3d4e Update EXAMPLE_PEER_C tunnel config
+c3d4e5f Fix EXAMPLE_PEER_B network config
+d4e5f6g Update example-peer device version
 ...
 # ❌ Hard to tell what's profile change vs. peer config change
 # ❌ Interdependent changes (same profile) look separate
@@ -321,7 +321,7 @@ $ git log --oneline -10
 a1b2c3d fix: Update Checkpoint DPD timeout (affects 3 peers)
 b2c3d4e feat: Add new Fortinet peer customer-50
 c3d4e5f feat: Add new tunnel profile for Palo Alto
-d4e5f6g fix: Update MOCK_PEER_C SNAT config
+d4e5f6g fix: Update EXAMPLE_PEER_C SNAT config
 ...
 # ✅ Clear separation: profile changes vs. peer changes
 # ✅ Easy to see which peers are affected by profile updates
@@ -329,15 +329,15 @@ d4e5f6g fix: Update MOCK_PEER_C SNAT config
 
 **Git log for specific peer**:
 ```bash
-$ git log config/peers/mock-peer-a.yaml
-a1b2c3d Added mock-peer-a peer (initial deployment)
-# Shows only mock-peer-a-specific changes, not every DPD timeout update
+$ git log config/peers/example-peer.yaml
+a1b2c3d Added example-peer peer (initial deployment)
+# Shows only example-peer-specific changes, not every DPD timeout update
 ```
 
 **Git log for profiles**:
 ```bash
 $ git log config/tunnel-profiles.yaml
-a1b2c3d fix: Update Checkpoint DPD timeout (affects mock-peer-a, mock-peer-b, legacy)
+a1b2c3d fix: Update Checkpoint DPD timeout (affects example-peer, mock-peer-b, legacy)
 b2c3d4e feat: Add new tunnel profile for Palo Alto
 c3d4e5f fix: Fortinet DPD timeout update
 # Shows all profile evolution without peer config noise

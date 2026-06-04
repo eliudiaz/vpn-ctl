@@ -21,10 +21,10 @@ peers:                # All peers mixed in one array
   - name: MockPeerA
     tunnel_profile: checkpoint_r80
     ...
-  - name: MOCK_PEER_B
+  - name: EXAMPLE_PEER_B
     tunnel_profile: checkpoint_r80
     ...
-  - name: MOCK_PEER_C
+  - name: EXAMPLE_PEER_C
     tunnel_profile: fortigate_standard
     ...
 ```
@@ -49,9 +49,9 @@ peers:                # All peers mixed in one array
 config/
 ├── tunnel-profiles.yaml          (Shared tunnel templates)
 └── peers/
-    ├── mock-peer-a.yaml             (MockPeerA specification)
-    ├── mock-peer-b.yaml               (MOCK_PEER_B specification)
-    ├── mock-peer-c.yaml                (MOCK_PEER_C specification)
+    ├── example-peer.yaml             (MockPeerA specification)
+    ├── mock-peer-b.yaml               (EXAMPLE_PEER_B specification)
+    ├── mock-peer-c.yaml                (EXAMPLE_PEER_C specification)
     └── mock-peer-d.yaml  (Legacy network specification)
 ```
 
@@ -59,12 +59,12 @@ config/
 
 Each peer file follows Kubernetes resource pattern:
 
-**`config/peers/mock-peer-a.yaml`** (Example):
+**`config/peers/example-peer.yaml`** (Example):
 ```yaml
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: mock-peer-a
+  name: example-peer
   namespace: vpn-infrastructure
   labels:
     vendor: checkpoint
@@ -173,13 +173,13 @@ spec:
   snat:
     enabled: true
     type: "provider_assigned_ip"  # or "nat_instance"
-    provider_assigned_ip: "203.0.113.99"  # MOCK_PEER_C provides this IP
+    provider_assigned_ip: "203.0.113.99"  # EXAMPLE_PEER_C provides this IP
     nat_instance_config:
       # Would be populated if using isolated NAT gateway
       instance_type: "t3.micro"
       availability_zone: "us-east-2a"
   contacts:
-    - name: "MOCK_PEER_C Network Operations"
+    - name: "EXAMPLE_PEER_C Network Operations"
       phone: "TBD"
       email: "operations@mock-peer-c.local"
       role: "Network Administrator"
@@ -313,7 +313,7 @@ tunnel:
 ### 4. **SNAT Configuration as Native Peer Property**
 - SNAT is now first-class citizen in peer spec
 - Supports multiple SNAT modes (provider_assigned_ip, nat_instance, etc.)
-- MOCK_PEER_C-specific SNAT parameters co-located with peer definition
+- EXAMPLE_PEER_C-specific SNAT parameters co-located with peer definition
 
 ```yaml
 snat:
@@ -453,15 +453,15 @@ Both `vpn-peers.yaml` and individual manifests work simultaneously.
 ```yaml
 # config/vpn-peers.yaml (still works)
 peers:
-  - name: mock-peer-a
+  - name: example-peer
     tunnel_profile: checkpoint_r80
     ...
 
-# config/peers/mock-peer-a.yaml (new, also works)
+# config/peers/example-peer.yaml (new, also works)
 apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: mock-peer-a
+  name: example-peer
 ...
 ```
 
@@ -506,7 +506,7 @@ Deprecate `vpn-peers.yaml`, use only individual manifests and shared `tunnel-pro
 
 - [ ] Create `config/tunnel-profiles.yaml` with shared profiles
 - [ ] Create `config/peers/` directory
-- [ ] Migrate mock-peer-a → `config/peers/mock-peer-a.yaml`
+- [ ] Migrate example-peer → `config/peers/example-peer.yaml`
 - [ ] Migrate mock-peer-b → `config/peers/mock-peer-b.yaml`
 - [ ] Migrate mock-peer-c → `config/peers/mock-peer-c.yaml`
 - [ ] Migrate mock-peer-d → `config/peers/mock-peer-d.yaml`
