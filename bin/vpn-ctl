@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# vpn-ctl - VPN Infrastructure Control Tool
+# Entry point for vpn-ctl CLI command
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# Add project to Python path
+export PYTHONPATH="${PROJECT_ROOT}:${PYTHONPATH:-}"
+
+# Run CLI
+python3 -m vpnctl.main "$@"

@@ -1,0 +1,157 @@
+tunnel_profiles:
+  checkpoint_r80:
+    description: Checkpoint R80.10 compatible (Vimenca standard)
+    ike_versions:
+    - ikev2
+    phase1:
+      encryption:
+      - AES256
+      integrity:
+      - SHA2-256
+      dh_groups:
+      - 14
+      lifetime: 28800
+    phase2:
+      encryption:
+      - AES256
+      integrity:
+      - SHA2-256
+      dh_groups: []
+      lifetime: 3600
+    dpd:
+      timeout: 30
+      action: restart
+    static_routes_only: true
+  palo_alto_standard:
+    description: Palo Alto Networks standard profile
+    ike_versions:
+    - ikev1
+    - ikev2
+    phase1:
+      encryption:
+      - AES256
+      integrity:
+      - SHA2-256
+      dh_groups:
+      - 14
+      lifetime: 28800
+    phase2:
+      encryption:
+      - AES256
+      integrity:
+      - SHA2-256
+      dh_groups:
+      - 14
+      lifetime: 3600
+    dpd:
+      timeout: 10
+      action: clear
+    static_routes_only: false
+  fortigate_standard:
+    description: Fortinet FortiGate standard profile (IKEv2 with PFS)
+    ike_versions:
+    - ikev2
+    phase1:
+      encryption:
+      - AES256
+      integrity:
+      - SHA2-256
+      dh_groups:
+      - 14
+      lifetime: 28800
+    phase2:
+      encryption:
+      - AES256
+      integrity:
+      - SHA2-256
+      dh_groups:
+      - 14
+      lifetime: 3600
+    dpd:
+      timeout: 30
+      action: restart
+    aggressive_mode: false
+    pfs_enabled: true
+    replay_detection: true
+    static_routes_only: true
+peers:
+  # Example Peer 1: Checkpoint Firewall
+  - name: example-partner-1
+    enabled: false  # Disabled for production - customize before use
+    tunnel_profile: checkpoint_r80
+    public_ip: 203.0.113.50  # Replace with actual public IP
+    bgp_asn: 65001  # Replace with actual BGP ASN
+    destination_cidrs:
+      - 10.0.0.0/16  # Replace with partner's network CIDR
+    imported_cidrs:
+      - 10.0.0.0/16  # Replace with partner's imported networks
+    device_type: Checkpoint Firewall
+    device_version: R80.10
+    psk:
+      tunnel1: "REPLACE_WITH_ACTUAL_PSK"
+      tunnel2: "REPLACE_WITH_ACTUAL_PSK"
+    test_endpoints:
+      - target: 10.0.0.5
+        protocol: ping
+      - target: partner.example.com
+        protocol: tcp
+        port: 443
+    contacts:
+      - name: Partner Network Admin
+        phone: "+1-555-0100"
+        email: network-admin@partner.example.com
+
+  # Example Peer 2: Palo Alto Networks Firewall
+  - name: example-partner-2
+    enabled: false  # Disabled for production - customize before use
+    tunnel_profile: palo_alto_standard
+    public_ip: 203.0.113.51  # Replace with actual public IP
+    bgp_asn: 65002  # Replace with actual BGP ASN
+    destination_cidrs:
+      - 192.168.0.0/16  # Replace with partner's network CIDR
+    device_type: Palo Alto Networks
+    device_version: "9.1.0"
+    psk:
+      tunnel1: "REPLACE_WITH_ACTUAL_PSK"
+      tunnel2: "REPLACE_WITH_ACTUAL_PSK"
+    test_endpoints:
+      - target: 192.168.0.5
+        protocol: ping
+      - target: api.partner2.example.com
+        protocol: tcp
+        port: 443
+    contacts:
+      - name: Partner 2 NOC
+        email: noc@partner2.example.com
+
+  # Example Peer 3: Fortinet FortiGate
+  - name: example-partner-3
+    enabled: false  # Disabled for production - customize before use
+    tunnel_profile: fortigate_standard
+    public_ip: 203.0.113.52  # Replace with actual public IP
+    bgp_asn: 65003  # Replace with actual BGP ASN
+    destination_cidrs:
+      - 172.20.0.0/16  # Replace with partner's network CIDR
+    device_type: Firewall Fortinet
+    device_version: FortiGate v7.2.10
+    psk:
+      tunnel1: "REPLACE_WITH_ACTUAL_PSK"
+      tunnel2: "REPLACE_WITH_ACTUAL_PSK"
+    tunnel_configuration:
+      description: FortiGate IKEv2 with AES256/SHA2-256 and PFS
+      ike_version: IKEv2
+      phase1_encryption: AES256
+      phase1_integrity: SHA2-256
+      phase1_dh: Group 14 (2048-bit)
+      phase1_lifetime: 28800 sec (8 hours)
+      phase2_encryption: AES256
+      phase2_integrity: SHA2-256
+      phase2_dh: Group 14 (2048-bit)
+      phase2_lifetime: 3600 sec (60 minutes)
+      pfs_enabled: true
+      aggressive_mode: false
+      replay_detection: true
+    contacts:
+      - name: Partner 3 Network Operations
+        email: network-ops@partner3.example.com
+        role: Network Administrator

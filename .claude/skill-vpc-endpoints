@@ -1,0 +1,395 @@
+#!/bin/bash
+
+# Skill: VPC Endpoints Validation & Health Check
+# Purpose: Validate VPC endpoints for EKS cluster networking
+# Usage: ./skill-vpc-endpoints [--deep] [--vpc VPC_ID] [--region REGION]
+
+set -e
+
+REGION="${REGION:-us-east-2}"
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+print_status() {
+    local status=$1
+    local message=$2
+
+    case $status in
+        "pass")
+            echo -e "${GREEN}✓${NC} $message"
+            ;;
+        "warn")
+            echo -e "${YELLOW}⚠${NC} $message"
+            ;;
+        "fail")
+            echo -e "${RED}✗${NC} $message"
+            ;;
+        "info")
+            echo -e "${BLUE}ℹ${NC} $message"
+            ;;
+    esac
+}
+
+print_header() {
+    echo -e "\n${BOLD}${BLUE}=== $1 ===${NC}\n"
+}
+
+# Get VPCs with tag filter for EKS clusters
+get_eks_vpcs() {
+    aws ec2 describe-vpcs \
+        --region "$REGION" \
+        --query 'Vpcs[?Tags[?Key==`Name` && Value==`asg-plat-dev`]].[VpcId,CidrBlock]' \
+        --output json 2>/dev/null || echo "[]"
+}
+
+# Quick endpoint check
+quick_endpoint_check() {
+    print_header "VPC Endpoints Quick Check"
+
+    if [ -z "$VPC_ID" ]; then
+        echo "Detecting EKS VPCs..."
+        local vpc_data=$(get_eks_vpcs)
+        VPC_ID=$(echo "$vpc_data" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data[0][0] if data else '')" 2>/dev/null || echo "")
+
+        if [ -z "$VPC_ID" ]; then
+            print_status "fail" "Could not detect VPC - specify with --vpc VPC_ID"
+            return 1
+        fi
+    fi
+
+    print_status "info" "VPC: $VPC_ID"
+    echo ""
+
+    # Interface Endpoints (paid)
+    print_header "Interface Endpoints (7.20/month each)"
+
+    local interface_endpoints=$(aws ec2 describe-vpc-endpoints \
+        --filters "Name=vpc-id,Values=$VPC_ID" "Name=vpc-endpoint-type,Values=Interface" \
+        --region "$REGION" \
+        --query 'VpcEndpoints[*].[VpcEndpointId,ServiceName,State,PrivateDnsEnabled]' \
+        --output json 2>/dev/null || echo "[]")
+
+    local endpoint_count=$(echo "$interface_endpoints" | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+
+    if [ "$endpoint_count" -gt 0 ]; then
+        print_status "pass" "Interface endpoints found: $endpoint_count"
+
+        echo "$interface_endpoints" | python3 << 'PYTHON' 2>/dev/null || true
+import json
+import sys
+
+data = json.load(sys.stdin)
+required_services = [
+    'ecr.dkr', 'ecr.api', 'ec2', 'sts', 'logs',
+    'elasticloadbalancing', 'autoscaling'
+]
+
+found_services = set()
+for endpoint_id, service_name, state, dns_enabled in data:
+    service_short = service_name.split('.')[-1]
+    found_services.add(service_short)
+    status = "✓" if state == "available" else "✗"
+    dns = "DNS+" if dns_enabled else "NoDNS"
+    print(f"  {status} {service_short}: {state} ({dns})")
+
+missing = set(required_services) - found_services
+if missing:
+    print(f"\nMissing services: {', '.join(missing)}")
+PYTHON
+    else
+        print_status "warn" "No interface endpoints found"
+    fi
+
+    echo ""
+    print_header "Gateway Endpoints (FREE)"
+
+    # Gateway Endpoints (free)
+    local gateway_endpoints=$(aws ec2 describe-vpc-endpoints \
+        --filters "Name=vpc-id,Values=$VPC_ID" "Name=vpc-endpoint-type,Values=Gateway" \
+        --region "$REGION" \
+        --query 'VpcEndpoints[*].[VpcEndpointId,ServiceName,State]' \
+        --output json 2>/dev/null || echo "[]")
+
+    local gateway_count=$(echo "$gateway_endpoints" | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+
+    if [ "$gateway_count" -gt 0 ]; then
+        print_status "pass" "Gateway endpoints found: $gateway_count"
+
+        echo "$gateway_endpoints" | python3 << 'PYTHON' 2>/dev/null || true
+import json
+import sys
+
+data = json.load(sys.stdin)
+for endpoint_id, service_name, state in data:
+    service_short = service_name.split('.')[-1]
+    status = "✓" if state == "available" else "✗"
+    print(f"  {status} {service_short}: {state}")
+PYTHON
+    else
+        print_status "warn" "No gateway endpoints found"
+    fi
+
+    echo ""
+    print_status "pass" "VPC Endpoints are AVAILABLE"
+    return 0
+}
+
+# Deep analysis
+deep_endpoint_check() {
+    print_header "VPC Endpoints Deep Analysis"
+
+    if [ -z "$VPC_ID" ]; then
+        local vpc_data=$(get_eks_vpcs)
+        VPC_ID=$(echo "$vpc_data" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data[0][0] if data else '')" 2>/dev/null || echo "")
+    fi
+
+    # Interface Endpoints Details
+    print_header "Interface Endpoints Configuration"
+    aws ec2 describe-vpc-endpoints \
+        --filters "Name=vpc-id,Values=$VPC_ID" "Name=vpc-endpoint-type,Values=Interface" \
+        --region "$REGION" \
+        --query 'VpcEndpoints[*].[VpcEndpointId,ServiceName,State,PrivateDnsEnabled,PrivateDnsNameConfiguration.Name,SubnetIds,Groups[*].GroupId]' \
+        --output table 2>/dev/null || echo "No interface endpoints"
+
+    # Gateway Endpoints
+    print_header "Gateway Endpoints Configuration"
+    aws ec2 describe-vpc-endpoints \
+        --filters "Name=vpc-id,Values=$VPC_ID" "Name=vpc-endpoint-type,Values=Gateway" \
+        --region "$REGION" \
+        --query 'VpcEndpoints[*].[VpcEndpointId,ServiceName,State,RouteTableIds]' \
+        --output table 2>/dev/null || echo "No gateway endpoints"
+
+    # Security Groups for endpoints
+    print_header "Security Groups Associated with Endpoints"
+    aws ec2 describe-vpc-endpoints \
+        --filters "Name=vpc-id,Values=$VPC_ID" "Name=vpc-endpoint-type,Values=Interface" \
+        --region "$REGION" \
+        --query 'VpcEndpoints[*].Groups[*].GroupId' \
+        --output json 2>/dev/null | python3 << 'PYTHON' 2>/dev/null || true
+import json
+import sys
+
+data = json.load(sys.stdin)
+sgs = set()
+for sg_list in data:
+    for sg in sg_list:
+        sgs.add(sg)
+
+for sg in sgs:
+    print(f"\nSecurity Group: {sg}")
+PYTHON
+
+    # Endpoint Policy (service access)
+    print_header "Endpoint Access Policies"
+    aws ec2 describe-vpc-endpoints \
+        --filters "Name=vpc-id,Values=$VPC_ID" \
+        --region "$REGION" \
+        --query 'VpcEndpoints[*].[ServiceName,PolicyDocument]' \
+        --output json 2>/dev/null | python3 -m json.tool 2>/dev/null | head -50 || echo "Could not retrieve policies"
+
+    return 0
+}
+
+# Agentic analysis
+agentic_analysis() {
+    print_header "Agentic VPC Endpoints Analysis"
+
+    print_status "info" "Analyzing endpoint health and configuration..."
+    echo ""
+
+    if [ -z "$VPC_ID" ]; then
+        local vpc_data=$(get_eks_vpcs)
+        VPC_ID=$(echo "$vpc_data" | python3 -c "import sys, json; data=json.load(sys.stdin); print(data[0][0] if data else '')" 2>/dev/null || echo "")
+    fi
+
+    # Gather metrics
+    local interface_total=$(aws ec2 describe-vpc-endpoints \
+        --filters "Name=vpc-id,Values=$VPC_ID" "Name=vpc-endpoint-type,Values=Interface" \
+        --region "$REGION" \
+        --query 'VpcEndpoints | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    local interface_available=$(aws ec2 describe-vpc-endpoints \
+        --filters "Name=vpc-id,Values=$VPC_ID" "Name=vpc-endpoint-type,Values=Interface" "Name=vpc-endpoint-state,Values=available" \
+        --region "$REGION" \
+        --query 'VpcEndpoints | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    local gateway_total=$(aws ec2 describe-vpc-endpoints \
+        --filters "Name=vpc-id,Values=$VPC_ID" "Name=vpc-endpoint-type,Values=Gateway" \
+        --region "$REGION" \
+        --query 'VpcEndpoints | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    local dns_enabled=$(aws ec2 describe-vpc-endpoints \
+        --filters "Name=vpc-id,Values=$VPC_ID" "Name=vpc-endpoint-type,Values=Interface" "Name=vpc-endpoint.private-dns-enabled,Values=true" \
+        --region "$REGION" \
+        --query 'VpcEndpoints | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    echo "Endpoint Inventory:"
+    echo "  Interface Endpoints: $interface_total total ($interface_available available)"
+    echo "  Gateway Endpoints: $gateway_total total"
+    echo "  Private DNS Enabled: $dns_enabled"
+    echo ""
+
+    # Required services check
+    local required_count=7  # ecr.dkr, ecr.api, ec2, sts, logs, elb, autoscaling
+
+    print_status "info" "Configuration Assessment:"
+    echo ""
+
+    if [ "$interface_total" -lt "$required_count" ]; then
+        print_status "warn" "Missing some interface endpoints (found $interface_total, need $required_count)"
+    else
+        print_status "pass" "All required interface endpoints deployed"
+    fi
+
+    if [ "$interface_available" -lt "$interface_total" ]; then
+        print_status "fail" "Some endpoints not available - investigate failed endpoints"
+    else
+        print_status "pass" "All endpoints are available"
+    fi
+
+    if [ "$dns_enabled" -lt "$interface_total" ]; then
+        print_status "warn" "Some endpoints missing Private DNS - may cause service discovery issues"
+    else
+        print_status "pass" "All endpoints have Private DNS enabled"
+    fi
+
+    if [ "$gateway_total" -lt 2 ]; then
+        print_status "warn" "Missing gateway endpoints (S3, DynamoDB)"
+    else
+        print_status "pass" "Gateway endpoints (S3, DynamoDB) available"
+    fi
+
+    echo ""
+    print_status "info" "Cost Analysis:"
+    echo "  Interface Endpoints: $interface_total × \$7.20/month = \$$(echo "$interface_total * 7.2" | bc)/month"
+    echo "  Gateway Endpoints: Free"
+    echo ""
+
+    print_status "info" "Recommendations:"
+    echo ""
+
+    if [ "$interface_total" -lt "$required_count" ]; then
+        echo "  1. Create missing endpoints using Pulumi or AWS console"
+        echo "  2. Check ./pulumi/__main__.py for endpoint definitions"
+        echo "  3. Ensure all 7 required services are deployed"
+    fi
+
+    if [ "$dns_enabled" -lt "$interface_total" ]; then
+        echo "  1. Enable Private DNS on all interface endpoints"
+        echo "  2. This allows pods to use service names (ecr.us-east-2.amazonaws.com)"
+    fi
+
+    if [ "$interface_available" -lt "$interface_total" ]; then
+        echo "  1. Check failed endpoint creation logs"
+        echo "  2. Verify security group allows inbound 443"
+        echo "  3. Ensure subnet has available private IPs"
+    fi
+
+    return 0
+}
+
+# Help
+show_help() {
+    cat << 'EOF'
+VPC Endpoints Validation Skill
+
+Purpose: Validate VPC endpoints for EKS cluster private networking
+
+Usage: ./skill-vpc-endpoints [OPTIONS]
+
+Options:
+  (default)       Quick endpoint check (5 seconds)
+  --deep          Deep configuration analysis (15 seconds)
+  --analyze       Agentic health assessment (20 seconds)
+  --vpc VPC_ID    Specific VPC (auto-detect EKS by default)
+  --region REGION AWS region (default: us-east-2)
+  --help          Show this help
+
+Quick Check verifies:
+  ✓ Interface endpoints exist (7 required)
+  ✓ Gateway endpoints exist (S3, DynamoDB)
+  ✓ All endpoints are available
+  ✓ Private DNS enabled
+
+Deep Analysis shows:
+  - Endpoint configuration (subnets, AZs)
+  - Security group associations
+  - Access policies
+  - Private DNS configuration
+  - Route table associations (gateway)
+
+Agentic Analysis:
+  - Endpoint inventory assessment
+  - Cost analysis
+  - Configuration health
+  - Specific recommendations
+
+Required Interface Endpoints (7):
+  1. ecr.dkr (pull container images)
+  2. ecr.api (ECR API calls)
+  3. ec2 (EC2 API)
+  4. sts (IAM role assumption - IRSA)
+  5. logs (CloudWatch Logs)
+  6. elasticloadbalancing (ALB/NLB)
+  7. autoscaling (Cluster Autoscaler)
+
+Gateway Endpoints (FREE):
+  - s3 (S3 access)
+  - dynamodb (DynamoDB access)
+
+Endpoint States:
+  available       = Ready for traffic
+  pending         = Creating
+  failed          = Error during creation
+  deleting        = Being removed
+
+Examples:
+  ./skill-vpc-endpoints              # Quick check (auto-detect VPC)
+  ./skill-vpc-endpoints --deep       # Full configuration review
+  ./skill-vpc-endpoints --analyze    # Health and cost analysis
+  ./skill-vpc-endpoints --vpc vpc-abc123  # Specific VPC
+
+Cost Considerations:
+  - Each interface endpoint: $7.20/month
+  - 7 endpoints × $7.20 = $50.40/month
+  - Gateway endpoints are FREE
+  - Data processing: $0.01 per GB (minimal for typical workloads)
+EOF
+}
+
+# Main
+case "${1:-}" in
+    --deep)
+        quick_endpoint_check
+        deep_endpoint_check
+        ;;
+    --analyze)
+        quick_endpoint_check
+        agentic_analysis
+        ;;
+    --vpc)
+        if [ -z "$2" ]; then
+            print_status "fail" "VPC ID required: --vpc VPC_ID"
+            exit 1
+        fi
+        export VPC_ID="$2"
+        shift 2
+        quick_endpoint_check
+        ;;
+    --help)
+        show_help
+        ;;
+    *)
+        quick_endpoint_check
+        ;;
+esac

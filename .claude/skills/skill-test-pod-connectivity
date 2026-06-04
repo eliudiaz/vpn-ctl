@@ -1,0 +1,453 @@
+#!/bin/bash
+# skill-test-pod-connectivity
+# Tests URLs from inside EKS cluster pods + validates routing layers
+#
+# Usage:
+#   ./skill-test-pod-connectivity Vimenca
+#   ./skill-test-pod-connectivity Vimenca --urls http://172.16.82.28:8088/ws/methods.wsdl
+#   ./skill-test-pod-connectivity Vimenca --format json
+#   ./skill-test-pod-connectivity --list
+#
+# Requires:
+#   - kubectl (configured for asg-plat-dev cluster)
+#   - AWS CLI v2 with 'affinity' profile
+#   - curl
+#   - jq (for JSON output)
+
+set -o pipefail
+
+# Color codes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Configuration
+CLUSTER_NAME="asg-plat-dev"
+AWS_PROFILE="affinity"
+AWS_REGION="us-east-2"
+TIMEOUT=10
+
+# Peer registry (mirrors vpn-peers.yaml)
+declare -A PEER_URLS
+PEER_URLS[Vimenca]="http://172.16.82.28:8088/ws/methods.wsdl http://172.16.65.21/BancaSeguraServices/ws/methods.wsdl"
+PEER_URLS[CIBAO]="http://172.17.10.10/api"
+PEER_URLS[Checkpoint-DR]="http://10.60.1.1/api"
+
+# Parse arguments
+PEER=""
+FORMAT="text"
+CUSTOM_URLS=()
+VERBOSE=false
+
+show_usage() {
+    cat << 'EOF'
+Usage: skill-test-pod-connectivity [PEER] [OPTIONS]
+
+Positional Arguments:
+  PEER                  VPN peer name (Vimenca, CIBAO, Checkpoint-DR) or --list
+
+Options:
+  --urls URL [URL ...]  Override default URLs for peer
+  --format json|text    Output format (default: text)
+  --verbose             Show detailed logs
+  --help                Show this help
+
+Examples:
+  skill-test-pod-connectivity Vimenca
+  skill-test-pod-connectivity Vimenca --format json
+  skill-test-pod-connectivity Vimenca --urls http://172.16.82.28:8088/ws/methods.wsdl
+  skill-test-pod-connectivity --list
+
+EOF
+}
+
+log_info() {
+    if [ "$VERBOSE" = true ]; then
+        echo -e "${BLUE}ℹ${NC} $1" >&2
+    fi
+}
+
+log_error() {
+    echo -e "${RED}✘${NC} $1" >&2
+}
+
+log_success() {
+    echo -e "${GREEN}✔${NC} $1" >&2
+}
+
+log_warning() {
+    echo -e "${YELLOW}⚠${NC} $1" >&2
+}
+
+# Parse arguments
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --list)
+            echo "Available VPN peers:"
+            for peer in "${!PEER_URLS[@]}"; do
+                echo "  - $peer"
+            done
+            exit 0
+            ;;
+        --format)
+            FORMAT="$2"
+            shift 2
+            ;;
+        --urls)
+            shift
+            while [ $# -gt 0 ] && [[ ! "$1" =~ ^-- ]]; do
+                CUSTOM_URLS+=("$1")
+                shift
+            done
+            ;;
+        --verbose)
+            VERBOSE=true
+            shift
+            ;;
+        --help)
+            show_usage
+            exit 0
+            ;;
+        -*)
+            log_error "Unknown option: $1"
+            show_usage
+            exit 1
+            ;;
+        *)
+            PEER="$1"
+            shift
+            ;;
+    esac
+done
+
+# Validate peer
+if [ -z "$PEER" ]; then
+    log_error "Missing PEER argument"
+    show_usage
+    exit 1
+fi
+
+if [ -z "${PEER_URLS[$PEER]}" ] && [ ${#CUSTOM_URLS[@]} -eq 0 ]; then
+    log_error "Unknown peer: $PEER"
+    echo "Run with --list to see available peers"
+    exit 1
+fi
+
+# Determine URLs to test
+if [ ${#CUSTOM_URLS[@]} -gt 0 ]; then
+    URLS=("${CUSTOM_URLS[@]}")
+else
+    IFS=' ' read -ra URLS <<< "${PEER_URLS[$PEER]}"
+fi
+
+log_info "Testing peer: $PEER"
+log_info "Cluster: $CLUSTER_NAME"
+log_info "URLs: ${URLS[@]}"
+
+# Verify kubectl access
+if ! kubectl cluster-info &>/dev/null; then
+    log_error "kubectl not configured or cluster not accessible"
+    exit 1
+fi
+log_success "kubectl configured for $CLUSTER_NAME"
+
+# Verify AWS CLI
+if ! aws sts get-caller-identity --profile "$AWS_PROFILE" &>/dev/null; then
+    log_error "AWS profile '$AWS_PROFILE' not available or not authenticated"
+    exit 1
+fi
+log_success "AWS authenticated with profile: $AWS_PROFILE"
+
+# Extract IP from first URL for route validation
+FIRST_IP=$(echo "${URLS[0]}" | sed -E 's|.*://([^:/]+).*|\1|')
+FIRST_CIDR_BASE=$(echo "$FIRST_IP" | cut -d. -f1-3).0/24
+
+log_info "Extracting CIDR from IP: $FIRST_IP → $FIRST_CIDR_BASE"
+
+# =============================================================================
+# Layer 1: Validate TGW routes
+# =============================================================================
+
+log_info "Validating TGW routes..."
+
+# Get TGW route table ID
+TGW_RTB_ID=$(aws ec2 describe-transit-gateways \
+    --profile "$AWS_PROFILE" \
+    --region "$AWS_REGION" \
+    --filters "Name=tag:Name,Values=affinity-hub-tgw" \
+    --query 'TransitGateways[0].DefaultRouteTableAssociation' \
+    --output text 2>/dev/null || echo "")
+
+TGW_RTB_ID=$(aws ec2 describe-transit-gateway-route-tables \
+    --profile "$AWS_PROFILE" \
+    --region "$AWS_REGION" \
+    --query 'TransitGatewayRouteTables[0].TransitGatewayRouteTableId' \
+    --output text 2>/dev/null || echo "")
+
+if [ -z "$TGW_RTB_ID" ] || [ "$TGW_RTB_ID" = "None" ]; then
+    log_warning "Could not determine TGW route table ID"
+    TGW_ROUTES_OK=false
+else
+    # Check if test CIDR exists in TGW
+    TGW_ROUTE_STATE=$(aws ec2 search-transit-gateway-routes \
+        --profile "$AWS_PROFILE" \
+        --region "$AWS_REGION" \
+        --transit-gateway-route-table-id "$TGW_RTB_ID" \
+        --filters "Name=state,Values=active,blackholed" \
+        --query "Routes[?DestinationCidrBlock=='$FIRST_CIDR_BASE'].State" \
+        --output text 2>/dev/null || echo "")
+
+    if [ "$TGW_ROUTE_STATE" = "active" ]; then
+        log_success "TGW route $FIRST_CIDR_BASE is ACTIVE"
+        TGW_ROUTES_OK=true
+    elif [ -n "$TGW_ROUTE_STATE" ]; then
+        log_warning "TGW route $FIRST_CIDR_BASE state: $TGW_ROUTE_STATE"
+        TGW_ROUTES_OK=false
+    else
+        log_warning "TGW route $FIRST_CIDR_BASE not found"
+        TGW_ROUTES_OK=false
+    fi
+fi
+
+# =============================================================================
+# Layer 2: Validate VPC routes
+# =============================================================================
+
+log_info "Validating VPC routes..."
+
+# Get cluster VPC and route tables
+CLUSTER_VPC=$(aws eks describe-cluster \
+    --profile "$AWS_PROFILE" \
+    --region "$AWS_REGION" \
+    --name "$CLUSTER_NAME" \
+    --query 'cluster.resourcesVpcConfig.vpcId' \
+    --output text 2>/dev/null || echo "")
+
+if [ -z "$CLUSTER_VPC" ] || [ "$CLUSTER_VPC" = "None" ]; then
+    log_error "Could not determine cluster VPC"
+    VPC_ROUTES_OK=false
+else
+    log_success "Cluster VPC: $CLUSTER_VPC"
+
+    # Get route tables for cluster VPC
+    VPC_ROUTE_TABLES=$(aws ec2 describe-route-tables \
+        --profile "$AWS_PROFILE" \
+        --region "$AWS_REGION" \
+        --filters "Name=vpc-id,Values=$CLUSTER_VPC" \
+        --query 'RouteTables[*].RouteTableId' \
+        --output text 2>/dev/null || echo "")
+
+    if [ -z "$VPC_ROUTE_TABLES" ]; then
+        log_warning "No route tables found in VPC"
+        VPC_ROUTES_OK=false
+    else
+        VPC_ROUTES_OK=true
+        for rtb_id in $VPC_ROUTE_TABLES; do
+            # Check if route exists for FIRST_CIDR_BASE
+            ROUTE_EXISTS=$(aws ec2 describe-route-tables \
+                --profile "$AWS_PROFILE" \
+                --region "$AWS_REGION" \
+                --route-table-ids "$rtb_id" \
+                --query "RouteTables[0].Routes[?DestinationCidrBlock=='$FIRST_CIDR_BASE']" \
+                --output text 2>/dev/null | wc -l)
+
+            if [ "$ROUTE_EXISTS" -gt 0 ]; then
+                log_success "VPC route $FIRST_CIDR_BASE found in $rtb_id"
+            else
+                log_warning "VPC route $FIRST_CIDR_BASE NOT found in $rtb_id"
+                VPC_ROUTES_OK=false
+            fi
+        done
+    fi
+fi
+
+# =============================================================================
+# Layer 3: Test URLs from pod
+# =============================================================================
+
+log_info "Testing URL connectivity from EKS pod..."
+
+# Create a temp pod to run curl tests
+POD_NAME="curl-test-$(date +%s)"
+NAMESPACE="default"
+
+log_info "Creating pod: $POD_NAME"
+
+# Try to create the pod and wait for it to be ready
+kubectl run "$POD_NAME" \
+    --image=curlimages/curl:latest \
+    --restart=Never \
+    --rm \
+    -- sleep 3600 &
+
+POD_PID=$!
+sleep 2
+
+# Check if pod is running
+POD_STATUS=$(kubectl get pod "$POD_NAME" -o jsonpath='{.status.phase}' 2>/dev/null || echo "")
+
+if [ "$POD_STATUS" != "Running" ]; then
+    log_warning "Pod failed to start (status: $POD_STATUS), attempting direct test..."
+    kill $POD_PID 2>/dev/null || true
+    URL_TESTS_OK=false
+else
+    log_success "Pod running: $POD_NAME"
+
+    URL_TESTS_OK=true
+    declare -a URL_RESULTS
+    declare -a URL_STATUS_CODES
+    declare -a URL_LATENCIES
+
+    for url in "${URLS[@]}"; do
+        log_info "Testing: $url"
+
+        # Run curl inside pod with timeout
+        CURL_OUTPUT=$(kubectl exec "$POD_NAME" -- \
+            curl -s -o /dev/null -w "%{http_code} %{time_total}" \
+            --max-time "$TIMEOUT" "$url" 2>/dev/null || echo "000 0")
+
+        read STATUS_CODE LATENCY <<< "$CURL_OUTPUT"
+
+        URL_STATUS_CODES+=("$STATUS_CODE")
+        URL_LATENCIES+=("$LATENCY")
+
+        if [ "$STATUS_CODE" = "200" ] || [ "$STATUS_CODE" = "201" ]; then
+            URL_RESULTS+=("PASS")
+            log_success "URL $url: HTTP $STATUS_CODE (${LATENCY}s)"
+        elif [ "$STATUS_CODE" = "000" ]; then
+            URL_RESULTS+=("FAIL")
+            URL_TESTS_OK=false
+            log_error "URL $url: UNREACHABLE (timeout after ${TIMEOUT}s)"
+        else
+            URL_RESULTS+=("PARTIAL")
+            log_warning "URL $url: HTTP $STATUS_CODE (${LATENCY}s)"
+        fi
+    done
+
+    # Clean up pod
+    log_info "Cleaning up pod: $POD_NAME"
+    kubectl delete pod "$POD_NAME" --ignore-not-found=true &>/dev/null || true
+    kill $POD_PID 2>/dev/null || true
+fi
+
+# =============================================================================
+# Output Results
+# =============================================================================
+
+# Calculate overall health score
+PASS_COUNT=0
+FAIL_COUNT=0
+PARTIAL_COUNT=0
+for result in "${URL_RESULTS[@]}"; do
+    case "$result" in
+        PASS) ((PASS_COUNT++)) ;;
+        FAIL) ((FAIL_COUNT++)) ;;
+        PARTIAL) ((PARTIAL_COUNT++)) ;;
+    esac
+done
+
+TOTAL_TESTS=$((PASS_COUNT + FAIL_COUNT + PARTIAL_COUNT))
+if [ "$TOTAL_TESTS" -gt 0 ]; then
+    HEALTH_SCORE=$(( (PASS_COUNT * 100) / TOTAL_TESTS ))
+else
+    HEALTH_SCORE=0
+fi
+
+# Add route validation to score
+if [ "$TGW_ROUTES_OK" = true ] && [ "$VPC_ROUTES_OK" = true ]; then
+    ROUTE_SCORE=100
+else
+    ROUTE_SCORE=50
+fi
+
+OVERALL_SCORE=$(( (HEALTH_SCORE + ROUTE_SCORE) / 2 ))
+
+if [ "$FORMAT" = "json" ]; then
+    # JSON output
+    cat << EOF
+{
+  "peer": "$PEER",
+  "cluster": "$CLUSTER_NAME",
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "routes": {
+    "tgw": {
+      "status": "$([ "$TGW_ROUTES_OK" = true ] && echo "OK" || echo "FAILED")",
+      "route": "$FIRST_CIDR_BASE"
+    },
+    "vpc": {
+      "status": "$([ "$VPC_ROUTES_OK" = true ] && echo "OK" || echo "FAILED")",
+      "route": "$FIRST_CIDR_BASE"
+    }
+  },
+  "url_tests": {
+    "total": ${#URLS[@]},
+    "passed": $PASS_COUNT,
+    "failed": $FAIL_COUNT,
+    "partial": $PARTIAL_COUNT,
+    "results": [
+EOF
+
+    for i in "${!URLS[@]}"; do
+        echo "      {"
+        echo "        \"url\": \"${URLS[$i]}\","
+        echo "        \"status\": \"${URL_STATUS_CODES[$i] || 000}\","
+        echo "        \"result\": \"${URL_RESULTS[$i] || SKIP}\","
+        echo "        \"latency_s\": ${URL_LATENCIES[$i] || 0}"
+        echo "      }$([ $i -lt $((${#URLS[@]} - 1)) ] && echo "," || echo "")"
+    done
+
+    cat << EOF
+    ]
+  },
+  "health_score": $OVERALL_SCORE,
+  "status": "$([ $OVERALL_SCORE -ge 80 ] && echo "READY" || [ $OVERALL_SCORE -ge 60 ] && echo "DEGRADED" || echo "UNHEALTHY")"
+}
+EOF
+else
+    # Text output
+    echo ""
+    echo "┌─────────────────────────────────────────────────────────────────────────────┐"
+    echo "│ CONNECTIVITY TEST RESULTS                                                   │"
+    echo "├─────────────────────────────────────────────────────────────────────────────┤"
+    echo "│ Peer: $PEER"
+    echo "│ Cluster: $CLUSTER_NAME"
+    echo "├─────────────────────────────────────────────────────────────────────────────┤"
+    echo "│ 🌐 ROUTING LAYERS"
+    echo "│   TGW Route ($FIRST_CIDR_BASE): $([ "$TGW_ROUTES_OK" = true ] && echo -e "${GREEN}✔ OK${NC}" || echo -e "${RED}✘ FAILED${NC}")"
+    echo "│   VPC Route ($FIRST_CIDR_BASE): $([ "$VPC_ROUTES_OK" = true ] && echo -e "${GREEN}✔ OK${NC}" || echo -e "${RED}✘ FAILED${NC}")"
+    echo "├─────────────────────────────────────────────────────────────────────────────┤"
+    echo "│ 🌐 URL TESTS ($PASS_COUNT/$TOTAL_TESTS passed)"
+
+    for i in "${!URLS[@]}"; do
+        RESULT_ICON=""
+        case "${URL_RESULTS[$i]}" in
+            PASS) RESULT_ICON="${GREEN}✔${NC}" ;;
+            FAIL) RESULT_ICON="${RED}✘${NC}" ;;
+            PARTIAL) RESULT_ICON="${YELLOW}⚠${NC}" ;;
+        esac
+        printf "│   %b %s (HTTP %s, %.2fs)\n" "$RESULT_ICON" "${URLS[$i]}" "${URL_STATUS_CODES[$i]:-000}" "${URL_LATENCIES[$i]:-0}"
+    done
+
+    echo "├─────────────────────────────────────────────────────────────────────────────┤"
+    echo "│ 📊 OVERALL HEALTH"
+    HEALTH_TEXT=""
+    if [ $OVERALL_SCORE -ge 80 ]; then
+        HEALTH_TEXT="${GREEN}✔ READY${NC} ($OVERALL_SCORE%)"
+    elif [ $OVERALL_SCORE -ge 60 ]; then
+        HEALTH_TEXT="${YELLOW}⚠ DEGRADED${NC} ($OVERALL_SCORE%)"
+    else
+        HEALTH_TEXT="${RED}✘ UNHEALTHY${NC} ($OVERALL_SCORE%)"
+    fi
+    echo "│   Status: $(echo -e "$HEALTH_TEXT")"
+    echo "└─────────────────────────────────────────────────────────────────────────────┘"
+    echo ""
+fi
+
+# Exit code based on health score
+if [ $OVERALL_SCORE -ge 80 ]; then
+    exit 0
+else
+    exit 1
+fi

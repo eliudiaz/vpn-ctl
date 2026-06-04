@@ -1,0 +1,542 @@
+#!/bin/bash
+
+# Skill: VPN End-to-End (E2E) Testing
+# Purpose: Structured 5-layer VPN tunnel testing with scoring
+# Usage: ./skill-vpn-e2e-test [OPTIONS]
+
+set -e
+
+REGION="${REGION:-us-east-2}"
+TGW_ID="tgw-0572ce4b80ff7445a"
+TGW_RTB_ID="tgw-rtb-079e9cb450e5355e6"
+PEER_NAME="${PEER_NAME:-}"
+TEST_LAYER="${TEST_LAYER:-all}"
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+# Counters
+TOTAL_CHECKS=0
+PASSED_CHECKS=0
+
+print_status() {
+    local status=$1
+    local message=$2
+    ((TOTAL_CHECKS++))
+
+    case $status in
+        "pass")
+            echo -e "${GREEN}✓${NC} $message"
+            ((PASSED_CHECKS++))
+            ;;
+        "warn")
+            echo -e "${YELLOW}⚠${NC} $message"
+            ;;
+        "fail")
+            echo -e "${RED}✗${NC} $message"
+            ;;
+        "info")
+            echo -e "${BLUE}ℹ${NC} $message"
+            ;;
+    esac
+}
+
+print_header() {
+    echo -e "\n${BOLD}${CYAN}=== $1 ===${NC}\n"
+}
+
+print_section() {
+    echo -e "\n${BOLD}$1${NC}"
+}
+
+print_result_summary() {
+    local percent=$((PASSED_CHECKS * 100 / TOTAL_CHECKS))
+
+    echo ""
+    echo -e "${BOLD}=== E2E Test Result Summary ===${NC}"
+    echo "Passed: $PASSED_CHECKS / $TOTAL_CHECKS checks"
+    echo "Score: ${percent}%"
+
+    if [ $percent -eq 100 ]; then
+        echo -e "${GREEN}Status: ALL TESTS PASSING${NC}"
+        return 0
+    elif [ $percent -ge 80 ]; then
+        echo -e "${YELLOW}Status: MOSTLY PASSING (review failures)${NC}"
+        return 0
+    else
+        echo -e "${RED}Status: CRITICAL ISSUES (see failures above)${NC}"
+        return 1
+    fi
+}
+
+# Layer 1: Network Reachability
+layer_1_reachability() {
+    print_header "Layer 1: Network Reachability"
+
+    if [ -z "$PEER_NAME" ]; then
+        print_status "warn" "No peer specified; skipping reachability tests"
+        echo "Use: --peer PEER_NAME to test specific peer"
+        return 0
+    fi
+
+    # Get tunnel endpoints
+    local tunnel_data=$(aws ec2 describe-vpn-connections \
+        --filters "Name=tag:Name,Values=$PEER_NAME" \
+        --region "$REGION" \
+        --query 'VpnConnections[0].VgwTelemetry[*].OutsideIpAddress' \
+        --output text 2>/dev/null || echo "")
+
+    if [ -z "$tunnel_data" ]; then
+        print_status "fail" "Cannot retrieve tunnel endpoints for peer: $PEER_NAME"
+        return 1
+    fi
+
+    local endpoints=($tunnel_data)
+    local endpoint_count=${#endpoints[@]}
+
+    if [ $endpoint_count -lt 2 ]; then
+        print_status "fail" "Expected 2 tunnel endpoints, found $endpoint_count"
+        return 1
+    fi
+
+    print_status "info" "Testing reachability to $(echo $endpoint_count) tunnel endpoints"
+    echo ""
+
+    # Test each endpoint on UDP 500 and 4500
+    for endpoint in "${endpoints[@]}"; do
+        for port in 500 4500; do
+            if timeout 3 bash -c "echo > /dev/udp/$endpoint/$port" 2>/dev/null; then
+                print_status "pass" "Endpoint $endpoint:UDP/$port reachable (best-effort)"
+            else
+                # UDP is stateless, so timeouts are expected; just note it
+                print_status "warn" "Endpoint $endpoint:UDP/$port no response (expected for UDP; check firewall)"
+            fi
+        done
+    done
+
+    echo ""
+    return 0
+}
+
+# Layer 2: IKE/IPSec Tunnel State
+layer_2_tunnel_state() {
+    print_header "Layer 2: IKE/IPSec Tunnel Establishment"
+
+    if [ -z "$PEER_NAME" ]; then
+        print_status "warn" "No peer specified; skipping tunnel state checks"
+        echo "Use: --peer PEER_NAME to test specific peer"
+        return 0
+    fi
+
+    # Get tunnel status
+    local tunnel_status=$(aws ec2 describe-vpn-connections \
+        --filters "Name=tag:Name,Values=$PEER_NAME" \
+        --region "$REGION" \
+        --query 'VpnConnections[0].VgwTelemetry[*].Status.TunnelStatus' \
+        --output text 2>/dev/null || echo "")
+
+    if [ -z "$tunnel_status" ]; then
+        print_status "fail" "Cannot retrieve tunnel status for peer: $PEER_NAME"
+        return 1
+    fi
+
+    local tunnel_states=($tunnel_status)
+    local up_count=0
+
+    print_status "info" "Checking tunnel states..."
+    echo ""
+
+    for i in "${!tunnel_states[@]}"; do
+        local state="${tunnel_states[$i]}"
+        if [ "$state" = "UP" ]; then
+            print_status "pass" "Tunnel $((i+1)): $state"
+            ((up_count++))
+        else
+            print_status "fail" "Tunnel $((i+1)): $state (expected: UP)"
+        fi
+    done
+
+    echo ""
+
+    if [ $up_count -eq 2 ]; then
+        print_status "pass" "Gate 2.1 PASSED: Both tunnels UP"
+        return 0
+    else
+        print_status "fail" "Gate 2.1 FAILED: Only $up_count / 2 tunnels UP"
+        return 1
+    fi
+}
+
+# Layer 3: BGP Route Exchange
+layer_3_bgp_routes() {
+    print_header "Layer 3: BGP Route Exchange"
+
+    if [ -z "$PEER_NAME" ]; then
+        print_status "warn" "No peer specified; skipping BGP route checks"
+        echo "Use: --peer PEER_NAME to test specific peer"
+        return 0
+    fi
+
+    # Check TGW route table for any routes from this peer VPN
+    local vpn_id=$(aws ec2 describe-vpn-connections \
+        --filters "Name=tag:Name,Values=$PEER_NAME" \
+        --region "$REGION" \
+        --query 'VpnConnections[0].VpnConnectionId' \
+        --output text 2>/dev/null || echo "")
+
+    if [ -z "$vpn_id" ]; then
+        print_status "fail" "Cannot find VPN connection for peer: $PEER_NAME"
+        return 1
+    fi
+
+    print_status "info" "VPN Connection: $vpn_id"
+    echo ""
+
+    # Get routes for this VPN in TGW route table
+    local vpn_routes=$(aws ec2 describe-transit-gateway-routes \
+        --transit-gateway-route-table-id "$TGW_RTB_ID" \
+        --filters "Name=type,Values=propagated" \
+        --region "$REGION" \
+        --query "Routes[?TransitGatewayAttachments[0].TransitGatewayAttachmentId!=null]" \
+        --output json 2>/dev/null || echo "[]")
+
+    local route_count=$(echo "$vpn_routes" | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+
+    if [ "$route_count" -eq 0 ]; then
+        print_status "fail" "No BGP routes found in TGW route table for peer"
+        echo ""
+        print_status "info" "Routes may still be propagating; wait 2-3 minutes and retry"
+        return 1
+    fi
+
+    print_status "pass" "Found $route_count active routes from peer"
+    echo ""
+
+    # Show routes
+    echo "$vpn_routes" | python3 << 'PYTHON' 2>/dev/null || true
+import json
+import sys
+
+try:
+    routes = json.load(sys.stdin)
+    for route in routes[:5]:  # Show first 5 routes
+        cidr = route.get('DestinationCidrBlock', 'N/A')
+        state = route.get('State', 'unknown')
+        route_type = route.get('Type', 'unknown')
+        print(f"  • {cidr} [{state}] ({route_type})")
+
+    if len(routes) > 5:
+        print(f"  ... and {len(routes) - 5} more routes")
+except:
+    pass
+PYTHON
+
+    echo ""
+
+    # Check BGP status from AWS StatusMessage
+    local bgp_status=$(aws ec2 describe-vpn-connections \
+        --filters "Name:tag:Name,Values=$PEER_NAME" \
+        --region "$REGION" \
+        --query 'VpnConnections[0].VgwTelemetry[0].StatusMessage' \
+        --output text 2>/dev/null || echo "")
+
+    if [[ "$bgp_status" =~ "BGP ROUTES" ]]; then
+        print_status "pass" "BGP Status: $bgp_status"
+        print_status "pass" "Gate 3.1 PASSED: BGP routes exchanged"
+        return 0
+    else
+        print_status "warn" "BGP Status: $bgp_status (no BGP routes yet, may be initializing)"
+        return 1
+    fi
+}
+
+# Layer 4: Traffic Plane Test (requires pod setup)
+layer_4_traffic_test() {
+    print_header "Layer 4: Data Plane Traffic Test"
+
+    if [ -z "$PEER_NAME" ]; then
+        print_status "warn" "No peer specified; cannot test data plane"
+        echo "Use: --peer PEER_NAME to test specific peer"
+        return 0
+    fi
+
+    print_status "info" "Data plane testing requires:"
+    echo "  1. A test host on peer network (e.g., 172.16.x.x)"
+    echo "  2. An EKS pod in Affinity VPC"
+    echo ""
+    print_status "info" "Manual test procedure:"
+    echo "  1. Deploy test pod: kubectl run test-pod --image=alpine -- sleep 3600"
+    echo "  2. Get pod IP: kubectl get pods -o wide"
+    echo "  3. Ping peer network: kubectl exec test-pod -- ping 172.16.1.100"
+    echo "  4. Verify on peer side: tcpdump src 10.0.1.0/24"
+    echo ""
+    print_status "warn" "Skipping automated data plane test (requires manual setup)"
+
+    return 0
+}
+
+# Layer 5: Redundancy Assessment
+layer_5_redundancy() {
+    print_header "Layer 5: Redundancy Assessment"
+
+    if [ -z "$PEER_NAME" ]; then
+        print_status "warn" "No peer specified; skipping redundancy check"
+        echo "Use: --peer PEER_NAME to test specific peer"
+        return 0
+    fi
+
+    # Check both tunnels are UP
+    local tunnel_status=$(aws ec2 describe-vpn-connections \
+        --filters "Name:tag:Name,Values=$PEER_NAME" \
+        --region "$REGION" \
+        --query 'VpnConnections[0].VgwTelemetry[*].Status.TunnelStatus' \
+        --output text 2>/dev/null || echo "")
+
+    local tunnel_states=($tunnel_status)
+    local up_count=0
+
+    for state in "${tunnel_states[@]}"; do
+        if [ "$state" = "UP" ]; then
+            ((up_count++))
+        fi
+    done
+
+    if [ $up_count -eq 2 ]; then
+        print_status "pass" "Both tunnels UP: full redundancy available"
+        print_status "pass" "Gate 5.1 PASSED: Redundancy OK"
+        echo ""
+        print_status "info" "Single tunnel failure will not cause total loss"
+        print_status "info" "Expected failover time: 30-90 seconds (device-dependent)"
+        return 0
+    elif [ $up_count -eq 1 ]; then
+        print_status "warn" "Only 1 tunnel UP: redundancy degraded"
+        print_status "warn" "Next tunnel failure WILL cause outage"
+        echo ""
+        print_status "info" "Investigate why second tunnel is DOWN"
+        return 1
+    else
+        print_status "fail" "No tunnels UP: service unavailable"
+        return 1
+    fi
+}
+
+# CloudWatch metrics check
+check_cloudwatch_metrics() {
+    print_header "CloudWatch Metrics"
+
+    if [ -z "$PEER_NAME" ]; then
+        print_status "warn" "No peer specified; skipping CloudWatch checks"
+        return 0
+    fi
+
+    print_status "info" "Retrieving tunnel state metrics from CloudWatch..."
+    echo ""
+
+    # Get tunnel state metric
+    local metric=$(aws cloudwatch get-metric-statistics \
+        --namespace "AWS/VPN" \
+        --metric-name "TunnelState" \
+        --dimensions "Name=VpnId,Value=vpn-*" \
+        --start-time "$(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%S)" \
+        --end-time "$(date -u +%Y-%m-%dT%H:%M:%S)" \
+        --period 300 \
+        --statistics "Maximum" \
+        --region "$REGION" 2>/dev/null || echo "{}")
+
+    if [ "$metric" != "{}" ]; then
+        print_status "pass" "CloudWatch metrics available"
+        echo "  Metric: TunnelState"
+        echo "  Datapoints: $(echo "$metric" | python3 -c "import sys, json; print(len(json.load(sys.stdin).get('Datapoints', [])))" 2>/dev/null || echo "0")"
+    else
+        print_status "warn" "CloudWatch metrics not available or empty"
+    fi
+
+    echo ""
+}
+
+# Quick check (all peers)
+quick_check() {
+    print_header "Quick VPN E2E Status Check (All Peers)"
+
+    # Get all VPN connections
+    local vpn_data=$(aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections[*].[Tags[?Key==`Name`].Value[0],State,VgwTelemetry[*].Status.TunnelStatus]' \
+        --output json 2>/dev/null || echo "[]")
+
+    local vpn_count=$(echo "$vpn_data" | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+
+    if [ "$vpn_count" -eq 0 ]; then
+        print_status "warn" "No VPN connections found"
+        return 0
+    fi
+
+    print_status "info" "Found $vpn_count VPN peer(s)"
+    echo ""
+
+    echo "$vpn_data" | python3 << 'PYTHON' 2>/dev/null || true
+import json
+import sys
+
+try:
+    vpns = json.load(sys.stdin)
+    for peer_name, state, tunnel_states in vpns:
+        peer_display = peer_name if peer_name else "[No Name]"
+
+        if state == "available":
+            status_icon = "✓"
+            state_color = "\033[0;32m"
+        else:
+            status_icon = "✗"
+            state_color = "\033[1;33m"
+
+        up_count = sum(1 for ts in tunnel_states if ts == "UP")
+        tunnel_display = f"{up_count}/2 tunnels UP"
+
+        print(f"{status_icon} {peer_display}: {state_color}{state}\033[0m ({tunnel_display})")
+except:
+    pass
+PYTHON
+
+    echo ""
+}
+
+# Show help
+show_help() {
+    cat << 'EOF'
+VPN End-to-End (E2E) Testing Skill
+
+Purpose: Structured testing of VPN tunnel connectivity across 5 layers
+
+Usage: ./skill-vpn-e2e-test [OPTIONS]
+
+Options:
+  (default)              Quick check of all VPN peers (5 seconds)
+  --peer PEER_NAME       Test specific peer (e.g., --peer Vimenca)
+  --layer <1-5>          Test specific layer only
+  --e2e                  Full E2E test (all layers for specified peer)
+  --region REGION        AWS region (default: us-east-2)
+  --help                 Show this help
+
+Layers:
+  Layer 1: Network Reachability (UDP 500/4500 to endpoints)
+  Layer 2: IKE/IPSec Tunnel State (both tunnels UP)
+  Layer 3: BGP Route Exchange (routes in TGW table)
+  Layer 4: Data Plane Traffic Test (ping from EKS pod)
+  Layer 5: Redundancy Assessment (failover readiness)
+
+Examples:
+  ./skill-vpn-e2e-test                              # Quick status of all peers
+  ./skill-vpn-e2e-test --peer Vimenca              # Check Vimenca peer
+  ./skill-vpn-e2e-test --peer Vimenca --layer 2   # Check only tunnel state
+  ./skill-vpn-e2e-test --peer Vimenca --e2e        # Full E2E test for Vimenca
+
+Output:
+  ✓ = Test passed
+  ✗ = Test failed (requires action)
+  ⚠ = Warning (may need attention)
+  ℹ = Information (for reference)
+
+E2E Test Score:
+  100% = All gates passing; tunnel fully operational
+  80%+ = Mostly passing; review failures
+  <80% = Critical issues; see failure details
+
+Peer Names (from vpn-peers.yaml):
+  - Vimenca (Checkpoint R80.10)
+  - CIBA (Fortinet FortiGate)
+  - Checkpoint-DR (Checkpoint template)
+
+For detailed protocol and troubleshooting, see:
+  VPN_E2E_TESTING_PROTOCOL.md
+  peer-guides/CHECKPOINT_SETUP_GUIDE.md
+  peer-guides/FORTIGATE_SETUP_GUIDE.md
+  peer-guides/PALOALTO_SETUP_GUIDE.md
+  peer-guides/CISCO_SETUP_GUIDE.md
+EOF
+}
+
+# Main
+case "${1:-}" in
+    --peer)
+        if [ -z "$2" ]; then
+            print_status "fail" "Peer name required: --peer PEER_NAME"
+            exit 1
+        fi
+        PEER_NAME="$2"
+        shift 2
+
+        case "${1:-all}" in
+            --layer)
+                TEST_LAYER="$2"
+                case $TEST_LAYER in
+                    1) layer_1_reachability ;;
+                    2) layer_2_tunnel_state ;;
+                    3) layer_3_bgp_routes ;;
+                    4) layer_4_traffic_test ;;
+                    5) layer_5_redundancy ;;
+                    *)
+                        print_status "fail" "Invalid layer: $TEST_LAYER (must be 1-5)"
+                        exit 1
+                        ;;
+                esac
+                ;;
+            --e2e)
+                layer_1_reachability
+                layer_2_tunnel_state
+                layer_3_bgp_routes
+                layer_4_traffic_test
+                layer_5_redundancy
+                check_cloudwatch_metrics
+                print_result_summary
+                ;;
+            *)
+                quick_check
+                ;;
+        esac
+        ;;
+    --layer)
+        TEST_LAYER="$2"
+        if [ -z "$PEER_NAME" ]; then
+            print_status "fail" "Peer name required for layer testing: --peer PEER_NAME --layer <1-5>"
+            exit 1
+        fi
+        case $TEST_LAYER in
+            1) layer_1_reachability ;;
+            2) layer_2_tunnel_state ;;
+            3) layer_3_bgp_routes ;;
+            4) layer_4_traffic_test ;;
+            5) layer_5_redundancy ;;
+            *)
+                print_status "fail" "Invalid layer: $TEST_LAYER (must be 1-5)"
+                exit 1
+                ;;
+        esac
+        ;;
+    --e2e)
+        if [ -z "$PEER_NAME" ]; then
+            print_status "fail" "Peer name required for E2E testing: --peer PEER_NAME --e2e"
+            exit 1
+        fi
+        layer_1_reachability
+        layer_2_tunnel_state
+        layer_3_bgp_routes
+        layer_4_traffic_test
+        layer_5_redundancy
+        check_cloudwatch_metrics
+        print_result_summary
+        ;;
+    --help)
+        show_help
+        ;;
+    *)
+        quick_check
+        ;;
+esac

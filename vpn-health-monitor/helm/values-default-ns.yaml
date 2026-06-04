@@ -1,0 +1,135 @@
+# VPN Health Monitor - Values for Default Namespace Deployment
+# ============================================================
+
+namespace:
+  create: false
+  name: default
+
+# Use existing Docker image (built externally)
+image:
+  repository: 218833996210.dkr.ecr.us-east-2.amazonaws.com/affinity/vpn-health-monitor
+  tag: "1.0.3"
+  pullPolicy: IfNotPresent
+
+# Replicas for default namespace
+deployment:
+  replicas: 2
+
+# Ingress configuration for default namespace
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: vpn.assurehub.io
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    enabled: true
+    secretName: vpn-health-monitor-tls
+    hosts:
+      - vpn.assurehub.io
+
+# Autoscaling settings
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# All 11 VPN targets (3 providers)
+vpnTargets:
+  enabled: true
+  content: |
+    providers:
+      - name: "Vimenca"
+        description: "Banking services provider - SNAT masqueraded to 203.0.113.10"
+        enabled: true
+        targets:
+          - name: "Primary-Banking"
+            ip: "172.16.70.1"
+            port: 8080
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "Securities"
+            ip: "172.16.65.21"
+            port: 443
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "Integration-Hub"
+            ip: "172.16.82.28"
+            port: 8088
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+
+      - name: "CIBAO"
+        description: "Enterprise partner network - Original pod IPs visible"
+        enabled: true
+        targets:
+          - name: "Data-Warehouse"
+            ip: "172.17.10.50"
+            port: 1433
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "CRM-Portal"
+            ip: "172.17.5.10"
+            port: 8080
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "ERP-API"
+            ip: "172.17.5.20"
+            port: 8443
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "Message-Broker"
+            ip: "172.17.20.10"
+            port: 5672
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+
+      - name: "Affinity-Legacy"
+        description: "Legacy MSSQL databases - Original pod IPs visible"
+        enabled: true
+        targets:
+          - name: "APAP-Produccion"
+            ip: "192.168.100.8"
+            port: 1433
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "Pruebas"
+            ip: "192.168.100.11"
+            port: 1433
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "Produccion-Secondary"
+            ip: "192.168.100.12"
+            port: 1433
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "Application-Gateway"
+            ip: "172.133.5.4"
+            port: 443
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+
+    monitoring:
+      interval_seconds: 60
+      history_retention: 3600
+      max_history_per_target: 60
+      default_timeout: 5
+      max_concurrent: 10

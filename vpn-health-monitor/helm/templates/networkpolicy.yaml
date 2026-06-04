@@ -1,0 +1,35 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "vpn-health-monitor.fullname" . }}
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "vpn-health-monitor.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "vpn-health-monitor.selectorLabels" . | nindent 6 }}
+  policyTypes:
+  {{- range .Values.networkPolicy.policyTypes }}
+  - {{ . }}
+  {{- end }}
+  ingress:
+  - from:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.port.containerPort }}
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow TCP (includes ICMP at network layer)
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+{{- end }}

@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>CISCO_SETUP_GUIDE</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="/dev/fd/11" />
+</head>
+<body>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#cisco-asa-vpn-tunnel-setup-guide"
+id="toc-cisco-asa-vpn-tunnel-setup-guide">Cisco ASA VPN Tunnel Setup
+Guide</a>
+<ul>
+<li><a href="#table-of-contents" id="toc-table-of-contents">📋 Table of
+Contents</a></li>
+<li><a href="#overview" id="toc-overview">🎯 Overview</a></li>
+<li><a href="#prerequisites" id="toc-prerequisites">✅
+Prerequisites</a></li>
+<li><a href="#tunnel-parameters" id="toc-tunnel-parameters">🔐 Tunnel
+Parameters</a></li>
+<li><a href="#step-by-step-configuration"
+id="toc-step-by-step-configuration">🔧 Step-by-Step
+Configuration</a></li>
+<li><a href="#bgp-dynamic-routing" id="toc-bgp-dynamic-routing">🔄 BGP
+Dynamic Routing</a></li>
+<li><a href="#verification-procedures"
+id="toc-verification-procedures">✅ Verification Procedures</a></li>
+<li><a href="#troubleshooting" id="toc-troubleshooting">🐛
+Troubleshooting</a></li>
+<li><a href="#joint-e2e-testing-phases-3-7"
+id="toc-joint-e2e-testing-phases-3-7">🧪 Joint E2E Testing (Phases
+3-7)</a></li>
+<li><a href="#support-escalation" id="toc-support-escalation">📞 Support
+&amp; Escalation</a></li>
+<li><a href="#configuration-checklist"
+id="toc-configuration-checklist">📋 Configuration Checklist</a></li>
+<li><a href="#additional-resources" id="toc-additional-resources">📚
+Additional Resources</a></li>
+<li><a href="#revision-history" id="toc-revision-history">📝 Revision
+History</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="cisco-asa-vpn-tunnel-setup-guide">Cisco ASA VPN Tunnel Setup
+Guide</h1>
+<p><strong>AFT VPN Peer Configuration Guide</strong> <strong>Document
+Version:</strong> 1.0 <strong>Last Updated:</strong> March 4, 2026</p>
+<hr />
+<h2 id="table-of-contents">📋 Table of Contents</h2>
+<ol type="1">
+<li><a href="#overview">Overview</a></li>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#tunnel-parameters">Tunnel Parameters</a></li>
+<li><a href="#step-by-step-configuration">Step-by-Step
+Configuration</a></li>
+<li><a href="#bgp-dynamic-routing">BGP Dynamic Routing</a></li>
+<li><a href="#verification-procedures">Verification Procedures</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+<li><a href="#joint-e2e-testing-phases-3-7">Joint E2E Testing (Phases
+3-7)</a></li>
+<li><a href="#support--escalation">Support &amp; Escalation</a></li>
+</ol>
+<hr />
+<h2 id="overview">🎯 Overview</h2>
+<p>This guide provides step-by-step instructions for configuring a Cisco
+ASA (Adaptive Security Appliance) to establish a secure, redundant VPN
+tunnel connection to Affinity’s AWS Transit Gateway infrastructure.</p>
+<h3 id="what-youre-building">What You’re Building</h3>
+<pre><code>Your Network              Affinity Transit Gateway      AWS Network
+(172.16.0.0/16)          (Hub &amp; Spoke)                 (VPCs)
+      │                         │                           │
+      ├─ Tunnel 1 (Primary)────►│                           │
+      │  (52.14.x.x:500)        ├─ Route Propagation ─────►│
+      │                         │                           │
+      ├─ Tunnel 2 (Secondary)──►│                           │
+      │  (52.14.y.y:500)        │                           │
+      │                         │                           │
+      └─ BGP 65000             └─ BGP 64512 (AWS)          │
+         (Dynamic Routing)       (Dynamic Routing)         │</code></pre>
+<h3 id="key-benefits">Key Benefits</h3>
+<ul>
+<li>✅ <strong>Redundancy:</strong> Dual tunnels with automatic
+failover</li>
+<li>✅ <strong>Dynamic Routing:</strong> BGP learns routes
+automatically</li>
+<li>✅ <strong>Encryption:</strong> IKEv2 with AES-256, SHA2-256</li>
+<li>✅ <strong>Low Latency:</strong> Direct AWS connectivity</li>
+<li>✅ <strong>AWS Managed:</strong> Transit Gateway handles
+complexity</li>
+</ul>
+<p><strong>Estimated Setup Time:</strong> 30-45 minutes</p>
+<hr />
+<h2 id="prerequisites">✅ Prerequisites</h2>
+<p>Before beginning, ensure you have:</p>
+<ul class="task-list">
+<li><label><input type="checkbox" /><strong>Admin Access:</strong> ASDM
+(Adaptive Security Device Manager) or CLI with admin
+privileges</label></li>
+<li><label><input type="checkbox" /><strong>Network Planning:</strong>
+CIDR blocks that will be routed through tunnel</label></li>
+<li><label><input type="checkbox" /><strong>Tunnel Details:</strong>
+Endpoint IPs and PSKs (provided by Affinity)</label></li>
+<li><label><input type="checkbox" /><strong>BGP Details:</strong> Your
+ASN and insider tunnel IPs</label></li>
+<li><label><input type="checkbox" /><strong>Connectivity:</strong>
+Ability to reach Cisco ASA management interface (ASDM/SSH)</label></li>
+<li><label><input type="checkbox" /><strong>Documentation:</strong>
+Print this guide for reference during configuration</label></li>
+</ul>
+<h3 id="information-provided-by-affinity">Information Provided by
+Affinity</h3>
+<p>You should receive the following from Affinity DevOps:</p>
+<pre><code>Tunnel 1:
+  Endpoint: 52.14.X.X:500 (UDP)
+  Inside IP: 169.254.X.X/30
+  PSK: [32-character secure string]
+
+Tunnel 2:
+  Endpoint: 52.14.Y.Y:500 (UDP)
+  Inside IP: 169.254.Y.Y/30
+  PSK: [32-character secure string]
+
+BGP Configuration:
+  AWS ASN: 64512
+  Your ASN: [Your assigned ASN]
+  AWS Side BGP IP: 169.254.X.1 / 169.254.Y.1
+  Your Side BGP IP: 169.254.X.2 / 169.254.Y.2</code></pre>
+<hr />
+<h2 id="tunnel-parameters">🔐 Tunnel Parameters</h2>
+<h3 id="encryption-authentication-standards">Encryption &amp;
+Authentication Standards</h3>
+<p>All Cisco ASA configurations use these identical parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>IKE Version</strong></td>
+<td>IKEv2</td>
+</tr>
+<tr>
+<td><strong>Phase 1 Encryption</strong></td>
+<td>AES-256</td>
+</tr>
+<tr>
+<td><strong>Phase 1 Integrity</strong></td>
+<td>SHA2-256</td>
+</tr>
+<tr>
+<td><strong>Phase 1 DH Group</strong></td>
+<td>DH Group 14 (modp4096)</td>
+</tr>
+<tr>
+<td><strong>Phase 1 Lifetime</strong></td>
+<td>28800 seconds (8 hours)</td>
+</tr>
+<tr>
+<td><strong>Phase 2 Encryption</strong></td>
+<td>AES-256</td>
+</tr>
+<tr>
+<td><strong>Phase 2 Integrity</strong></td>
+<td>SHA2-256</td>
+</tr>
+<tr>
+<td><strong>Phase 2 PFS</strong></td>
+<td>Yes (Recommended)</td>
+</tr>
+<tr>
+<td><strong>Phase 2 Lifetime</strong></td>
+<td>3600 seconds (1 hour)</td>
+</tr>
+<tr>
+<td><strong>Dead Peer Detection (DPD)</strong></td>
+<td>Enabled</td>
+</tr>
+<tr>
+<td><strong>DPD Timeout</strong></td>
+<td>10 seconds</td>
+</tr>
+<tr>
+<td><strong>DPD Action</strong></td>
+<td>restart</td>
+</tr>
+</tbody>
+</table>
+<h3 id="why-these-settings">Why These Settings?</h3>
+<ul>
+<li><strong>IKEv2:</strong> Modern, more resilient than IKEv1</li>
+<li><strong>AES-256:</strong> FIPS 140-2 approved, strong
+encryption</li>
+<li><strong>SHA2-256:</strong> Industry standard integrity checking</li>
+<li><strong>DH Group 14:</strong> Balances security and performance</li>
+<li><strong>DPD:</strong> Detects and recovers from tunnel failures
+automatically</li>
+</ul>
+<hr />
+<h2 id="step-by-step-configuration">🔧 Step-by-Step Configuration</h2>
+<h3 id="step-1-access-cisco-asa">STEP 1: Access Cisco ASA</h3>
+<p><strong>Via ASDM (Web GUI):</strong> 1. Open ASDM application or
+navigate to <code>https://[asa-ip]:8443</code> 2. Log in with admin
+credentials 3. Navigate to <strong>Configuration</strong> →
+<strong>Site-to-Site VPN</strong> → <strong>IPSec</strong></p>
+<p><strong>Via CLI (SSH):</strong></p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ssh</span> admin@<span class="pp">[</span><span class="ss">asa</span><span class="pp">-</span><span class="ss">ip</span><span class="pp">]</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Or</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">telnet</span> <span class="pp">[</span><span class="ss">asa</span><span class="pp">-</span><span class="ss">ip</span><span class="pp">]</span></span></code></pre></div>
+<hr />
+<h3 id="step-2-create-ike-policy-phase-1">STEP 2: Create IKE Policy
+(Phase 1)</h3>
+<p><strong>Via ASDM:</strong> 1. Navigate to
+<strong>Configuration</strong> → <strong>Site-to-Site VPN</strong> →
+<strong>IKE</strong> 2. Click <strong>Add</strong> to create new policy
+3. Configure: - <strong>Priority:</strong> 1 - <strong>IKE
+Version:</strong> IKEv2 - <strong>Encryption:</strong> AES-256 -
+<strong>Integrity:</strong> SHA-256 - <strong>DH Group:</strong> 14 -
+<strong>Lifetime (seconds):</strong> 28800</p>
+<ol start="4" type="1">
+<li>Click <strong>OK</strong></li>
+</ol>
+<p><strong>Via CLI:</strong></p>
+<pre><code>configure terminal
+crypto ikev2 policy 1
+  encryption aes-256
+  integrity sha256
+  group 14
+  lifetime 28800
+exit</code></pre>
+<hr />
+<h3 id="step-3-create-ipsec-transform-set-phase-2">STEP 3: Create IPSec
+Transform Set (Phase 2)</h3>
+<p><strong>Via ASDM:</strong> 1. Navigate to
+<strong>Configuration</strong> → <strong>Site-to-Site VPN</strong> →
+<strong>IPSec</strong> 2. Click <strong>Transform Sets</strong> →
+<strong>Add</strong> 3. Configure: - <strong>Name:</strong>
+<code>ATG-Transform-Set-1</code> - <strong>Encryption:</strong> AES-256
+- <strong>Integrity (Authentication):</strong> SHA-256 - <strong>Enable
+PFS:</strong> Yes - <strong>DH Group:</strong> 14 -
+<strong>Mode:</strong> Tunnel - <strong>Lifetime (seconds):</strong>
+3600</p>
+<ol start="4" type="1">
+<li>Click <strong>OK</strong></li>
+</ol>
+<p><strong>Via CLI:</strong></p>
+<pre><code>crypto ipsec transform-set ATG-Transform-Set-1 esp-aes 256 esp-sha-256
+  mode tunnel
+  pfs group14</code></pre>
+<hr />
+<h3 id="step-4-create-crypto-acl-traffic-selectors">STEP 4: Create
+Crypto ACL (Traffic Selectors)</h3>
+<p><strong>Via ASDM:</strong> 1. Navigate to
+<strong>Configuration</strong> → <strong>Objects</strong> →
+<strong>Access Lists</strong> 2. Click <strong>Add</strong> to create
+new ACL 3. Configure: - <strong>Name:</strong>
+<code>VPN-to-Affinity-ACL</code> - <strong>Access List Type:</strong>
+Extended - Add rule: Permit IP from <code>172.16.0.0 255.255.0.0</code>
+to <code>10.0.0.0 255.255.0.0</code></p>
+<ol start="4" type="1">
+<li>Click <strong>OK</strong></li>
+</ol>
+<p><strong>Via CLI:</strong></p>
+<pre><code>access-list VPN-to-Affinity-ACL extended permit ip 172.16.0.0 255.255.0.0 10.0.0.0 255.255.0.0</code></pre>
+<hr />
+<h3 id="step-5-configure-ipsec-connection-tunnel-1">STEP 5: Configure
+IPSec Connection (Tunnel 1)</h3>
+<p><strong>Via ASDM:</strong> 1. Navigate to
+<strong>Configuration</strong> → <strong>Site-to-Site VPN</strong> →
+<strong>IPSec Connections</strong> 2. Click <strong>Add</strong> to
+create connection 3. Configure General: - <strong>Connection
+Name:</strong> <code>Affinity-ATG-Tunnel-1</code> - <strong>Connection
+Type:</strong> Site to Site - <strong>Interface:</strong> Outside
+(external interface) - <strong>Peer IP Address:</strong>
+<code>52.14.X.X</code> (Affinity endpoint) - <strong>Authentication
+Type:</strong> Pre-shared Key - <strong>Pre-shared Key:</strong> [PSK
+provided by Affinity] (case-sensitive!)</p>
+<ol start="4" type="1">
+<li><p>Configure IPSec:</p>
+<ul>
+<li><strong>IKE Policy:</strong> Select policy created in Step 2</li>
+<li><strong>Transform Set:</strong> Select
+<code>ATG-Transform-Set-1</code></li>
+<li><strong>Access List:</strong> Select
+<code>VPN-to-Affinity-ACL</code></li>
+<li><strong>PFS Group:</strong> 14</li>
+</ul></li>
+<li><p>Click <strong>OK</strong></p></li>
+<li><p><strong>Repeat for Tunnel 2:</strong></p>
+<ul>
+<li>Name: <code>Affinity-ATG-Tunnel-2</code></li>
+<li>Peer IP: <code>52.14.Y.Y</code></li>
+<li>PSK: [Second PSK from Affinity]</li>
+</ul></li>
+</ol>
+<p><strong>Via CLI:</strong></p>
+<pre><code>crypto map ATG-Map 1 match address VPN-to-Affinity-ACL
+crypto map ATG-Map 1 set peer 52.14.X.X
+crypto map ATG-Map 1 set ikev2 ike-policy 1
+crypto map ATG-Map 1 set transform-set ATG-Transform-Set-1
+crypto map ATG-Map 1 set pfs group14
+crypto map ATG-Map 1 set lifetime seconds 3600
+
+crypto map ATG-Map interface outside</code></pre>
+<hr />
+<h3 id="step-6-configure-tunnel-interfaces">STEP 6: Configure Tunnel
+Interfaces</h3>
+<p><strong>Via CLI (Creating Logical Interfaces):</strong></p>
+<pre><code>interface Tunnel1
+  ip address 169.254.X.2 255.255.255.252
+  tunnel source [your-public-ip]
+  tunnel destination 52.14.X.X
+  tunnel mode ipsec ipv4
+  tunnel protection ipsec profile ATG-Tunnel-1
+exit
+
+interface Tunnel2
+  ip address 169.254.Y.2 255.255.255.252
+  tunnel source [your-public-ip]
+  tunnel destination 52.14.Y.Y
+  tunnel mode ipsec ipv4
+  tunnel protection ipsec profile ATG-Tunnel-2
+exit</code></pre>
+<hr />
+<h3 id="step-7-create-acl-for-vpn-traffic">STEP 7: Create ACL for VPN
+Traffic</h3>
+<p><strong>Via ASDM:</strong> 1. Navigate to
+<strong>Configuration</strong> → <strong>Objects</strong> →
+<strong>Access Lists</strong> 2. Create new ACL for device: -
+<strong>Name:</strong> <code>VPN-Policy-ACL</code> - Add rule: Permit
+traffic between your network and Affinity</p>
+<p><strong>Via CLI:</strong></p>
+<pre><code>access-list VPN-Policy-ACL extended permit ip 172.16.0.0 255.255.0.0 10.0.0.0 255.255.0.0</code></pre>
+<hr />
+<h3 id="step-8-create-network-address-translation-nat-exemption">STEP 8:
+Create Network Address Translation (NAT) Exemption</h3>
+<p><strong>Important:</strong> VPN traffic must NOT be NAT’d</p>
+<p><strong>Via CLI:</strong></p>
+<pre><code># Exempt VPN traffic from NAT
+access-list NoNAT extended permit ip 172.16.0.0 255.255.0.0 10.0.0.0 255.255.0.0
+nat (inside,outside) source static 172.16.0.0 172.16.0.0 destination static 10.0.0.0 10.0.0.0 no-proxy-arp</code></pre>
+<hr />
+<h3 id="step-9-save-configuration">STEP 9: Save Configuration</h3>
+<p><strong>Via ASDM:</strong> 1. Click <strong>File</strong> →
+<strong>Save</strong> 2. Wait for configuration to save</p>
+<p><strong>Via CLI:</strong></p>
+<pre><code>write memory
+# or
+copy running-config startup-config</code></pre>
+<hr />
+<h2 id="bgp-dynamic-routing">🔄 BGP Dynamic Routing</h2>
+<h3 id="step-1-enable-bgp">Step 1: Enable BGP</h3>
+<p><strong>Via CLI:</strong></p>
+<pre><code>router bgp 65000
+  bgp log-neighbor-changes
+  neighbor 169.254.X.1 remote-as 64512
+  neighbor 169.254.Y.1 remote-as 64512
+  !
+  address-family ipv4
+    neighbor 169.254.X.1 activate
+    neighbor 169.254.Y.1 activate
+    network 172.16.0.0 mask 255.255.0.0
+  exit-address-family
+exit</code></pre>
+<h3 id="step-2-configure-bgp-timers-optional">Step 2: Configure BGP
+Timers (Optional)</h3>
+<pre><code>router bgp 65000
+  neighbor 169.254.X.1 timers 60 180
+  neighbor 169.254.Y.1 timers 60 180
+exit</code></pre>
+<h3 id="step-3-redistribute-connected-routes-optional">Step 3:
+Redistribute Connected Routes (Optional)</h3>
+<pre><code>router bgp 65000
+  address-family ipv4
+    redistribute connected
+  exit-address-family
+exit</code></pre>
+<h3 id="step-4-verify-bgp-configuration">Step 4: Verify BGP
+Configuration</h3>
+<pre><code>show bgp summary
+show bgp neighbors
+show ip bgp</code></pre>
+<hr />
+<h2 id="verification-procedures">✅ Verification Procedures</h2>
+<h3 id="verify-tunnel-status">Verify Tunnel Status</h3>
+<p><strong>Via CLI:</strong></p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ipsec sa</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Should show:</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Affinity-ATG-Tunnel-1: tunnel status UP</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Affinity-ATG-Tunnel-2: tunnel status UP</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ikev2 sa</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Check IKE SAs established</span></span></code></pre></div>
+<p><strong>Via ASDM:</strong></p>
+<ol type="1">
+<li>Navigate to <strong>Monitoring</strong> → <strong>Site-to-Site
+VPN</strong></li>
+<li>Check tunnel status</li>
+<li>Both tunnels should show UP</li>
+</ol>
+<h3 id="verify-bgp-routes">Verify BGP Routes</h3>
+<p><strong>Via CLI:</strong></p>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp summary</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Should show: State established (if peers are up)</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> ip bgp</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Routes learned from AWS:</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Network       Next Hop            Metric LocPrf Weight Path</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 10.0.0.0/16   169.254.X.1              0             0 64512 i</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> ip route bgp</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="co"># BGP routes in routing table</span></span></code></pre></div>
+<h3 id="test-connectivity">Test Connectivity</h3>
+<p><strong>From Cisco ASA:</strong></p>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> 10.0.0.10 source 172.16.0.1</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Should receive responses without packet loss</span></span></code></pre></div>
+<p><strong>From Affinity Side:</strong></p>
+<p>Affinity DevOps will verify: - Tunnel endpoints reachable - BGP
+routes learned - Traffic passing through</p>
+<hr />
+<h2 id="troubleshooting">🐛 Troubleshooting</h2>
+<h3 id="issue-tunnel-stays-down">Issue: Tunnel Stays DOWN</h3>
+<p><strong>Symptoms:</strong> Tunnels show DOWN or “not enabled”</p>
+<p><strong>Diagnosis:</strong></p>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ipsec sa brief</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ikev2 sa brief</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto engine connections active</span></code></pre></div>
+<p><strong>Solutions:</strong></p>
+<ol type="1">
+<li><strong>Verify PSK Match:</strong>
+<ul>
+<li>Check PSK in ASA matches exactly what Affinity provided</li>
+<li>PSKs are case-sensitive</li>
+<li>No extra spaces or characters</li>
+</ul>
+<pre><code>show crypto map</code></pre></li>
+<li><strong>Check ACL Match:</strong>
+<ul>
+<li>Verify crypto ACL permits traffic between networks</li>
+<li>Traffic must match exactly</li>
+</ul>
+<pre><code>show access-list VPN-to-Affinity-ACL</code></pre></li>
+<li><strong>Verify Encryption Settings:</strong>
+<ul>
+<li>Confirm IKEv2, AES-256, SHA2-256 selected</li>
+<li>Check DH Group 14 enabled</li>
+</ul>
+<pre><code>show crypto ike policy
+show crypto ipsec transform-set</code></pre></li>
+<li><strong>Check Interface:</strong>
+<ul>
+<li>Verify external interface enabled and has route to peer</li>
+</ul>
+<pre><code>show interface outside
+show route | include 52.14</code></pre></li>
+</ol>
+<hr />
+<h3 id="issue-bgp-routes-not-learning">Issue: BGP Routes Not
+Learning</h3>
+<p><strong>Symptoms:</strong> Tunnel UP but no routes appearing</p>
+<p><strong>Diagnosis:</strong></p>
+<div class="sourceCode" id="cb24"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp summary</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Check if peers show &quot;Up&quot;</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp neighbors 169.254.X.1</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Detailed peer information</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> ip bgp</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Should show routes from AWS</span></span></code></pre></div>
+<p><strong>Solutions:</strong></p>
+<ol type="1">
+<li><strong>Verify BGP Enabled:</strong>
+<ul>
+<li>Confirm BGP enabled and AS number correct</li>
+</ul>
+<pre><code>show run router bgp</code></pre></li>
+<li><strong>Check Neighbor Configuration:</strong>
+<ul>
+<li>Verify neighbor IP matches tunnel inside IP</li>
+<li>Confirm remote AS = 64512</li>
+</ul>
+<pre><code>show bgp neighbors</code></pre></li>
+<li><strong>Review BGP Timers:</strong>
+<ul>
+<li>Keep alive should be ≤ 60 seconds</li>
+<li>Hold time should be ≥ 180 seconds</li>
+</ul>
+<pre><code>show bgp timers</code></pre></li>
+</ol>
+<hr />
+<h3 id="issue-traffic-not-passing">Issue: Traffic Not Passing</h3>
+<p><strong>Symptoms:</strong> Tunnel UP, routes learned, but no data
+flow</p>
+<p><strong>Diagnosis:</strong></p>
+<div class="sourceCode" id="cb28"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check if traffic matches crypto ACL</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> access-list VPN-to-Affinity-ACL</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Monitor tunnel traffic</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="ex">debug</span> crypto ipsec</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Check NAT exemption</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> nat detail</span></code></pre></div>
+<p><strong>Solutions:</strong></p>
+<ol type="1">
+<li><strong>Verify ACL Configuration:</strong>
+<ul>
+<li>Confirm ACL permits traffic source → destination</li>
+<li>Traffic selectors must match exactly</li>
+<li>No overlapping or conflicting rules</li>
+</ul></li>
+<li><strong>Check NAT Exemption:</strong>
+<ul>
+<li>Ensure VPN traffic exempted from NAT</li>
+<li>Source/destination must NOT be translated</li>
+</ul></li>
+<li><strong>Enable Debug (Temporary):</strong>
+<ul>
+<li>Monitor tunnel activity</li>
+</ul>
+<pre><code>debug crypto ipsec
+debug crypto ikev2
+# Disable with: undebug all</code></pre></li>
+</ol>
+<hr />
+<h2 id="joint-e2e-testing-phases-3-7">🧪 Joint E2E Testing (Phases
+3-7)</h2>
+<p><strong>After device configuration is complete</strong>, both
+Affinity and your DevOps team conduct structured testing via the master
+protocol: <a
+href="../VPN_E2E_TESTING_PROTOCOL.md"><code>VPN_E2E_TESTING_PROTOCOL.md</code></a></p>
+<p>This section covers <strong>Cisco ASA-specific testing
+procedures</strong> for each phase.</p>
+<h3 id="phase-3-ikeipsec-tunnel-establishment-layer-1-2">Phase 3:
+IKE/IPSec Tunnel Establishment (Layer 1-2)</h3>
+<p><strong>Timeline:</strong> Immediately after configuration is saved
+and enabled</p>
+<p><strong>What happens:</strong> Your device initiates IKE; AWS
+responds; tunnels reach UP state</p>
+<p><strong>Your action:</strong> Monitor tunnel negotiation</p>
+<div class="sourceCode" id="cb30"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Real-time tunnel status</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ikev2 sa</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected output (after successful negotiation):</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="co"># IKEv2 SAs:</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Session-id:0x0, IKE_SA type:IPsecClient Established 1-time SA</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Peer IP:52.14.123.45:500</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a><span class="co"># COMPLETE [ JH ] [ SA ]</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Check IPSec security associations</span></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ipsec sa</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected output:</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a><span class="co"># interface: outside</span></span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a><span class="co">#  Crypto map tag: AWS_TUNNEL_1, seq num: 10</span></span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a><span class="co">#   Peer address(es): 52.14.123.45</span></span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a><span class="co">#   Protected data flows:</span></span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a><span class="co">#    permit ip any any</span></span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a><span class="co">#   PFS (Y/N): Y</span></span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a><span class="co">#   Transform sets in use:</span></span>
+<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a><span class="co">#    AWS_TRANSFORM_SET</span></span>
+<span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a><span class="co">#  Connections:</span></span>
+<span id="cb30-23"><a href="#cb30-23" aria-hidden="true" tabindex="-1"></a><span class="co">#   Active SA count: 2 (inbound and outbound)</span></span>
+<span id="cb30-24"><a href="#cb30-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-25"><a href="#cb30-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Monitor in real-time</span></span>
+<span id="cb30-26"><a href="#cb30-26" aria-hidden="true" tabindex="-1"></a><span class="ex">debug</span> crypto ikev2</span>
+<span id="cb30-27"><a href="#cb30-27" aria-hidden="true" tabindex="-1"></a><span class="co"># [Wait a few seconds, observe IKE negotiation]</span></span>
+<span id="cb30-28"><a href="#cb30-28" aria-hidden="true" tabindex="-1"></a><span class="ex">undebug</span> all</span></code></pre></div>
+<p><strong>Affinity verifies:</strong> AWS console shows both tunnels UP
+(via <code>skill-vpn-connectivity</code>)</p>
+<p><strong>Gate 3.1:</strong> Both tunnels show active SAs on both
+sides</p>
+<p><strong>If tunnels stay DOWN after 30 seconds:</strong> See <a
+href="#troubleshooting">Troubleshooting</a> → “Tunnel Stays DOWN”</p>
+<hr />
+<h3 id="phase-4-bgp-route-exchange-layer-3">Phase 4: BGP Route Exchange
+(Layer 3)</h3>
+<p><strong>Timeline:</strong> 5-15 seconds after tunnels reach UP</p>
+<p><strong>What happens:</strong> BGP neighbors establish; routes
+learned automatically</p>
+<p><strong>Your action:</strong> Monitor BGP neighbor state</p>
+<div class="sourceCode" id="cb31"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check BGP summary</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp summary</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected output:</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ Up/Down State/PfxRcd</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 169.254.10.1    4 64512     10      10        5    0    0 00:05:10        3</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 169.254.11.1    4 64512     10      10        5    0    0 00:05:10        3</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="co"># View routes received from BGP</span></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp ipv4 unicast neighbors 169.254.10.1 received-routes</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a><span class="co"># View routes in BGP table</span></span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp ipv4 unicast summary</span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a><span class="co"># View routes in main routing table (should include BGP routes)</span></span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> route bgp</span></code></pre></div>
+<p><strong>Affinity verifies:</strong> AWS Transit Gateway route table
+contains your CIDRs with state=active</p>
+<p><strong>Gate 4.1:</strong> BGP neighbors show in Established state;
+routes appear in both TGW table and your routing table</p>
+<p><strong>If routes don’t appear:</strong> See <a
+href="#remediation-playbooks">Remediation Playbooks</a> → “BGP Routes
+Not Appearing”</p>
+<hr />
+<h3 id="phase-5-data-plane-traffic-test-layer-4">Phase 5: Data Plane
+Traffic Test (Layer 4)</h3>
+<p><strong>Timeline:</strong> After Phase 4 gate passes</p>
+<p><strong>What happens:</strong> Test actual traffic flow across
+tunnel</p>
+<h4 id="affinitys-test-from-eks-pod">Affinity’s Test (from EKS pod)</h4>
+<div class="sourceCode" id="cb32"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Affinity pings a host on your network</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> run vpn-test <span class="at">--rm</span> <span class="at">-it</span> <span class="at">--image</span><span class="op">=</span>alpine <span class="at">--</span> sh</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Inside pod:</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> <span class="at">-c</span> 10 <span class="pp">[</span><span class="ss">YOUR_TEST_IP</span><span class="pp">]</span>  <span class="co"># e.g., 172.16.1.100</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: 0% packet loss, round-trip time ~45-100ms</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Test MTU</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> <span class="at">-c</span> 3 <span class="at">-M</span> do <span class="at">-s</span> 1400 <span class="pp">[</span><span class="ss">YOUR_TEST_IP</span><span class="pp">]</span>  <span class="co"># May fail</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> <span class="at">-c</span> 3 <span class="at">-M</span> do <span class="at">-s</span> 1350 <span class="pp">[</span><span class="ss">YOUR_TEST_IP</span><span class="pp">]</span>  <span class="co"># Should succeed</span></span></code></pre></div>
+<h4 id="your-confirmation">Your Confirmation</h4>
+<p>On your test host, monitor traffic arrival:</p>
+<div class="sourceCode" id="cb33"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Monitor incoming traffic from Affinity</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> debug</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="ex">debug</span> ip icmp                    <span class="co"># Log ICMP traffic</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="ex">debug</span> ip packet detail           <span class="co"># Log all packets</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="co"># [Trigger ping from Affinity]</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a><span class="ex">undebug</span> all</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify tunnel is carrying traffic</span></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ipsec sa detail <span class="kw">|</span> <span class="fu">grep</span> bytes</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Check BGP routes are in routing table</span></span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> route bgp <span class="kw">|</span> <span class="ex">include</span> 10.0</span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a><span class="co"># View security logs</span></span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> log</span></code></pre></div>
+<p><strong>Gate 5.1:</strong> Bidirectional ping succeeds with ≤1% loss;
+MTU 1350+ working</p>
+<p><strong>If traffic doesn’t pass:</strong> See <a
+href="#remediation-playbooks">Remediation Playbooks</a> → “Traffic Not
+Passing”</p>
+<hr />
+<h3 id="phase-6-redundancy-failover-test-layer-5-optional">Phase 6:
+Redundancy &amp; Failover Test (Layer 5) — OPTIONAL</h3>
+<p><strong>Timeline:</strong> Can be deferred to maintenance window</p>
+<p><strong>What happens:</strong> One tunnel is disabled; verify other
+handles all traffic</p>
+<p><strong>Your action:</strong> Continuous ping during test</p>
+<div class="sourceCode" id="cb34"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Start extended ping to Affinity test IP</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> <span class="pp">[</span><span class="ss">AFFINITY_TEST_IP</span><span class="pp">]</span> repeat 1000</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Affinity will disable Tunnel 1 on their side</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected ping behavior:</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a><span class="co"># [Normal] ~1ms latency, 0% loss</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="co"># [Tunnel 1 DOWN] Brief interruption (1-3 sec)</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a><span class="co"># [DPD timeout] 10 second delay (Cisco default)</span></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="co"># [BGP reconvergence] Another 5-10 seconds</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a><span class="co"># [Resumed] Ping continues normally through Tunnel 2</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Total disruption: 15-25 seconds</span></span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Monitor tunnel status during failover</span></span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ipsec sa summary</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Should show Tunnel 2 active, Tunnel 1 inactive</span></span></code></pre></div>
+<p><strong>Gate 6.1:</strong> Single tunnel failure does not cause total
+outage</p>
+<hr />
+<h3 id="phase-7-operational-sign-off">Phase 7: Operational Sign-Off</h3>
+<p><strong>Timeline:</strong> After all Phase 5 (or Phase 6) gates
+pass</p>
+<p><strong>Action:</strong> Complete bilateral sign-off checklist in <a
+href="../VPN_E2E_TESTING_PROTOCOL.md"><code>VPN_E2E_TESTING_PROTOCOL.md</code></a>
+Phase 7 section</p>
+<p><strong>Cisco ASA Verification Checklist:</strong> - [ ]
+<code>show crypto ikev2 sa</code> shows both IKE SAs ESTABLISHED - [ ]
+<code>show crypto ipsec sa</code> shows active SAs for both tunnels - [
+] <code>show bgp summary</code> shows neighbors in Established state - [
+] <code>show bgp ipv4 unicast summary</code> shows received routes - [ ]
+Data plane ping succeeds (0% loss) - [ ] Failover test completed (if
+performed) - [ ] Configuration backed up and documented</p>
+<p><strong>Once signed:</strong> Tunnel is production-ready</p>
+<hr />
+<h3 id="cisco-asa-device-specific-verification-cheat-sheet">Cisco ASA
+Device-Specific Verification Cheat Sheet</h3>
+<div class="sourceCode" id="cb35"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer 2: Tunnel State</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ikev2 sa                       <span class="co"># IKE status</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ipsec sa                       <span class="co"># IPSec SA summary</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ipsec sa detail                <span class="co"># Detailed IPSec SAs</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer 3: BGP Routes</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp summary                           <span class="co"># BGP neighbor status</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp ipv4 unicast neighbors 169.254.10.1 received-routes  <span class="co"># Learned routes</span></span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> route bgp                             <span class="co"># BGP routes in main table</span></span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer 4: Traffic Test</span></span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> log <span class="kw">|</span> <span class="ex">include</span> <span class="st">&quot;10.0&quot;</span>                 <span class="co"># Logs from Affinity CIDR</span></span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ipsec sa detail <span class="kw">|</span> <span class="fu">grep</span> bytes  <span class="co"># Traffic statistics</span></span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a><span class="ex">debug</span> ip icmp                              <span class="co"># ICMP logging</span></span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Real-time Monitoring</span></span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ipsec sa summary               <span class="co"># Real-time summary</span></span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp neighbors 169.254.10.1            <span class="co"># BGP neighbor detail</span></span>
+<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Full Status</span></span>
+<span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> running-config crypto</span>
+<span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> running-config router bgp</span></code></pre></div>
+<hr />
+<h2 id="support-escalation">📞 Support &amp; Escalation</h2>
+<h3 id="before-contacting-support">Before Contacting Support</h3>
+<p>Please verify:</p>
+<ul class="task-list">
+<li><label><input type="checkbox" />Tunnel endpoints are
+reachable</label></li>
+<li><label><input type="checkbox" />PSK matches exactly
+(case-sensitive)</label></li>
+<li><label><input type="checkbox" />Encryption settings match: IKEv2,
+AES-256, SHA2-256, Group 14</label></li>
+<li><label><input type="checkbox" />Crypto ACL permits correct
+traffic</label></li>
+<li><label><input type="checkbox" />VPN traffic exempted from
+NAT</label></li>
+<li><label><input type="checkbox" />BGP neighbor IPs configured
+correctly</label></li>
+<li><label><input type="checkbox" />Firewall policy/ACL allows VPN
+traffic</label></li>
+</ul>
+<h3 id="contact-affinity-devops">Contact Affinity DevOps</h3>
+<p><strong>Email:</strong> support@affinity.com
+<strong>Subject:</strong>
+<code>[ATG VPN] Tunnel Issue - Cisco ASA - [Your Organization]</code></p>
+<p><strong>Include in Email:</strong></p>
+<pre><code>Peer Name: [Your registered peer name]
+Device: Cisco ASA (version X.X.X)
+Issue: [Detailed description]
+
+Tunnel Status:
+  Tunnel 1: [UP/DOWN]
+  Tunnel 2: [UP/DOWN]
+
+BGP Status:
+  Neighbors learned: [yes/no]
+  Routes received: [number]
+
+Error Messages:
+[Paste any error messages from logs]
+
+Configuration Attached:
+  - Output of: show crypto ipsec sa
+  - Output of: show crypto map
+  - Output of: show bgp neighbors (if using BGP)</code></pre>
+<h3 id="on-call-support">24/7 On-Call Support</h3>
+<p><strong>Phone:</strong> +1-XXX-XXX-XXXX <strong>Available:</strong>
+Urgent issues only</p>
+<hr />
+<h2 id="configuration-checklist">📋 Configuration Checklist</h2>
+<p>Before declaring configuration complete:</p>
+<p><strong>IKE Configuration:</strong> - [ ] IKE policy created with
+IKEv2, AES-256, SHA2-256, Group 14 - [ ] IKE lifetime set to 28800
+seconds (8 hours)</p>
+<p><strong>IPSec Configuration:</strong> - [ ] Transform set created
+with AES-256, SHA2-256, Group 14 - [ ] Transform set lifetime set to
+3600 seconds (1 hour) - [ ] PFS enabled with Group 14 - [ ] PSKs entered
+for both tunnels (case-sensitive)</p>
+<p><strong>Crypto Map:</strong> - [ ] Crypto ACL permits traffic between
+local and remote CIDR blocks - [ ] Crypto map configured for both
+tunnels - [ ] Crypto map applied to external interface</p>
+<p><strong>NAT Configuration:</strong> - [ ] NAT exemption configured
+for VPN traffic - [ ] VPN traffic specifically excluded from
+translation</p>
+<p><strong>BGP Configuration (if using):</strong> - [ ] BGP enabled with
+correct local AS number - [ ] Neighbors configured with correct IP and
+remote AS - [ ] Network statements include local CIDR blocks</p>
+<p><strong>Verification:</strong> - [ ] Both tunnels show UP - [ ] BGP
+peers show as “Up” (if using BGP) - [ ] Routes to AWS appearing in
+routing table - [ ] Ping test to AWS network successful</p>
+<hr />
+<h2 id="additional-resources">📚 Additional Resources</h2>
+<ul>
+<li><strong>Cisco ASA IPSec Documentation:</strong>
+https://www.cisco.com/c/en/us/support/security/asa/</li>
+<li><strong>Cisco ASA BGP Configuration:</strong>
+https://www.cisco.com/c/en/us/support/security/asa/</li>
+<li><strong>AWS Transit Gateway Guide:</strong>
+https://docs.aws.amazon.com/vpc/latest/tgw/</li>
+</ul>
+<hr />
+<h2 id="revision-history">📝 Revision History</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0</td>
+<td>2026-03-04</td>
+<td>Initial release for ATG VPN setup</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Document Status:</strong> ✅ Ready for Use <strong>Last
+Verified:</strong> March 4, 2026 <strong>Support Contact:</strong>
+support@affinity.com</p>
+<hr />
+<h3 id="quick-reference-commands-cheat-sheet">Quick Reference: Commands
+Cheat Sheet</h3>
+<div class="sourceCode" id="cb37"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check IPSec tunnel status</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ipsec sa brief</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ipsec sa detail</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Check IKE status</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ikev2 sa brief</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a><span class="co"># View crypto configuration</span></span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto map</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ike policy</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ipsec transform-set</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Check BGP status</span></span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp summary</span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp neighbors</span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp neighbors 169.254.X.1 detail</span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a><span class="co"># View routing table</span></span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> ip route bgp</span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> ip route <span class="kw">|</span> <span class="ex">include</span> 10.0</span>
+<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Test connectivity</span></span>
+<span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> 10.0.0.10 source 172.16.0.1</span>
+<span id="cb37-24"><a href="#cb37-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-25"><a href="#cb37-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Enable debugging (temporary)</span></span>
+<span id="cb37-26"><a href="#cb37-26" aria-hidden="true" tabindex="-1"></a><span class="ex">debug</span> crypto ipsec</span>
+<span id="cb37-27"><a href="#cb37-27" aria-hidden="true" tabindex="-1"></a><span class="ex">debug</span> crypto ikev2</span>
+<span id="cb37-28"><a href="#cb37-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Disable with:</span></span>
+<span id="cb37-29"><a href="#cb37-29" aria-hidden="true" tabindex="-1"></a><span class="ex">undebug</span> all</span>
+<span id="cb37-30"><a href="#cb37-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-31"><a href="#cb37-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Save configuration</span></span>
+<span id="cb37-32"><a href="#cb37-32" aria-hidden="true" tabindex="-1"></a><span class="fu">write</span> memory</span>
+<span id="cb37-33"><a href="#cb37-33" aria-hidden="true" tabindex="-1"></a><span class="ex">copy</span> running-config startup-config</span></code></pre></div>
+</body>
+</html>

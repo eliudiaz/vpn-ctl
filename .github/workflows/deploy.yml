@@ -1,0 +1,63 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'config/peers/**'
+      - 'pulumi/**'
+  workflow_dispatch:
+    inputs:
+      peer_name:
+        description: 'Peer to deploy (leave empty for all)'
+        required: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: us-east-2
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Validate specs
+        run: vpn-ctl spec validate
+
+      - name: Check sync
+        run: vpn-ctl spec sync --report-only
+
+      - name: Deploy peers
+        run: |
+          # Deploy changed peers or specific peer
+          if [ -n "${{ github.event.inputs.peer_name }}" ]; then
+            vpn-ctl peer deploy "${{ github.event.inputs.peer_name }}"
+          else
+            # Auto-detect changed peers from git
+            CHANGED_PEERS=$(git diff --name-only origin/main..HEAD config/peers/ | grep -oP '(?<=/).*(?=\.yaml)' | sort -u)
+            for PEER in $CHANGED_PEERS; do
+              echo "Deploying $PEER..."
+              vpn-ctl peer deploy "$PEER"
+            done
+          fi
+
+      - name: Verify tunnels
+        run: vpn-ctl tunnel status
+
+      - name: Report status
+        if: always()
+        run: vpn-ctl peer list

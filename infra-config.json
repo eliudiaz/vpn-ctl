@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "generated_at": "2026-06-04T00:00:00Z",
+    "aws_account": "XXXXXXXXXXXX",
+    "aws_region": "us-east-2",
+    "environment": "dev",
+    "exported_by": "vpnctl infra export-config",
+    "note": "This is a template. Replace placeholder values with actual infrastructure data."
+  },
+  "infrastructure": {
+    "transit_gateway": {
+      "id": "tgw-XXXXXXXXX",
+      "name": "company-hub-tgw",
+      "asn": 64512,
+      "owner_id": "XXXXXXXXXXXX",
+      "state": "available"
+    },
+    "eks_cluster": {
+      "name": "platform-cluster-dev",
+      "arn": "arn:aws:eks:us-east-2:XXXXXXXXXXXX:cluster/platform-cluster-dev",
+      "region": "us-east-2",
+      "vpc_id": "vpc-XXXXXXXXX",
+      "vpc_cidr": "172.31.0.0/16",
+      "tgw_attachment_id": "tgw-attach-XXXXXXXXX",
+      "tgw_attachment_state": "available"
+    },
+    "tgw_route_table": {
+      "id": "tgw-rtb-XXXXXXXXX",
+      "transit_gateway_id": "tgw-XXXXXXXXX",
+      "state": "available",
+      "routes": []
+    }
+  },
+  "peers": {},
+  "test_config": {
+    "global": {
+      "timeout_seconds": 5,
+      "refresh_interval_seconds": 60,
+      "enabled": true
+    },
+    "peer_tests": {}
+  }
+}

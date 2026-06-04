@@ -1,0 +1,177 @@
+# VPN Health Monitor - Target Configuration
+# ============================================================
+# Define VPN provider targets to continuously monitor via ping.
+# Each target is pinged every 60 seconds and results are stored.
+#
+# Usage: Edit this file to add/remove monitoring targets.
+# Changes are picked up on application restart.
+
+# =============================================================================
+# PROVIDERS - VPN Connectivity Targets
+# =============================================================================
+
+providers:
+  # Vimenca Banking Services
+  - name: "Vimenca"
+    description: "Banking services provider - SNAT masqueraded to 203.0.113.10"
+    enabled: true
+    targets:
+      - name: "Primary-Banking"
+        ip: "172.16.70.1"
+        port: 8080
+        protocol: "icmp"
+        timeout: 5
+        enabled: true
+
+      - name: "Securities"
+        ip: "172.16.65.21"
+        port: 443
+        protocol: "icmp"
+        timeout: 5
+        enabled: true
+
+      - name: "Integration-Hub"
+        ip: "172.16.82.28"
+        port: 8088
+        protocol: "icmp"
+        timeout: 5
+        enabled: true
+
+  # CIBAO Enterprise Network
+  - name: "CIBAO"
+    description: "Enterprise partner network - Original pod IPs visible"
+    enabled: true
+    targets:
+      - name: "Data-Warehouse"
+        ip: "172.17.10.50"
+        port: 1433
+        protocol: "icmp"
+        timeout: 5
+        enabled: true
+
+      - name: "CRM-Portal"
+        ip: "172.17.5.10"
+        port: 8080
+        protocol: "icmp"
+        timeout: 5
+        enabled: true
+
+      - name: "ERP-API"
+        ip: "172.17.5.20"
+        port: 8443
+        protocol: "icmp"
+        timeout: 5
+        enabled: true
+
+      - name: "Message-Broker"
+        ip: "172.17.20.10"
+        port: 5672
+        protocol: "icmp"
+        timeout: 5
+        enabled: true
+
+  # Affinity-Legacy MSSQL Network
+  - name: "Affinity-Legacy"
+    description: "Legacy MSSQL databases - Original pod IPs visible"
+    enabled: true
+    targets:
+      - name: "APAP-Produccion"
+        ip: "192.168.100.8"
+        port: 1433
+        protocol: "icmp"
+        timeout: 5
+        enabled: true
+
+      - name: "Pruebas"
+        ip: "192.168.100.11"
+        port: 1433
+        protocol: "icmp"
+        timeout: 5
+        enabled: true
+
+      - name: "Produccion-Secondary"
+        ip: "192.168.100.12"
+        port: 1433
+        protocol: "icmp"
+        timeout: 5
+        enabled: true
+
+      - name: "Application-Gateway"
+        ip: "172.133.5.4"
+        port: 443
+        protocol: "icmp"
+        timeout: 5
+        enabled: true
+
+  # Example: Template for adding new provider
+  # - name: "New-Provider"
+  #   description: "Description of this provider"
+  #   enabled: false  # Set to true to start monitoring
+  #   targets:
+  #     - name: "Service-Name"
+  #       ip: "10.0.0.1"
+  #       port: 443
+  #       protocol: "icmp"  # icmp (default), tcp, http
+  #       timeout: 5        # seconds
+  #       enabled: true
+
+# =============================================================================
+# MONITORING CONFIGURATION
+# =============================================================================
+
+monitoring:
+  # Ping interval in seconds (how often to check each target)
+  interval_seconds: 60
+
+  # How long to keep historical data (in seconds)
+  history_retention: 3600  # 1 hour
+
+  # Maximum pings per target to keep in memory
+  max_history_per_target: 60
+
+  # Timeout for individual ping operations
+  default_timeout: 5
+
+  # Concurrent ping tasks (how many targets to ping at once)
+  max_concurrent: 10
+
+# =============================================================================
+# ALERTING (Future)
+# =============================================================================
+
+# alerting:
+#   enabled: false
+#   slack_webhook: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+#   email_on_failure: false
+#   alert_threshold_percent: 50  # Alert if success rate drops below this
+#   consecutive_failures: 3      # Alert after N consecutive failures
+
+# =============================================================================
+# NOTES
+# =============================================================================
+# 1. ENABLED FLAG:
+#    - Set enabled: true to monitor target
+#    - Set enabled: false to skip target (won't be pinged)
+#
+# 2. PROTOCOLS:
+#    - icmp: Standard ICMP ping (default)
+#    - tcp: TCP connection check (uses port)
+#    - http: HTTP GET request (uses port)
+#
+# 3. TIMEOUT:
+#    - Individual ping timeout in seconds
+#    - Recommended: 5-10 seconds
+#    - Lower = faster detection, higher = more tolerant
+#
+# 4. ADDING NEW TARGETS:
+#    - Add under appropriate provider section
+#    - Or create new provider entry
+#    - Application picks up changes on restart
+#
+# 5. PORT FIELD:
+#    - Optional, used for TCP/HTTP checks
+#    - Ignored for ICMP pings
+#
+# 6. HISTORY RETENTION:
+#    - Data is kept in memory only (not persisted)
+#    - Survives application restarts if storage added later

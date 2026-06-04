@@ -1,0 +1,384 @@
+#!/bin/bash
+
+# Skill: VPN Connectivity Diagnostics
+# Purpose: Diagnose VPN peer connections, tunnels, and BGP status
+# Usage: ./skill-vpn-connectivity [--deep] [--peer PEER_NAME] [--region REGION]
+
+set -e
+
+REGION="${REGION:-us-east-2}"
+TGW_ID="tgw-0572ce4b80ff7445a"
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+print_status() {
+    local status=$1
+    local message=$2
+
+    case $status in
+        "pass")
+            echo -e "${GREEN}✓${NC} $message"
+            ;;
+        "warn")
+            echo -e "${YELLOW}⚠${NC} $message"
+            ;;
+        "fail")
+            echo -e "${RED}✗${NC} $message"
+            ;;
+        "info")
+            echo -e "${BLUE}ℹ${NC} $message"
+            ;;
+    esac
+}
+
+print_header() {
+    echo -e "\n${BOLD}${BLUE}=== $1 ===${NC}\n"
+}
+
+# Quick VPN check
+quick_vpn_check() {
+    print_header "VPN Connectivity Quick Check"
+
+    # Get all VPN connections
+    local vpn_data=$(aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections[*].[VpnConnectionId,State,CustomerGatewayId]' \
+        --output json 2>/dev/null || echo "[]")
+
+    local vpn_count=$(echo "$vpn_data" | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+
+    if [ "$vpn_count" -eq 0 ]; then
+        print_status "warn" "No VPN connections found"
+        return 0
+    fi
+
+    print_status "info" "Found $vpn_count VPN connection(s)"
+    echo ""
+
+    # Check each VPN
+    echo "$vpn_data" | python3 << 'PYTHON' 2>/dev/null || true
+import json
+import sys
+
+data = json.load(sys.stdin)
+for vpn_id, state, cgw_id in data:
+    status = "✓" if state == "available" else "✗"
+    state_color = "\033[0;32m" if state == "available" else "\033[1;33m"
+    print(f"{status} VPN {vpn_id}: {state_color}{state}\033[0m (CGW: {cgw_id})")
+PYTHON
+
+    echo ""
+    print_header "VPN Tunnel Status"
+
+    # Get tunnel details
+    local tunnel_data=$(aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections[*].[VpnConnectionId,VpnTunnelOptions[*].[TunnelAddress,Status.TunnelStatus]]' \
+        --output json 2>/dev/null || echo "[]")
+
+    echo "$tunnel_data" | python3 << 'PYTHON' 2>/dev/null || true
+import json
+import sys
+
+data = json.load(sys.stdin)
+for vpn_id, tunnels in data:
+    print(f"VPN: {vpn_id}")
+    for tunnel_addr, tunnel_status in tunnels:
+        status_icon = "✓" if tunnel_status == "UP" else "✗"
+        status_color = "\033[0;32m" if tunnel_status == "UP" else "\033[1;33m"
+        print(f"  {status_icon} Tunnel {tunnel_addr}: {status_color}{tunnel_status}\033[0m")
+PYTHON
+
+    return 0
+}
+
+# Deep analysis
+deep_vpn_check() {
+    print_header "VPN Deep Connectivity Analysis"
+
+    # Get all VPN connections with full details
+    print_header "All VPN Connections"
+    aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections[*].[VpnConnectionId,CustomerGatewayId,State,Type,Options.[StaticRoutesOnly,TunnelOptions[0].[ReplayWindowSize,DPDAction]]]' \
+        --output table 2>/dev/null || echo "No VPN connections"
+
+    # Customer Gateways
+    print_header "Customer Gateways (Peer Devices)"
+    aws ec2 describe-customer-gateways \
+        --region "$REGION" \
+        --query 'CustomerGateways[*].[CustomerGatewayId,State,Type,BgpAsn,PublicIp]' \
+        --output table 2>/dev/null || echo "No customer gateways"
+
+    # VPN Tunnel Options
+    print_header "VPN Tunnel Configuration Details"
+    aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections[*].[VpnConnectionId,VpnTunnelOptions[*].[TunnelAddress,Phase1EncryptionAlgorithms[*].Value,Phase2EncryptionAlgorithms[*].Value,Phase1IntegrityAlgorithms[*].Value,Phase2IntegrityAlgorithms[*].Value]]' \
+        --output json 2>/dev/null | python3 -m json.tool 2>/dev/null || echo "Could not retrieve tunnel options"
+
+    # BGP Status (if available)
+    print_header "BGP Configuration"
+    aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections[*].[VpnConnectionId,Options.TunnelOptions[*].TunnelInsideCidr]' \
+        --output table 2>/dev/null || echo "BGP information not available"
+
+    # Routes for each VPN
+    print_header "Static Routes Associated with VPNs"
+    aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections[*].Routes' \
+        --output table 2>/dev/null || echo "No static routes"
+
+    return 0
+}
+
+# Peer-specific check
+check_specific_peer() {
+    local peer_name="$1"
+
+    print_header "VPN Peer Check: $peer_name"
+
+    # Find VPN connection for this peer
+    local vpn_info=$(aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query "VpnConnections[?Tags[?Key=='Name' && Value=='$peer_name']].[VpnConnectionId,State,CustomerGatewayId,Options.TunnelOptions[*].[TunnelAddress,Status.TunnelStatus]]" \
+        --output json 2>/dev/null)
+
+    if [ -z "$vpn_info" ] || [ "$vpn_info" = "[]" ]; then
+        print_status "fail" "VPN peer '$peer_name' not found"
+        return 1
+    fi
+
+    echo "$vpn_info" | python3 << 'PYTHON' 2>/dev/null || true
+import json
+import sys
+
+data = json.load(sys.stdin)
+if data:
+    vpn_id, state, cgw_id, tunnels = data[0]
+    print(f"VPN Connection: {vpn_id}")
+    print(f"State: {state}")
+    print(f"Customer Gateway: {cgw_id}")
+    print("")
+    print("Tunnels:")
+    for tunnel_addr, tunnel_status in tunnels:
+        icon = "✓" if tunnel_status == "UP" else "✗"
+        print(f"  {icon} {tunnel_addr}: {tunnel_status}")
+PYTHON
+
+    return 0
+}
+
+# Agentic analysis
+agentic_analysis() {
+    print_header "Agentic VPN Connectivity Analysis"
+
+    print_status "info" "Analyzing VPN health and connectivity patterns..."
+    echo ""
+
+    # Gather metrics
+    local vpn_total=$(aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    local vpn_available=$(aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" "Name=state,Values=available" \
+        --region "$REGION" \
+        --query 'VpnConnections | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    local tunnel_up=$(aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections[*].VpnTunnelOptions[?Status.TunnelStatus==`UP`] | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    local tunnel_down=$(aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections[*].VpnTunnelOptions[?Status.TunnelStatus==`DOWN`] | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    echo "VPN Connectivity Metrics:"
+    echo "  Total VPN Connections: $vpn_total"
+    echo "  Available: $vpn_available"
+    echo "  Tunnel Status: $tunnel_up UP, $tunnel_down DOWN"
+    echo ""
+
+    # Analysis
+    print_status "info" "Health Assessment:"
+    echo ""
+
+    if [ "$vpn_available" -eq 0 ]; then
+        print_status "fail" "No available VPN connections - critical issue"
+    elif [ "$vpn_available" -lt "$vpn_total" ]; then
+        print_status "warn" "Some VPN connections unavailable - investigate state"
+    else
+        print_status "pass" "All VPN connections available"
+    fi
+
+    if [ "$tunnel_down" -gt 0 ]; then
+        if [ "$tunnel_up" -gt 0 ]; then
+            print_status "warn" "Redundant tunnel down - failover active, check peer"
+        else
+            print_status "fail" "All tunnels down - critical connectivity loss"
+        fi
+    else
+        print_status "pass" "All tunnels active"
+    fi
+
+    echo ""
+    print_status "info" "Recommendations:"
+    echo ""
+
+    if [ "$vpn_available" -eq 0 ]; then
+        echo "  1. Check VPN connection state in AWS console"
+        echo "  2. Verify customer gateway is reachable"
+        echo "  3. Check pre-shared keys (PSKs) match peer configuration"
+        echo "  4. Verify peer device is powered on and configured"
+    fi
+
+    if [ "$tunnel_down" -gt 0 ] && [ "$tunnel_up" -gt 0 ]; then
+        echo "  1. Check secondary tunnel endpoint reachability"
+        echo "  2. Verify peer tunnel configuration"
+        echo "  3. Review peer firewall rules"
+        echo "  4. Check for asymmetric routing issues"
+    fi
+
+    if [ "$vpn_total" -eq 0 ]; then
+        echo "  1. Add VPN peer using: ./add-vpn-peer.py"
+        echo "  2. Check vpn-peers.yaml configuration"
+        echo "  3. Verify Pulumi stack deployment"
+    fi
+
+    return 0
+}
+
+# Help
+show_help() {
+    cat << 'EOF'
+VPN Connectivity Diagnostics Skill
+
+Purpose: Diagnose VPN peers, tunnels, and BGP connectivity
+
+Usage: ./skill-vpn-connectivity [OPTIONS]
+
+Options:
+  (default)           Quick VPN status (5 seconds)
+  --deep              Deep tunnel analysis (15 seconds)
+  --analyze           Agentic health assessment (20 seconds)
+  --e2e               E2E readiness check (all layers)
+  --e2e PEER_NAME     E2E test for specific peer
+  --peer PEER_NAME    Check specific peer
+  --region REGION     AWS region (default: us-east-2)
+  --help              Show this help
+
+Quick Check shows:
+  ✓ All VPN connections and states
+  ✓ Tunnel status (UP/DOWN)
+  ✓ Tunnel endpoints
+
+Deep Analysis shows:
+  - Full VPN configuration
+  - Customer gateway details
+  - Tunnel encryption options (Phase 1 & 2)
+  - BGP configuration
+  - Static routes per VPN
+
+Agentic Analysis:
+  - Overall connectivity health
+  - Redundancy status
+  - Specific recommendations for failures
+  - Escalation triggers
+
+VPN Tunnel States:
+  UP      = Active and forwarding traffic
+  DOWN    = Inactive (may be redundant tunnel)
+
+VPN Connection States:
+  available   = Ready for traffic
+  pending     = Creating
+  failed      = Needs investigation
+  deleting    = Being removed
+
+Examples:
+  ./skill-vpn-connectivity              # Quick status check
+  ./skill-vpn-connectivity --deep       # Full configuration review
+  ./skill-vpn-connectivity --analyze    # Health assessment
+  ./skill-vpn-connectivity --peer Vimenca  # Specific peer
+
+Peer Names (from vpn-peers.yaml):
+  - Vimenca (Checkpoint R80.10)
+  - CIBA (Active connection)
+  - Checkpoint-DR (Template)
+
+Common Issues:
+  Both tunnels DOWN       → Peer unreachable
+  One tunnel DOWN         → Redundancy in use
+  VPN unavailable         → Configuration error
+  Routes missing          → Check TGW route table
+EOF
+}
+
+# Main
+case "${1:-}" in
+    --deep)
+        quick_vpn_check
+        deep_vpn_check
+        ;;
+    --analyze)
+        quick_vpn_check
+        agentic_analysis
+        ;;
+    --e2e)
+        if [ -z "$2" ]; then
+            print_status "info" "Running E2E readiness check on all peers..."
+            echo ""
+            # Run E2E script if available
+            if [ -x "./skill-vpn-e2e-test" ]; then
+                ./skill-vpn-e2e-test --e2e
+            else
+                print_status "info" "E2E testing script not found. Use: skill-vpn-e2e-test --peer PEER_NAME --e2e"
+                quick_vpn_check
+            fi
+        else
+            # Specific peer E2E test
+            if [ -x "./skill-vpn-e2e-test" ]; then
+                ./skill-vpn-e2e-test --peer "$2" --e2e
+            else
+                print_status "fail" "E2E testing script not found at: ./skill-vpn-e2e-test"
+                exit 1
+            fi
+        fi
+        ;;
+    --peer)
+        if [ -z "$2" ]; then
+            print_status "fail" "Peer name required: --peer PEER_NAME"
+            exit 1
+        fi
+        check_specific_peer "$2"
+        ;;
+    --help)
+        show_help
+        ;;
+    *)
+        quick_vpn_check
+        ;;
+esac

@@ -1,0 +1,487 @@
+#!/bin/bash
+
+# Skill: Regenerate Documentation
+# Purpose: Generate versioned VPN E2E testing documentation with semantic versioning
+# Usage: ./skill-regenerate-documentation [--patch|--minor|--major] [--version x.y.z] [--dry-run]
+
+set -e
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+# Configuration
+DOCS_DIR="docs"
+VERSION_FILE="docs/README.md"
+CURRENT_VERSION="1.0.0"
+DRY_RUN=false
+
+print_status() {
+    local status=$1
+    local message=$2
+
+    case $status in
+        "pass")
+            echo -e "${GREEN}✓${NC} $message"
+            ;;
+        "warn")
+            echo -e "${YELLOW}⚠${NC} $message"
+            ;;
+        "fail")
+            echo -e "${RED}✗${NC} $message"
+            ;;
+        "info")
+            echo -e "${BLUE}ℹ${NC} $message"
+            ;;
+    esac
+}
+
+print_header() {
+    echo -e "\n${BOLD}${BLUE}=== $1 ===${NC}\n"
+}
+
+show_help() {
+    cat << 'EOF'
+Skill: Regenerate Documentation
+
+Purpose: Generate new versions of VPN E2E testing documentation with semantic versioning
+
+Usage: ./skill-regenerate-documentation [OPTIONS]
+
+Version Bumping (choose one):
+  --patch              Bump patch version (1.0.0 → 1.0.1)
+  --minor              Bump minor version (1.0.0 → 1.1.0)
+  --major              Bump major version (1.0.0 → 2.0.0)
+  --version X.Y.Z      Specify exact version (e.g., 1.5.0)
+
+Options:
+  --dry-run            Preview changes without making them
+  --changelog NOTES    Include custom notes in changelog
+  --help               Show this help
+
+Examples:
+  ./skill-regenerate-documentation --patch                    # v1.0.0 → v1.0.1
+  ./skill-regenerate-documentation --minor                    # v1.0.0 → v1.1.0
+  ./skill-regenerate-documentation --major                    # v1.0.0 → v2.0.0
+  ./skill-regenerate-documentation --version 1.5.0            # v1.0.0 → v1.5.0
+  ./skill-regenerate-documentation --patch --dry-run          # Preview only
+
+What it does:
+  1. Detects current version from docs/
+  2. Calculates new version (patch, minor, major, or specified)
+  3. Regenerates all HTML from markdown sources
+  4. Creates new versioned directory (docs/vX.Y.Z/)
+  5. Preserves all previous versions
+  6. Updates master README.md with current version
+  7. Generates CHANGELOG.md entry
+  8. Prepares files for git commit (does not auto-push)
+
+Version Files:
+  - Current: docs/vX.Y.Z/ (latest version)
+  - Previous: docs/v(X-1).Y.Z/ (preserved, marked deprecated)
+  - Master: docs/README.md (always points to latest)
+  - History: docs/CHANGELOG.md (all releases documented)
+
+Semantic Versioning:
+  MAJOR - Breaking changes (new phases, protocol changes)
+  MINOR - New features (new device guides, new sections)
+  PATCH - Bug fixes & improvements (typo fixes, updates)
+
+Next Steps After Running:
+  1. Review generated documentation
+  2. git add docs/
+  3. git commit -m "docs: Release vX.Y.Z - [description]"
+  4. git tag vX.Y.Z (optional but recommended)
+EOF
+}
+
+# Detect current version
+detect_current_version() {
+    if [ -f "$DOCS_DIR/README.md" ]; then
+        grep "Current Version:" "$DOCS_DIR/README.md" | grep -oE "v[0-9]+\.[0-9]+\.[0-9]+" | head -1 || echo "1.0.0"
+    else
+        echo "1.0.0"
+    fi
+}
+
+# Parse semantic version
+parse_version() {
+    local version=$1
+    echo "$version" | sed 's/^v//'
+}
+
+# Increment version
+increment_version() {
+    local version=$1
+    local type=$2
+
+    local major=$(echo "$version" | cut -d. -f1)
+    local minor=$(echo "$version" | cut -d. -f2)
+    local patch=$(echo "$version" | cut -d. -f3)
+
+    case $type in
+        "patch")
+            patch=$((patch + 1))
+            ;;
+        "minor")
+            minor=$((minor + 1))
+            patch=0
+            ;;
+        "major")
+            major=$((major + 1))
+            minor=0
+            patch=0
+            ;;
+    esac
+
+    echo "${major}.${minor}.${patch}"
+}
+
+# Validate semantic version format
+validate_version() {
+    local version=$1
+    if [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Main execution
+main() {
+    print_header "Regenerate VPN E2E Testing Documentation"
+
+    # Detect current version
+    CURRENT_VERSION=$(detect_current_version)
+    CURRENT_VERSION=$(parse_version "$CURRENT_VERSION")
+    print_status "info" "Current version: v$CURRENT_VERSION"
+
+    # Determine new version
+    NEW_VERSION=""
+
+    if [ -n "$SPECIFIED_VERSION" ]; then
+        NEW_VERSION="$SPECIFIED_VERSION"
+        print_status "info" "Using specified version: v$NEW_VERSION"
+    elif [ -n "$VERSION_TYPE" ]; then
+        NEW_VERSION=$(increment_version "$CURRENT_VERSION" "$VERSION_TYPE")
+        print_status "info" "Bumping $VERSION_TYPE version: v$CURRENT_VERSION → v$NEW_VERSION"
+    else
+        print_status "fail" "Please specify --patch, --minor, --major, or --version X.Y.Z"
+        exit 1
+    fi
+
+    # Validate new version
+    if ! validate_version "$NEW_VERSION"; then
+        print_status "fail" "Invalid version format: $NEW_VERSION (must be X.Y.Z)"
+        exit 1
+    fi
+
+    # Check if version already exists
+    if [ -d "$DOCS_DIR/v$NEW_VERSION" ] && [ "$DRY_RUN" = false ]; then
+        print_status "warn" "Version v$NEW_VERSION already exists"
+        read -p "Overwrite? (y/N): " -r
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            print_status "fail" "Cancelled"
+            exit 1
+        fi
+    fi
+
+    echo ""
+    print_header "Pre-Generation Checks"
+
+    # Check markdown sources exist
+    if ! ls *.md > /dev/null 2>&1; then
+        print_status "fail" "No markdown sources found in current directory"
+        exit 1
+    fi
+    print_status "pass" "Markdown sources found"
+
+    # Check peer guides exist
+    if [ ! -d "peer-guides" ]; then
+        print_status "warn" "peer-guides directory not found (some guides may be missing)"
+    else
+        print_status "pass" "Peer guides directory found"
+    fi
+
+    # Check pandoc available
+    if ! command -v pandoc &> /dev/null; then
+        print_status "fail" "pandoc not found (required for HTML generation)"
+        exit 1
+    fi
+    print_status "pass" "pandoc available for HTML generation"
+
+    if [ "$DRY_RUN" = true ]; then
+        echo ""
+        print_header "Dry Run Preview"
+        print_status "info" "Would create: $DOCS_DIR/v$NEW_VERSION/"
+        print_status "info" "Would preserve: $DOCS_DIR/v$CURRENT_VERSION/"
+        print_status "info" "Would update: $DOCS_DIR/README.md"
+        print_status "info" "Would create: $DOCS_DIR/CHANGELOG.md"
+        print_status "pass" "Dry run complete. Use without --dry-run to apply changes"
+        exit 0
+    fi
+
+    echo ""
+    print_header "Generating Documentation v$NEW_VERSION"
+
+    # Create versioned directory
+    mkdir -p "$DOCS_DIR/v$NEW_VERSION"
+    print_status "pass" "Created $DOCS_DIR/v$NEW_VERSION/"
+
+    # Generate HTML files
+    local html_count=0
+    for md_file in *.md; do
+        if [ -f "$md_file" ]; then
+            # Skip certain files
+            if [[ "$md_file" == "VERSION_CONTROL.md" || "$md_file" == "README.md" ]]; then
+                continue
+            fi
+
+            html_file="${md_file%.md}.html"
+
+            pandoc "$md_file" \
+                -f markdown \
+                -t html \
+                -o "$DOCS_DIR/v$NEW_VERSION/$html_file" \
+                --toc \
+                --toc-depth=2 \
+                -s \
+                -c <(cat << 'CSS'
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  line-height: 1.8;
+  margin: 0;
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+  color: #333;
+  background: #fafafa;
+}
+h1 {
+  color: #003366;
+  border-bottom: 4px solid #003366;
+  padding-bottom: 15px;
+  margin: 40px 0 20px 0;
+}
+h2 {
+  color: #005599;
+  margin-top: 35px;
+  border-left: 4px solid #005599;
+  padding-left: 15px;
+}
+h3 { color: #0077bb; }
+code {
+  background: #f4f4f4;
+  padding: 2px 6px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  border-radius: 3px;
+}
+pre {
+  background: #1e1e1e;
+  color: #00ff00;
+  padding: 15px;
+  border-left: 4px solid #005599;
+  overflow-x: auto;
+  border-radius: 5px;
+}
+pre code { background: none; color: inherit; }
+table { border-collapse: collapse; margin: 20px 0; width: 100%; }
+table, th, td { border: 1px solid #ddd; padding: 12px; }
+th { background-color: #005599; color: white; }
+tr:nth-child(even) { background-color: #f9f9f9; }
+.toc { background: #f0f8ff; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #005599; }
+a { color: #0077bb; text-decoration: none; }
+a:hover { text-decoration: underline; }
+@media print { h1 { page-break-before: always; } }
+footer { text-align: right; color: #999; font-size: 0.9em; margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px; }
+CSS
+            ) 2>/dev/null
+
+            print_status "pass" "Generated: $html_file"
+            ((html_count++))
+        fi
+    done
+
+    # Generate peer guides HTML
+    if [ -d "peer-guides" ]; then
+        for md_file in peer-guides/*_SETUP_GUIDE.md; do
+            if [ -f "$md_file" ]; then
+                html_file=$(basename "${md_file%.md}.html")
+
+                pandoc "$md_file" \
+                    -f markdown \
+                    -t html \
+                    -o "$DOCS_DIR/v$NEW_VERSION/$html_file" \
+                    --toc \
+                    --toc-depth=2 \
+                    -s 2>/dev/null
+
+                print_status "pass" "Generated: $html_file"
+                ((html_count++))
+            fi
+        done
+    fi
+
+    print_status "info" "Total HTML files generated: $html_count"
+
+    # Create VERSION.md for this release
+    cat > "$DOCS_DIR/v$NEW_VERSION/VERSION.md" << VERSIONEOF
+# VPN E2E Testing Documentation v$NEW_VERSION
+
+**Release Date:** $(date '+%B %d, %Y')
+**Status:** ✅ Production Ready
+**Semantic Version:** $NEW_VERSION
+
+---
+
+## What's Included
+
+$html_count HTML files with complete VPN E2E testing documentation.
+
+---
+
+## Documentation Locations
+
+- **Current (Latest):** \`/docs/v$NEW_VERSION/\`
+- **Master README:** \`/docs/README.md\`
+- **Previous Versions:** \`/docs/v{older}/\` (preserved)
+
+---
+
+## Version History
+
+| Version | Date | Status |
+|---------|------|--------|
+| $NEW_VERSION | $(date '+%Y-%m-%d') | ✅ Current |
+
+---
+
+**Generated by:** skill-regenerate-documentation
+**Last Updated:** $(date)
+VERSIONEOF
+
+    print_status "pass" "Created: VERSION.md"
+
+    # Update master README
+    echo ""
+    print_header "Updating Master Documentation"
+
+    # Backup current README
+    if [ -f "$DOCS_DIR/README.md" ]; then
+        cp "$DOCS_DIR/README.md" "$DOCS_DIR/README.md.bak"
+        print_status "pass" "Backed up: README.md → README.md.bak"
+    fi
+
+    # Update version reference
+    sed -i.bak "s/v$CURRENT_VERSION/v$NEW_VERSION/g" "$DOCS_DIR/README.md" 2>/dev/null || \
+    sed -i '' "s/v$CURRENT_VERSION/v$NEW_VERSION/g" "$DOCS_DIR/README.md"
+
+    print_status "pass" "Updated: $DOCS_DIR/README.md with v$NEW_VERSION"
+
+    # Update date
+    current_date=$(date '+%B %d, %Y')
+    sed -i.bak "s/Last Updated:.*/Last Updated:** $current_date/" "$DOCS_DIR/README.md" 2>/dev/null || \
+    sed -i '' "s/Last Updated:.*/Last Updated:** $current_date/" "$DOCS_DIR/README.md"
+
+    print_status "pass" "Updated: Timestamp to $(date)"
+
+    # Create/Update CHANGELOG.md
+    if [ ! -f "$DOCS_DIR/CHANGELOG.md" ]; then
+        cat > "$DOCS_DIR/CHANGELOG.md" << 'CHANGEEOF'
+# Changelog
+
+All notable changes to VPN E2E Testing documentation are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/),
+and this project adheres to [Semantic Versioning](https://semver.org/).
+
+CHANGEEOF
+    fi
+
+    # Prepend new version to changelog
+    sed -i.bak "4i\\
+## v$NEW_VERSION ($(date '+%Y-%m-%d'))\\
+\\
+### Changed\\
+- Regenerated documentation with skill-regenerate-documentation\\
+\\
+" "$DOCS_DIR/CHANGELOG.md" 2>/dev/null || \
+    sed -i '' "4i\\
+## v$NEW_VERSION ($(date '+%Y-%m-%d'))\\
+\\
+### Changed\\
+- Regenerated documentation with skill-regenerate-documentation\\
+" "$DOCS_DIR/CHANGELOG.md"
+
+    print_status "pass" "Updated: CHANGELOG.md"
+
+    echo ""
+    print_header "Documentation Generation Complete"
+
+    print_status "pass" "Created: $DOCS_DIR/v$NEW_VERSION/ (all HTML files)"
+    print_status "pass" "Preserved: $DOCS_DIR/v$CURRENT_VERSION/ (previous version)"
+    print_status "pass" "Updated: Master README.md"
+    print_status "pass" "Updated: CHANGELOG.md"
+
+    echo ""
+    print_header "Next Steps"
+
+    echo "1. Review generated documentation:"
+    echo "   open $DOCS_DIR/v$NEW_VERSION/DEVOPS_DOCUMENTATION_INDEX.html"
+    echo ""
+    echo "2. Stage files for commit:"
+    echo "   git add $DOCS_DIR/"
+    echo ""
+    echo "3. Commit the release:"
+    echo "   git commit -m \"docs: Release v$NEW_VERSION - [description]\""
+    echo ""
+    echo "4. (Optional) Tag the version:"
+    echo "   git tag v$NEW_VERSION"
+    echo ""
+    print_status "pass" "Ready to commit"
+}
+
+# Parse arguments
+VERSION_TYPE=""
+SPECIFIED_VERSION=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --patch)
+            VERSION_TYPE="patch"
+            shift
+            ;;
+        --minor)
+            VERSION_TYPE="minor"
+            shift
+            ;;
+        --major)
+            VERSION_TYPE="major"
+            shift
+            ;;
+        --version)
+            SPECIFIED_VERSION="$2"
+            shift 2
+            ;;
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        --help)
+            show_help
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+main

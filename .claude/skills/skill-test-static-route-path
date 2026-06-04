@@ -1,0 +1,231 @@
+#!/bin/bash
+
+################################################################################
+# skill-test-static-route-path
+#
+# Test connectivity via static route IP for VPN peers with provider_assigned_ip.
+# Validates TGW route existence and connectivity reachability.
+#
+# Usage:
+#   ./skill-test-static-route-path Vimenca
+#   ./skill-test-static-route-path --peer Vimenca --verbose
+#   ./skill-test-static-route-path --list
+################################################################################
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+CONFIG_FILE="${SCRIPT_DIR}/config/vpn-peers.yaml"
+PEER_ARG="${1:-}"
+VERBOSE=false
+FORMAT="text"
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --peer)
+            PEER_ARG="$2"
+            shift 2
+            ;;
+        --verbose)
+            VERBOSE=true
+            shift
+            ;;
+        --list)
+            echo "Available VPN peers:"
+            grep "^  - name:" "$CONFIG_FILE" | sed 's/.*name: /  - /' | sed 's/$//'
+            exit 0
+            ;;
+        --format)
+            FORMAT="$2"
+            shift 2
+            ;;
+        -h|--help)
+            cat << 'EOF'
+Test static route connectivity for VPN peers.
+
+Usage:
+  ./skill-test-static-route-path Vimenca
+  ./skill-test-static-route-path --peer Vimenca --verbose
+  ./skill-test-static-route-path --list
+
+Options:
+  --peer PEER              Peer name to test
+  --verbose                Show detailed output
+  --format FORMAT          Output format: text (default) or json
+  --list                   List available peers
+  --help                   Show this help message
+EOF
+            exit 0
+            ;;
+        *)
+            PEER_ARG="$1"
+            shift
+            ;;
+    esac
+done
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+if [[ -z "$PEER_ARG" ]]; then
+    echo "Error: No peer specified. Use './skill-test-static-route-path --list' to see available peers."
+    exit 1
+fi
+
+# Get peer config from YAML
+get_peer_config() {
+    local peer_name="$1"
+    python3 << PYTHON
+import yaml
+import sys
+
+try:
+    with open("$CONFIG_FILE", 'r') as f:
+        config = yaml.safe_load(f)
+
+    for peer in config.get('peers', []):
+        if peer.get('name') == "$peer_name":
+            provider_ip = peer.get('provider_assigned_ip', '')
+            destination_cidrs = peer.get('destination_cidrs', [])
+            print(f"{provider_ip}|{','.join(destination_cidrs)}")
+            sys.exit(0)
+
+    print("ERROR: Peer not found")
+    sys.exit(1)
+except Exception as e:
+    print(f"ERROR: {e}")
+    sys.exit(1)
+PYTHON
+}
+
+# Check if provider_assigned_ip is defined
+if ! result=$(get_peer_config "$PEER_ARG" 2>/dev/null); then
+    echo "${RED}✗ Peer not found: $PEER_ARG${NC}"
+    exit 1
+fi
+
+IFS='|' read -r PROVIDER_IP DEST_CIDRS <<< "$result"
+
+if [[ -z "$PROVIDER_IP" ]]; then
+    echo "${YELLOW}⚠ Peer $PEER_ARG has no provider_assigned_ip configured${NC}"
+    exit 0
+fi
+
+# Normalize provider IP to /32 if needed
+if [[ ! "$PROVIDER_IP" =~ "/" ]]; then
+    PROVIDER_IP="${PROVIDER_IP}/32"
+fi
+
+[[ "$VERBOSE" == "true" ]] && echo "${BLUE}Testing static route for $PEER_ARG${NC}"
+[[ "$VERBOSE" == "true" ]] && echo "Provider IP: $PROVIDER_IP"
+[[ "$VERBOSE" == "true" ]] && echo ""
+
+# Test 1: Verify TGW route exists in AWS
+test_tgw_route() {
+    local peer_name="$1"
+    local route_cidr="$2"
+
+    if [[ "$VERBOSE" == "true" ]]; then
+        echo "Checking AWS Transit Gateway route..."
+    fi
+
+    # Get TGW route table ID (hard-coded for now, could make dynamic)
+    local TGW_RTB="tgw-rtb-079e9cb450e5355e6"
+
+    if aws ec2 search-transit-gateway-routes \
+        --profile affinity \
+        --region us-east-2 \
+        --transit-gateway-route-table-id "$TGW_RTB" \
+        --filters "Name=state,Values=active" \
+        --query "Routes[?DestinationCidrBlock=='${route_cidr}']" \
+        --output text 2>/dev/null | grep -q "$route_cidr"; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Test 2: Test connectivity via ping
+test_connectivity() {
+    local ip_address="$1"
+
+    # Extract bare IP without CIDR
+    ip_address="${ip_address%/*}"
+
+    if [[ "$VERBOSE" == "true" ]]; then
+        echo "Testing ping to $ip_address (3 packets, 5s timeout)..."
+    fi
+
+    # Try to ping with timeout
+    if timeout 5 ping -c 3 -W 2 "$ip_address" >/dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Run tests
+results_json="{\"peer\":\"$PEER_ARG\",\"provider_ip\":\"$PROVIDER_IP\",\"tests\":{"
+route_ok=false
+ping_ok=false
+
+# Test TGW route
+if test_tgw_route "$PEER_ARG" "$PROVIDER_IP"; then
+    route_status="${GREEN}✓${NC} ACTIVE"
+    route_ok=true
+else
+    route_status="${RED}✗${NC} NOT FOUND or INACTIVE"
+    route_ok=false
+fi
+
+[[ "$VERBOSE" == "true" ]] && echo "TGW Route: $route_status" && echo ""
+
+# Test connectivity
+if test_connectivity "$PROVIDER_IP"; then
+    ping_status="${GREEN}✓${NC} REACHABLE"
+    ping_ok=true
+else
+    ping_status="${YELLOW}⚠${NC} UNREACHABLE"
+    ping_ok=false
+fi
+
+[[ "$VERBOSE" == "true" ]] && echo "Connectivity: $ping_status"
+
+# Overall status
+if $route_ok && $ping_ok; then
+    overall="${GREEN}READY${NC}"
+    exit_code=0
+elif $route_ok; then
+    overall="${YELLOW}PARTIAL${NC}"
+    exit_code=1
+else
+    overall="${RED}FAILED${NC}"
+    exit_code=2
+fi
+
+# Output results
+if [[ "$FORMAT" == "json" ]]; then
+    results_json+='"route":'$([ "$route_ok" = "true" ] && echo "true" || echo "false")',
+'
+    results_json+='"ping":'$([ "$ping_ok" = "true" ] && echo "true" || echo "false")
+    results_json+="}}"
+    echo "$results_json"
+else
+    echo ""
+    echo "┌───────────────────────────────────────────┐"
+    echo "│ Static Route Test Results                 │"
+    echo "├───────────────────────────────────────────┤"
+    echo "│ Peer:       $PEER_ARG"
+    echo "│ Provider IP: $PROVIDER_IP"
+    echo "│ TGW Route:   $route_status"
+    echo "│ Connectivity: $ping_status"
+    echo "│ Status:      $overall"
+    echo "└───────────────────────────────────────────┘"
+fi
+
+exit $exit_code

@@ -1,0 +1,39 @@
+apiVersion: vpnctl.affinity.io/v1
+kind: StackDeployment
+metadata:
+  annotations:
+    description: Core Transit Gateway infrastructure hub
+  labels:
+    environment: production
+    type: core
+  name: vpn-ctl-stack
+  namespace: aff-atg
+spec:
+  config:
+    aws_profile: affinity
+    aws_region: us-east-2
+    project_name: aff-atg
+  provider: pulumi
+  resources:
+  - config:
+      description: Transit Gateway Hub for aff-atg (shared)
+      tags:
+        Environment: production
+        StackType: core
+    name: affinity-hub
+    type: transit-gateway-hub
+  - clusters:
+    - name: asg-plat-dev
+      region: us-east-2
+    type: eks-cluster-connectors
+  - comment: Created dynamically based on peer config
+    type: snat-instances
+  stack_directory: pulumi/stacks/core
+  version: 3.x
+status:
+  completionTime: '2026-05-12T16:34:00.609855'
+  lastUpdate: null
+  message: ''
+  phase: Deployed
+  resources: []
+  startTime: '2026-05-12T16:33:54.176338'

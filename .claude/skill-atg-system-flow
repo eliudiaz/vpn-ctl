@@ -1,0 +1,370 @@
+#!/bin/bash
+
+# Skill: Complete ATG System Flow Analysis
+# Purpose: End-to-end health check of entire Transit Gateway infrastructure
+# Usage: ./skill-atg-system-flow [--detailed] [--region REGION]
+
+set -e
+
+REGION="${REGION:-us-east-2}"
+TGW_ID="tgw-0572ce4b80ff7445a"
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+# Counters
+PASS=0
+WARN=0
+FAIL=0
+
+print_status() {
+    local status=$1
+    local message=$2
+
+    case $status in
+        "pass")
+            echo -e "${GREEN}✓${NC} $message"
+            ((PASS++))
+            ;;
+        "warn")
+            echo -e "${YELLOW}⚠${NC} $message"
+            ((WARN++))
+            ;;
+        "fail")
+            echo -e "${RED}✗${NC} $message"
+            ((FAIL++))
+            ;;
+        "info")
+            echo -e "${BLUE}ℹ${NC} $message"
+            ;;
+    esac
+}
+
+print_header() {
+    echo -e "\n${BOLD}${BLUE}=== $1 ===${NC}\n"
+}
+
+print_summary() {
+    echo ""
+    print_header "ATG System Health Summary"
+
+    local total=$((PASS + WARN + FAIL))
+    if [ $total -eq 0 ]; then
+        total=1
+    fi
+    local health=$((PASS * 100 / total))
+
+    echo "Checks: ${GREEN}$PASS passed${NC}, ${YELLOW}$WARN warnings${NC}, ${RED}$FAIL failed${NC}"
+    echo "Health Score: $health%"
+    echo ""
+
+    if [ $FAIL -eq 0 ]; then
+        print_status "pass" "ATG System is OPERATIONAL"
+    elif [ $FAIL -le 2 ]; then
+        print_status "warn" "ATG operational with minor issues"
+    else
+        print_status "fail" "ATG has significant problems"
+    fi
+}
+
+# 1. Transit Gateway Hub
+check_tgw_hub() {
+    print_header "1. Transit Gateway Hub"
+
+    local tgw_state=$(aws ec2 describe-transit-gateways \
+        --transit-gateway-ids "$TGW_ID" \
+        --region "$REGION" \
+        --query 'TransitGateways[0].State' \
+        --output text 2>/dev/null || echo "NOT_FOUND")
+
+    [ "$tgw_state" = "available" ] && print_status "pass" "TGW available" || print_status "fail" "TGW state: $tgw_state"
+
+    # Check DNS support
+    local dns_support=$(aws ec2 describe-transit-gateways \
+        --transit-gateway-ids "$TGW_ID" \
+        --region "$REGION" \
+        --query 'TransitGateways[0].Options.DnsSupport' \
+        --output text 2>/dev/null || echo "unknown")
+
+    [ "$dns_support" = "enable" ] && print_status "pass" "DNS support enabled" || print_status "warn" "DNS support: $dns_support"
+}
+
+# 2. VPC Attachments
+check_vpc_attachments() {
+    print_header "2. VPC Attachments (EKS Clusters)"
+
+    local attachment_count=$(aws ec2 describe-transit-gateway-vpc-attachments \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'TransitGatewayVpcAttachments | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    [ "$attachment_count" -gt 0 ] && print_status "pass" "VPC attachments: $attachment_count" || print_status "warn" "No VPC attachments found"
+
+    # Check attachment states
+    local available=$(aws ec2 describe-transit-gateway-vpc-attachments \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" "Name=state,Values=available" \
+        --region "$REGION" \
+        --query 'TransitGatewayVpcAttachments | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    [ "$available" = "$attachment_count" ] && print_status "pass" "All attachments available" || print_status "warn" "Some attachments not available ($available/$attachment_count)"
+}
+
+# 3. VPN Connections
+check_vpn_connections() {
+    print_header "3. VPN Connections (Peers)"
+
+    local vpn_count=$(aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    [ "$vpn_count" -gt 0 ] && print_status "pass" "VPN connections: $vpn_count" || print_status "warn" "No VPN connections configured"
+
+    # Check tunnel status
+    local tunnel_up=$(aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections[*].VpnTunnelOptions[?Status.TunnelStatus==`UP`] | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    local tunnel_down=$(aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections[*].VpnTunnelOptions[?Status.TunnelStatus==`DOWN`] | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    if [ "$tunnel_down" -eq 0 ]; then
+        print_status "pass" "All VPN tunnels UP ($tunnel_up active)"
+    elif [ "$tunnel_up" -gt 0 ]; then
+        print_status "warn" "Redundant tunnels in use ($tunnel_up UP, $tunnel_down DOWN)"
+    else
+        print_status "fail" "All VPN tunnels DOWN"
+    fi
+}
+
+# 4. TGW Routes
+check_tgw_routes() {
+    print_header "4. Transit Gateway Routes"
+
+    local route_count=$(aws ec2 describe-transit-gateway-routes \
+        --transit-gateway-route-table-id "tgw-rtb-079e9cb450e5355e6" \
+        --region "$REGION" \
+        --query 'Routes[?State==`active`] | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    [ "$route_count" -gt 0 ] && print_status "pass" "Active routes: $route_count" || print_status "fail" "No active routes found"
+
+    # Check blackholed routes
+    local blackholed=$(aws ec2 describe-transit-gateway-routes \
+        --transit-gateway-route-table-id "tgw-rtb-079e9cb450e5355e6" \
+        --region "$REGION" \
+        --query 'Routes[?State==`blackholed`] | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    [ "$blackholed" -eq 0 ] && print_status "pass" "No blackholed routes" || print_status "warn" "Found $blackholed blackholed routes"
+}
+
+# 5. VPC Endpoints
+check_vpc_endpoints() {
+    print_header "5. VPC Endpoints (Private Access)"
+
+    # Detect VPC
+    local vpc_id=$(aws ec2 describe-vpcs \
+        --filters "Name=tag:Name,Values=asg-plat-dev" \
+        --region "$REGION" \
+        --query 'Vpcs[0].VpcId' \
+        --output text 2>/dev/null || echo "")
+
+    if [ -z "$vpc_id" ] || [ "$vpc_id" = "None" ]; then
+        print_status "warn" "Could not detect VPC"
+        return
+    fi
+
+    print_status "info" "VPC: $vpc_id"
+
+    # Interface endpoints
+    local interface_total=$(aws ec2 describe-vpc-endpoints \
+        --filters "Name=vpc-id,Values=$vpc_id" "Name=vpc-endpoint-type,Values=Interface" \
+        --region "$REGION" \
+        --query 'VpcEndpoints | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    local interface_available=$(aws ec2 describe-vpc-endpoints \
+        --filters "Name=vpc-id,Values=$vpc_id" "Name=vpc-endpoint-type,Values=Interface" "Name=vpc-endpoint-state,Values=available" \
+        --region "$REGION" \
+        --query 'VpcEndpoints | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    if [ "$interface_total" -ge 7 ]; then
+        print_status "pass" "Interface endpoints: $interface_available/$interface_total"
+    else
+        print_status "warn" "Missing some interface endpoints ($interface_total/7)"
+    fi
+
+    # Gateway endpoints
+    local gateway_count=$(aws ec2 describe-vpc-endpoints \
+        --filters "Name=vpc-id,Values=$vpc_id" "Name=vpc-endpoint-type,Values=Gateway" \
+        --region "$REGION" \
+        --query 'VpcEndpoints | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    [ "$gateway_count" -ge 2 ] && print_status "pass" "Gateway endpoints: $gateway_count" || print_status "warn" "Missing gateway endpoints"
+
+    # Check DNS
+    local dns_enabled=$(aws ec2 describe-vpc-endpoints \
+        --filters "Name=vpc-id,Values=$vpc_id" "Name=vpc-endpoint-type,Values=Interface" "Name=vpc-endpoint.private-dns-enabled,Values=true" \
+        --region "$REGION" \
+        --query 'VpcEndpoints | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    [ "$dns_enabled" = "$interface_total" ] && print_status "pass" "Private DNS enabled on all endpoints" || print_status "warn" "DNS not enabled on all endpoints"
+}
+
+# 6. Cost & Resources
+check_cost_analysis() {
+    print_header "6. Cost Analysis"
+
+    local vpc_id=$(aws ec2 describe-vpcs \
+        --filters "Name=tag:Name,Values=asg-plat-dev" \
+        --region "$REGION" \
+        --query 'Vpcs[0].VpcId' \
+        --output text 2>/dev/null || echo "")
+
+    local interface_count=$(aws ec2 describe-vpc-endpoints \
+        --filters "Name=vpc-id,Values=$vpc_id" "Name=vpc-endpoint-type,Values=Interface" \
+        --region "$REGION" \
+        --query 'VpcEndpoints | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    local attachment_count=$(aws ec2 describe-transit-gateway-vpc-attachments \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'TransitGatewayVpcAttachments | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    local tgw_cost=$(echo "$attachment_count * 36" | bc)
+    local endpoint_cost=$(echo "$interface_count * 7.20" | bc)
+    local total_monthly=$(echo "$tgw_cost + $endpoint_cost" | bc)
+
+    echo "Estimated Monthly Costs:"
+    echo "  TGW Attachments ($attachment_count × \$36): \$$tgw_cost"
+    echo "  Interface Endpoints ($interface_count × \$7.20): \$$endpoint_cost"
+    echo "  Total: \$$total_monthly/month"
+    echo ""
+    print_status "info" "Cost is reasonable vs NAT Gateway approach (\$96-300/month)"
+}
+
+# Detailed flow diagram
+detailed_flow() {
+    print_header "ATG System Flow Diagram"
+
+    cat << 'EOF'
+┌─────────────────────────────────────────────────────────────┐
+│                    Transit Gateway Hub                       │
+│                   (tgw-0572ce4b80ff7445a)                   │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+          ┌────────────────┼────────────────┐
+          │                │                │
+    ┌─────▼─────┐   ┌──────▼───────┐   ┌───▼──────────┐
+    │ EKS VPC   │   │ VPC Endpoints │   │ VPN Peers    │
+    │ Attach    │   │ (Priv Access) │   │ (Sites)      │
+    └─────┬─────┘   └──────┬────────┘   └───┬──────────┘
+          │                │                 │
+    ┌─────▼─────┐   ┌──────▼───────┐   ┌───▼──────────┐
+    │ Pods      │   │ ECR, EC2, STS│   │ Vimenca,     │
+    │ Clusters  │   │ S3, DynamoDB  │   │ CIBA, others │
+    └───────────┘   └───────────────┘   └──────────────┘
+          ↓               ↓                   ↓
+       EKS Nodes      AWS Services       External Networks
+       Pod IPs        AWS APIs            Remote Sites
+EOF
+}
+
+# Main execution
+main() {
+    print_header "AWS Transit Gateway (ATG) - Complete System Flow"
+
+    check_tgw_hub
+    check_vpc_attachments
+    check_vpn_connections
+    check_tgw_routes
+    check_vpc_endpoints
+    check_cost_analysis
+
+    if [ "${1:-}" = "--detailed" ]; then
+        detailed_flow
+    fi
+
+    print_summary
+}
+
+# Help
+show_help() {
+    cat << 'EOF'
+AWS Transit Gateway System Flow Analysis
+
+Purpose: Complete end-to-end health check of ATG infrastructure
+
+Usage: ./skill-atg-system-flow [OPTIONS]
+
+Options:
+  (default)       Quick system flow check (20 seconds)
+  --detailed      Detailed flow diagram (25 seconds)
+  --region REGION AWS region (default: us-east-2)
+  --help          Show this help
+
+What it checks:
+  1. Transit Gateway Hub      - State and features (DNS, ECMP)
+  2. VPC Attachments          - EKS cluster connections
+  3. VPN Connections          - External peer status
+  4. TGW Routes               - Active and blackholed routes
+  5. VPC Endpoints            - Private access to AWS services
+  6. Cost Analysis            - Monthly cost estimation
+
+Health Score Interpretation:
+  100% = All systems operational
+  80%+ = Operational with minor issues
+  60-79% = Degraded, needs investigation
+  <60% = Severe problems, urgent action
+
+Common Issues & Fixes:
+  TGW unavailable         → Contact AWS support
+  No VPC attachments      → Deploy EKS cluster via Pulumi
+  VPN tunnels down        → Check peer device/firewall
+  Blackholed routes       → Add TGW route table entries
+  Endpoints failing       → Check Security Groups (allow 443)
+  Missing endpoints       → Deploy via Pulumi ./pulumi/__main__.py
+
+Examples:
+  ./skill-atg-system-flow              # Quick overview
+  ./skill-atg-system-flow --detailed   # Full flow diagram
+  ./skill-atg-system-flow --region us-west-2
+
+Related Skills:
+  ./skill-transit-gateway-health       # TGW hub diagnostics
+  ./skill-vpn-connectivity             # VPN peer analysis
+  ./skill-vpc-endpoints                # VPC endpoint validation
+EOF
+}
+
+# Entry point
+case "${1:-}" in
+    --help)
+        show_help
+        ;;
+    --detailed)
+        main "--detailed"
+        ;;
+    *)
+        main
+        ;;
+esac

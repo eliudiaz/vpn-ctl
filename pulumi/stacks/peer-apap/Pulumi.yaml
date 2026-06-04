@@ -1,0 +1,6 @@
+description: 'VPN peer: apap'
+name: aff-atg
+runtime:
+  name: python
+  options:
+    virtualenv: ../../venv

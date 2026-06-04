@@ -1,0 +1,21 @@
+# VPN Health Monitor - Python Dependencies
+
+# Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+
+# Modern Ping & Network Tools
+icmplib==3.0.3           # Modern async ICMP ping library
+aiohttp==3.9.1           # Async HTTP client for HTTP/HTTPS traffic generation
+
+# Configuration & Utilities
+pyyaml==6.0.1            # YAML parsing
+python-dotenv==1.0.0     # Environment variable management
+
+# Monitoring & Logging
+prometheus-client==0.19.0  # Prometheus metrics export
+psutil==5.9.6             # System and process utilities
+
+# AWS Integration
+boto3==1.26.137           # AWS SDK for Python

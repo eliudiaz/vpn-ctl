@@ -1,0 +1,553 @@
+#!/usr/bin/env python3
+"""
+skill-vpn-connectivity-test: Test connectivity to VPN peer IPs with results summary
+
+Performs comprehensive connectivity testing to peer network IPs and returns
+structured summary of results (control plane, data plane, performance metrics).
+
+Usage:
+  ./skill-vpn-connectivity-test Vimenca              # Test next IP in Vimenca network
+  ./skill-vpn-connectivity-test --peer Vimenca --ip 172.16.70.5  # Test specific IP
+  ./skill-vpn-connectivity-test --peer Vimenca --scan  # Scan network range
+  ./skill-vpn-connectivity-test --list               # List available peers for testing
+  ./skill-vpn-connectivity-test Vimenca --format json # JSON output
+  ./skill-vpn-connectivity-test --help               # Help
+
+Output:
+  • Network reachability summary (ping success rate)
+  • Service connectivity (TCP, HTTP)
+  • Performance metrics (latency, packet loss, MTU)
+  • AWS infrastructure status (VPN state, routes, TGW)
+  • JSON output option for automation
+"""
+
+import sys
+import json
+import argparse
+import subprocess
+import re
+from pathlib import Path
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
+from ipaddress import ip_address, ip_network
+
+# Colors
+GREEN = '\033[0;32m'
+RED = '\033[0;31m'
+YELLOW = '\033[1;33m'
+BLUE = '\033[0;34m'
+BOLD = '\033[1m'
+NC = '\033[0m'
+
+
+class ConnectivityTester:
+    """Test connectivity to VPN peer IPs"""
+
+    def __init__(self, registry_path=None, region="us-east-2", profile="affinity"):
+        """Initialize with registry and AWS configuration"""
+        if registry_path is None:
+            registry_path = Path(__file__).parent.parent / "vpn-peers-registry.yaml"
+
+        self.registry_path = registry_path
+        self.region = region
+        self.profile = profile
+        self.test_results = {}
+
+    def get_peer_cidr(self, peer_name: str) -> Optional[str]:
+        """Get peer CIDR from registry"""
+        try:
+            import yaml
+            with open(self.registry_path) as f:
+                registry = yaml.safe_load(f) or {}
+                peers = registry.get("peers", {})
+
+                for key, data in peers.items():
+                    if data.get("peer_name", "").lower() == peer_name.lower():
+                        peer_cidrs = data.get("peer_cidrs", [])
+                        if peer_cidrs:
+                            return peer_cidrs[0] if isinstance(peer_cidrs, list) else peer_cidrs
+        except Exception:
+            pass
+        return None
+
+    def get_next_testable_ip(self, peer_name: str) -> Optional[str]:
+        """Get next testable IP in peer network"""
+        cidr = self.get_peer_cidr(peer_name)
+        if not cidr:
+            return None
+
+        try:
+            net = ip_network(cidr, strict=False)
+            # Return third host in network (skip network and gateway)
+            hosts = list(net.hosts())
+            return str(hosts[2]) if len(hosts) > 2 else str(hosts[0])
+        except Exception:
+            return None
+
+    def test_icmp(self, ip: str, count: int = 5) -> Dict:
+        """Test ICMP connectivity (ping)"""
+        result = {
+            "status": "DOWN",
+            "reachable": False,
+            "packets_sent": count,
+            "packets_received": 0,
+            "loss_percent": 100.0,
+            "avg_latency_ms": None,
+            "min_latency_ms": None,
+            "max_latency_ms": None,
+            "stddev_latency_ms": None,
+        }
+
+        try:
+            output = subprocess.run(
+                ["ping", "-c", str(count), "-W", "2", ip],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+
+            if output.returncode == 0:
+                result["status"] = "UP"
+                result["reachable"] = True
+
+            # Parse ping output
+            lines = output.stdout + output.stderr
+
+            # Extract packet loss
+            loss_match = re.search(r'(\d+(?:\.\d+)?)\% packet loss', lines)
+            if loss_match:
+                result["loss_percent"] = float(loss_match.group(1))
+                result["packets_received"] = int(count * (100 - result["loss_percent"]) / 100)
+
+            # Extract latency stats (min/avg/max/stddev)
+            stats_match = re.search(r'(\d+(?:\.\d+)?)/(\d+(?:\.\d+)?)/(\d+(?:\.\d+)?)/(\d+(?:\.\d+)?)', lines)
+            if stats_match:
+                result["min_latency_ms"] = float(stats_match.group(1))
+                result["avg_latency_ms"] = float(stats_match.group(2))
+                result["max_latency_ms"] = float(stats_match.group(3))
+                result["stddev_latency_ms"] = float(stats_match.group(4))
+
+        except subprocess.TimeoutExpired:
+            result["status"] = "TIMEOUT"
+        except Exception as e:
+            result["error"] = str(e)
+
+        return result
+
+    def test_tcp_connectivity(self, ip: str, port: int = 80) -> Dict:
+        """Test TCP connectivity"""
+        result = {
+            "status": "CLOSED",
+            "reachable": False,
+            "port": port,
+        }
+
+        try:
+            # Use bash to test TCP connection (timeout 3 seconds)
+            output = subprocess.run(
+                ["bash", "-c", f"timeout 3 bash -c 'echo > /dev/tcp/{ip}/{port}' 2>&1"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+
+            if output.returncode == 0:
+                result["status"] = "OPEN"
+                result["reachable"] = True
+            else:
+                result["status"] = "CLOSED"
+
+        except Exception as e:
+            result["error"] = str(e)
+
+        return result
+
+    def test_mtu(self, ip: str) -> Dict:
+        """Test MTU with different payload sizes"""
+        result = {
+            "status": "UNKNOWN",
+            "max_working_size": None,
+            "sizes_tested": [],
+        }
+
+        # Test common MTU sizes
+        sizes = [1472, 1400, 1350, 1280]  # Payload sizes (add 28 bytes for ICMP header = full packet)
+
+        for size in sizes:
+            try:
+                output = subprocess.run(
+                    ["ping", "-c", "1", "-M", "do", "-s", str(size), ip],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+
+                success = output.returncode == 0
+                result["sizes_tested"].append({
+                    "payload_bytes": size,
+                    "full_packet_bytes": size + 28,
+                    "success": success,
+                })
+
+                if success:
+                    result["max_working_size"] = size + 28
+                    if result["status"] == "UNKNOWN":
+                        result["status"] = "OK"
+
+            except subprocess.TimeoutExpired:
+                result["sizes_tested"].append({
+                    "payload_bytes": size,
+                    "full_packet_bytes": size + 28,
+                    "success": False,
+                })
+
+        return result
+
+    def check_aws_vpn_status(self, peer_name: str) -> Dict:
+        """Check VPN connection status in AWS"""
+        result = {
+            "vpn_id": None,
+            "vpn_state": None,
+            "tunnel_1_status": "UNKNOWN",
+            "tunnel_2_status": "UNKNOWN",
+            "tunnel_1_ip": None,
+            "tunnel_2_ip": None,
+        }
+
+        try:
+            output = subprocess.run(
+                [
+                    "aws", "ec2", "describe-vpn-connections",
+                    "--filters", "Name=state,Values=available,pending",
+                    "--query", "VpnConnections[0]",
+                    "--region", self.region,
+                    "--profile", self.profile,
+                    "--output", "json"
+                ],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+
+            if output.returncode == 0:
+                vpn_data = json.loads(output.stdout)
+                if vpn_data and vpn_data != {}:
+                    result["vpn_id"] = vpn_data.get("VpnConnectionId")
+                    result["vpn_state"] = vpn_data.get("State")
+
+                    telemetry = vpn_data.get("VgwTelemetry", [])
+                    if len(telemetry) > 0:
+                        result["tunnel_1_status"] = telemetry[0].get("Status", "UNKNOWN")
+                        result["tunnel_1_ip"] = telemetry[0].get("OutsideIpAddress", "N/A")
+                    if len(telemetry) > 1:
+                        result["tunnel_2_status"] = telemetry[1].get("Status", "UNKNOWN")
+                        result["tunnel_2_ip"] = telemetry[1].get("OutsideIpAddress", "N/A")
+
+        except Exception as e:
+            result["error"] = str(e)
+
+        return result
+
+    def check_routes(self, peer_cidr: str) -> Dict:
+        """Check if routes exist in TGW route table"""
+        result = {
+            "route_exists": False,
+            "active": False,
+            "target_cidr": peer_cidr,
+        }
+
+        try:
+            output = subprocess.run(
+                [
+                    "aws", "ec2", "describe-route-tables",
+                    "--query", "RouteTables[].Routes[?TransitGatewayId!=`null`]",
+                    "--region", self.region,
+                    "--profile", self.profile,
+                    "--output", "json"
+                ],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+
+            if output.returncode == 0:
+                routes = json.loads(output.stdout)
+                for route in routes:
+                    if isinstance(route, list):
+                        for r in route:
+                            if r.get("DestinationCidrBlock") == peer_cidr:
+                                result["route_exists"] = True
+                                result["active"] = r.get("State") == "active"
+                    else:
+                        if route.get("DestinationCidrBlock") == peer_cidr:
+                            result["route_exists"] = True
+                            result["active"] = route.get("State") == "active"
+
+        except Exception as e:
+            result["error"] = str(e)
+
+        return result
+
+    def run_comprehensive_test(self, peer_name: str, target_ip: str) -> Dict:
+        """Run comprehensive connectivity test"""
+        test_summary = {
+            "timestamp": datetime.now().isoformat(),
+            "peer_name": peer_name,
+            "target_ip": target_ip,
+            "tests": {
+                "icmp": self.test_icmp(target_ip),
+                "tcp": self.test_tcp_connectivity(target_ip, 80),
+                "mtu": self.test_mtu(target_ip),
+            },
+            "aws": {
+                "vpn": self.check_aws_vpn_status(peer_name),
+                "routes": self.check_routes(self.get_peer_cidr(peer_name)),
+            }
+        }
+
+        return test_summary
+
+    def calculate_health_score(self, results: Dict) -> int:
+        """Calculate overall health score (0-100)"""
+        score = 0
+        max_score = 0
+
+        # ICMP test (30 points)
+        icmp = results["tests"].get("icmp", {})
+        max_score += 30
+        if icmp.get("reachable"):
+            loss = icmp.get("loss_percent", 100)
+            if loss == 0:
+                score += 30
+            elif loss < 5:
+                score += 20
+            elif loss < 20:
+                score += 10
+
+        # TCP test (20 points)
+        tcp = results["tests"].get("tcp", {})
+        max_score += 20
+        if tcp.get("reachable"):
+            score += 20
+
+        # MTU test (20 points)
+        mtu = results["tests"].get("mtu", {})
+        max_score += 20
+        max_size = mtu.get("max_working_size") or 0
+        if max_size >= 1400:
+            score += 20
+        elif max_size >= 1350:
+            score += 15
+
+        # AWS VPN status (15 points)
+        vpn = results["aws"].get("vpn", {})
+        max_score += 15
+        t1_up = vpn.get("tunnel_1_status") == "UP"
+        t2_up = vpn.get("tunnel_2_status") == "UP"
+        if t1_up and t2_up:
+            score += 15
+        elif t1_up or t2_up:
+            score += 10
+
+        # AWS Routes (15 points)
+        routes = results["aws"].get("routes", {})
+        max_score += 15
+        if routes.get("active"):
+            score += 15
+        elif routes.get("route_exists"):
+            score += 10
+
+        return int((score / max_score * 100) if max_score > 0 else 0)
+
+    def print_summary(self, results: Dict):
+        """Print human-readable test summary"""
+        peer = results["peer_name"]
+        ip = results["target_ip"]
+
+        print(f"\n{BLUE}{BOLD}═══════════════════════════════════════════════════════════════{NC}")
+        print(f"{BLUE}{BOLD}  VPN Connectivity Test Summary{NC}")
+        print(f"{BLUE}{BOLD}═══════════════════════════════════════════════════════════════{NC}\n")
+
+        print(f"{BOLD}Test Details:{NC}")
+        print(f"  Peer: {peer}")
+        print(f"  Target IP: {ip}")
+        print(f"  Timestamp: {results['timestamp']}")
+
+        # Network Connectivity
+        print(f"\n{BOLD}Network Connectivity:{NC}")
+        icmp = results["tests"]["icmp"]
+        if icmp.get("reachable"):
+            print(f"  {GREEN}✓{NC} ICMP (Ping): UP")
+            print(f"    └─ Avg latency: {icmp.get('avg_latency_ms', 'N/A')}ms")
+            print(f"    └─ Packet loss: {icmp.get('loss_percent', 'N/A')}%")
+        else:
+            print(f"  {RED}✗{NC} ICMP (Ping): DOWN")
+
+        tcp = results["tests"]["tcp"]
+        if tcp.get("reachable"):
+            print(f"  {GREEN}✓{NC} TCP (Port 80): OPEN")
+        else:
+            print(f"  {RED}✗{NC} TCP (Port 80): CLOSED")
+
+        # MTU
+        print(f"\n{BOLD}MTU Testing:{NC}")
+        mtu = results["tests"]["mtu"]
+        if mtu.get("max_working_size"):
+            print(f"  {GREEN}✓{NC} Max working MTU: {mtu['max_working_size']} bytes")
+        else:
+            print(f"  {YELLOW}⚠{NC} MTU testing inconclusive")
+
+        # AWS Status
+        print(f"\n{BOLD}AWS Infrastructure:{NC}")
+        vpn = results["aws"]["vpn"]
+        if vpn.get("vpn_id"):
+            print(f"  {GREEN}✓{NC} VPN Connection: {vpn['vpn_id']}")
+            t1_status = vpn.get("tunnel_1_status", "UNKNOWN")
+            t2_status = vpn.get("tunnel_2_status", "UNKNOWN")
+            print(f"    ├─ Tunnel 1: {t1_status} ({vpn.get('tunnel_1_ip', 'N/A')})")
+            print(f"    └─ Tunnel 2: {t2_status} ({vpn.get('tunnel_2_ip', 'N/A')})")
+        else:
+            print(f"  {RED}✗{NC} VPN Connection: Not found")
+
+        routes = results["aws"]["routes"]
+        if routes.get("active"):
+            print(f"  {GREEN}✓{NC} Routes: Active ({routes['target_cidr']})")
+        elif routes.get("route_exists"):
+            print(f"  {YELLOW}⚠{NC} Routes: Exist but not active")
+        else:
+            print(f"  {RED}✗{NC} Routes: Not found")
+
+        # Health Score
+        score = self.calculate_health_score(results)
+        if score >= 80:
+            color = GREEN
+            status = "HEALTHY"
+        elif score >= 60:
+            color = YELLOW
+            status = "DEGRADED"
+        else:
+            color = RED
+            status = "UNHEALTHY"
+
+        print(f"\n{BOLD}Overall Health:{NC}")
+        print(f"  {color}Score: {score}/100 ({status}){NC}")
+
+        print(f"\n{BLUE}{BOLD}═══════════════════════════════════════════════════════════════{NC}\n")
+
+    def print_json(self, results: Dict):
+        """Print results as JSON"""
+        # Add calculated health score
+        results["health_score"] = self.calculate_health_score(results)
+        print(json.dumps(results, indent=2))
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Test connectivity to VPN peer IPs with results summary",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Test next IP in Vimenca network
+  ./skill-vpn-connectivity-test Vimenca
+
+  # Test specific IP
+  ./skill-vpn-connectivity-test --peer Vimenca --ip 172.16.70.5
+
+  # Get JSON output for automation
+  ./skill-vpn-connectivity-test Vimenca --format json
+
+  # List available peers
+  ./skill-vpn-connectivity-test --list
+        """
+    )
+
+    parser.add_argument(
+        "peer",
+        nargs="?",
+        help="Peer name (e.g., Vimenca, CIBAO)"
+    )
+    parser.add_argument(
+        "--ip",
+        help="Specific IP to test (default: next testable IP in peer CIDR)"
+    )
+    parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format (default: text)"
+    )
+    parser.add_argument(
+        "--list",
+        action="store_true",
+        help="List all configured peers"
+    )
+    parser.add_argument(
+        "--registry",
+        help="Path to vpn-peers-registry.yaml"
+    )
+    parser.add_argument(
+        "--region",
+        default="us-east-2",
+        help="AWS region (default: us-east-2)"
+    )
+    parser.add_argument(
+        "--profile",
+        default="affinity",
+        help="AWS profile (default: affinity)"
+    )
+
+    args = parser.parse_args()
+
+    # Initialize tester
+    tester = ConnectivityTester(
+        registry_path=args.registry,
+        region=args.region,
+        profile=args.profile
+    )
+
+    # Handle --list
+    if args.list:
+        print(f"\n{BOLD}Available Peers for Testing:{NC}")
+        try:
+            import yaml
+            with open(tester.registry_path) as f:
+                registry = yaml.safe_load(f) or {}
+                peers = registry.get("peers", {})
+                if peers:
+                    for key, data in peers.items():
+                        name = data.get("peer_name")
+                        status = data.get("status")
+                        cidrs = data.get("peer_cidrs", [])
+                        print(f"  • {name} ({status}) - CIDR: {cidrs[0] if cidrs else 'N/A'}")
+                else:
+                    print("  (No peers configured)")
+        except Exception as e:
+            print(f"  Error loading peers: {e}")
+        print()
+        return
+
+    # Require peer name
+    if not args.peer:
+        parser.print_help()
+        sys.exit(1)
+
+    # Get target IP
+    target_ip = args.ip
+    if not target_ip:
+        target_ip = tester.get_next_testable_ip(args.peer)
+        if not target_ip:
+            print(f"{RED}Error: Could not determine test IP for peer '{args.peer}'{NC}")
+            sys.exit(1)
+
+    # Run test
+    results = tester.run_comprehensive_test(args.peer, target_ip)
+
+    # Output results
+    if args.format == "json":
+        tester.print_json(results)
+    else:
+        tester.print_summary(results)
+
+
+if __name__ == "__main__":
+    main()

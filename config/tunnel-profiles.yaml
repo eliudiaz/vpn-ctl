@@ -1,0 +1,147 @@
+# VPN Tunnel Profiles - Shared IPsec/IKE Configuration Templates
+# ================================================================
+# These profiles define standard IPsec/IKE parameters for different
+# vendor devices. Peers reference these profiles by name.
+#
+# Usage: Each peer in config/peers/*.yaml references one of these
+# profiles via: spec.tunnel.profile: checkpoint_r80
+#
+# To override profile settings for a specific peer, use:
+# spec.tunnel.overrides:
+#   phase1:
+#     lifetime: 14400  # 4 hours instead of 8
+
+apiVersion: vpn.affinity.io/v1
+kind: TunnelProfiles
+metadata:
+  name: tunnel-profiles
+  namespace: vpn-infrastructure
+  description: "Standard tunnel profiles for IPsec/IKE configurations"
+
+profiles:
+  # =============================================================================
+  checkpoint_r80:
+  # =============================================================================
+  # Checkpoint R80.10 compatible profile (used by Vimenca, CIBAO)
+  #
+  # Characteristics:
+  #   - IKEv2 only (no IKEv1)
+  #   - Strong encryption (AES256 both phases)
+  #   - No PFS (Perfect Forward Secrecy) - Checkpoint R80.10 limitation
+  #   - Static routes only (no BGP)
+  #   - DPD with restart action
+  #
+    description: "Checkpoint R80.10 compatible (Vimenca standard)"
+    ike_versions: ["ikev2"]
+    phase1:
+      encryption: ["AES256"]
+      integrity: ["SHA2-256"]
+      dh_groups: [14]
+      lifetime: 28800  # 8 hours
+    phase2:
+      encryption: ["AES256"]
+      integrity: ["SHA2-256"]
+      dh_groups: []  # PFS disabled for Checkpoint R80.10 compatibility
+      lifetime: 3600  # 60 minutes
+    dpd:
+      timeout: 30
+      action: "restart"
+    static_routes_only: true
+
+  # =============================================================================
+  fortigate_standard:
+  # =============================================================================
+  # Fortinet FortiGate standard profile with IKEv2 + PFS
+  #
+  # Characteristics:
+  #   - IKEv2 only
+  #   - Strong encryption (AES256 both phases)
+  #   - PFS enabled (Group 14 - 2048-bit DH)
+  #   - Aggressive mode disabled
+  #   - Replay detection enabled
+  #   - Static routes only
+  #   - DPD with restart action
+  #
+    description: "Fortinet FortiGate standard profile (IKEv2 with PFS)"
+    ike_versions: ["ikev2"]
+    phase1:
+      encryption: ["AES256"]
+      integrity: ["SHA2-256"]  # AWS format: SHA2-256 (not SHA256)
+      dh_groups: [14]
+      lifetime: 28800  # 8 hours
+    phase2:
+      encryption: ["AES256"]
+      integrity: ["SHA2-256"]  # AWS format: SHA2-256 (not SHA256)
+      dh_groups: [14]  # PFS enabled - Group 14 (2048-bit)
+      lifetime: 3600  # 60 minutes
+    dpd:
+      timeout: 30  # AWS minimum: 30 seconds
+      action: "restart"
+    aggressive_mode: false
+    pfs_enabled: true
+    replay_detection: true
+    static_routes_only: true
+
+  # =============================================================================
+  palo_alto_standard:
+  # =============================================================================
+  # Palo Alto Networks standard profile
+  #
+  # Characteristics:
+  #   - Supports both IKEv1 and IKEv2
+  #   - Strong encryption (AES256 both phases)
+  #   - PFS enabled (Group 14)
+  #   - Dynamic routing capable
+  #   - DPD with clear action
+  #   - For future use when Palo Alto peer is added
+  #
+    description: "Palo Alto Networks standard profile"
+    ike_versions: ["ikev1", "ikev2"]
+    phase1:
+      encryption: ["AES256"]
+      integrity: ["SHA2-256"]
+      dh_groups: [14]
+      lifetime: 28800  # 8 hours
+    phase2:
+      encryption: ["AES256"]
+      integrity: ["SHA2-256"]
+      dh_groups: [14]  # PFS enabled
+      lifetime: 3600  # 60 minutes
+    dpd:
+      timeout: 10
+      action: "clear"
+    static_routes_only: false
+
+# =============================================================================
+# NOTES
+# =============================================================================
+#
+# 1. PROFILE NAMING CONVENTION:
+#    - Format: <vendor>_<model or feature>
+#    - Examples: checkpoint_r80, fortigate_standard, palo_alto_standard
+#
+# 2. REUSABILITY:
+#    - Each profile can be used by multiple peers
+#    - Example: checkpoint_r80 used by Vimenca, CIBAO
+#
+# 3. CUSTOMIZATION:
+#    - If a peer needs different settings, use spec.tunnel.overrides in peer manifest
+#    - Example: Reduce Phase 1 lifetime to 4 hours just for that peer
+#
+# 4. PFS (Perfect Forward Secrecy):
+#    - Enabled: Each key exchange generates new keys (more secure, more CPU)
+#    - Disabled: Faster renegotiation, acceptable for same-organization peers
+#
+# 5. DPD (Dead Peer Detection):
+#    - Detects broken tunnels and takes action
+#    - "restart": Automatically reconnect tunnel
+#    - "clear": Tear down tunnel and wait for peer to reconnect
+#
+# 6. STATIC ROUTES vs BGP:
+#    - static_routes_only: true = manual route configuration in AWS (no BGP)
+#    - static_routes_only: false = BGP dynamic routing capable
+#
+# 7. PHASE LIFETIMES:
+#    - Phase 1 (IKE/SA): Typically 8 hours (28800 seconds)
+#    - Phase 2 (IPsec SA): Typically 60 minutes (3600 seconds)
+#    - Shorter phase 2 = more frequent rekeying (more secure, more overhead)

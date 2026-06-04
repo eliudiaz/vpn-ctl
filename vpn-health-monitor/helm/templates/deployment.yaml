@@ -1,0 +1,142 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vpn-health-monitor.fullname" . }}
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "vpn-health-monitor.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.deployment.replicas }}
+  strategy:
+    {{- toYaml .Values.deployment.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "vpn-health-monitor.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-targets.yaml") . | sha256sum }}
+        {{- with .Values.deployment.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "vpn-health-monitor.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.deployment.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "vpn-health-monitor.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: monitor
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: {{ .Values.port.name }}
+          containerPort: {{ .Values.port.containerPort }}
+          protocol: {{ .Values.port.protocol }}
+
+        workingDir: /app
+
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: LOG_LEVEL
+          value: {{ .Values.logLevel }}
+        {{- with .Values.env }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+
+        {{- if .Values.livenessProbe }}
+        livenessProbe:
+          {{- with .Values.livenessProbe.httpGet }}
+          httpGet:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.livenessProbe.initialDelaySeconds }}
+          initialDelaySeconds: {{ . }}
+          {{- end }}
+          {{- with .Values.livenessProbe.periodSeconds }}
+          periodSeconds: {{ . }}
+          {{- end }}
+          {{- with .Values.livenessProbe.timeoutSeconds }}
+          timeoutSeconds: {{ . }}
+          {{- end }}
+          {{- with .Values.livenessProbe.failureThreshold }}
+          failureThreshold: {{ . }}
+          {{- end }}
+        {{- end }}
+
+        {{- if .Values.readinessProbe }}
+        readinessProbe:
+          {{- with .Values.readinessProbe.httpGet }}
+          httpGet:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe.initialDelaySeconds }}
+          initialDelaySeconds: {{ . }}
+          {{- end }}
+          {{- with .Values.readinessProbe.periodSeconds }}
+          periodSeconds: {{ . }}
+          {{- end }}
+          {{- with .Values.readinessProbe.timeoutSeconds }}
+          timeoutSeconds: {{ . }}
+          {{- end }}
+          {{- with .Values.readinessProbe.failureThreshold }}
+          failureThreshold: {{ . }}
+          {{- end }}
+        {{- end }}
+
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+
+        {{- with .Values.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+
+        volumeMounts:
+        - name: vpn-config
+          mountPath: /app/vpn-targets.yaml
+          subPath: vpn-targets.yaml
+          readOnly: true
+        {{- with .Values.volumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+
+      {{- with .Values.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+
+      {{- with .Values.sidecars }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+
+      volumes:
+      - name: vpn-config
+        configMap:
+          name: {{ include "vpn-health-monitor.fullname" . }}-targets
+          defaultMode: 0444
+      {{- with .Values.volumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,30 @@
+name: aff-atg
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: Conecta EKS a Transit Gateway sin NAT. VPN Site-to-Site a Vimenca.
+
+config:
+  aff-atg:eks_cluster_name:
+    description: Nombre del cluster EKS existente
+  aff-atg:transit_gateway_id:
+    description: ID del Transit Gateway existente (tgw-xxxxx)
+  aff-atg:vimenca_cidr:
+    description: CIDR de la red de Vimenca
+    default: "172.16.70.0/24"
+  aff-atg:vimenca_vpn_ip:
+    description: IP pública del dispositivo VPN de Vimenca (Checkpoint)
+    default: "191.97.106.141"
+  aff-atg:vimenca_bgp_asn:
+    description: BGP ASN de Vimenca
+    default: 65000
+  aff-atg:aws_bgp_asn:
+    description: BGP ASN de AWS
+    default: 64512
+  aff-atg:affinity_cidrs:
+    description: CIDRs de redes Affinity (separados por coma)
+    default: "172.33.6.0/28,172.33.16.0/28"
+  aff-atg:affinity_aggregate_cidr:
+    description: CIDR agregado para rutas a Affinity
+    default: "172.33.0.0/16"

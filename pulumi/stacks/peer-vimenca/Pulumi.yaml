@@ -1,0 +1,6 @@
+description: 'VPN peer: vimenca'
+name: aff-atg
+runtime:
+  name: python
+  options:
+    virtualenv: ../../venv

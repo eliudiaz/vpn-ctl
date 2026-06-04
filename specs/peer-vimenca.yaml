@@ -1,0 +1,63 @@
+apiVersion: vpnctl.affinity.io/v1
+kind: PeerStackDeployment
+metadata:
+  annotations:
+    description: Vimenca (Checkpoint R80.10) VPN peer
+    device_type: Checkpoint
+    device_version: R80.10
+  labels:
+    environment: production
+    peer: vimenca
+    type: peer
+  name: peer-vimenca
+  namespace: aff-atg
+spec:
+  config:
+    aws_profile: affinity
+    aws_region: us-east-2
+    transit_gateway_id: tgw-0fe87898e57c8d9c7
+    transit_gateway_route_table_id: $(aws:transit_gateway_route_table_id)
+  peer:
+    bgp_asn: 65000
+    contacts:
+    - email: admin@vimenca.com
+      name: Vimenca Admin
+    destination_cidrs:
+    - 172.16.70.0/24
+    - 172.16.65.21/32
+    - 172.16.82.0/24
+    device_type: Checkpoint
+    device_version: R80.10
+    name: vimenca
+    public_ip: 191.97.106.141
+    snat_enabled: false
+    tunnel_profile: checkpoint_r80
+  provider: pulumi
+  resources:
+  - config:
+      bgp_asn: 65000
+      public_ip: 191.97.106.141
+    name: affinity-vimenca-cgw
+    type: customer-gateway
+  - config:
+      static_routes_only: true
+      tunnel_profile: checkpoint_r80
+    name: affinity-vimenca-vpn
+    type: vpn-connection
+  - config:
+      destination_cidr_block: '{{ item }}'
+    for_each: peer.destination_cidrs
+    type: transit-gateway-routes
+  - config:
+      destination_cidr_block: '{{ item }}'
+    for_each: peer.destination_cidrs
+    type: vpc-routes
+  stack_directory: pulumi/stacks/peer-vimenca
+  version: 3.x
+status:
+  completionTime: '2026-05-12T16:50:02.153599'
+  lastUpdate: null
+  message: ''
+  phase: Deployed
+  resources: []
+  startTime: '2026-05-12T16:49:52.718866'

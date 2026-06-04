@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>DEVOPS_QUICK_START</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="/dev/fd/11" />
+</head>
+<body>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#vpn-e2e-testing---devops-quick-start-guide"
+id="toc-vpn-e2e-testing---devops-quick-start-guide">VPN E2E Testing -
+DevOps Quick Start Guide</a>
+<ul>
+<li><a href="#quick-overview" id="toc-quick-overview">🚀 Quick
+Overview</a></li>
+<li><a href="#documentation-structure"
+id="toc-documentation-structure">📚 Documentation Structure</a></li>
+<li><a href="#fast-path-testing-checklist"
+id="toc-fast-path-testing-checklist">⚡ Fast Path: Testing
+Checklist</a></li>
+<li><a href="#troubleshooting-quick-links"
+id="toc-troubleshooting-quick-links">🚨 Troubleshooting Quick
+Links</a></li>
+<li><a href="#sign-off-checklist" id="toc-sign-off-checklist">📋
+Sign-Off Checklist</a></li>
+<li><a href="#key-commands-reference" id="toc-key-commands-reference">🔧
+Key Commands Reference</a></li>
+<li><a href="#support-escalation" id="toc-support-escalation">📞 Support
+&amp; Escalation</a></li>
+<li><a href="#document-guide" id="toc-document-guide">📚 Document
+Guide</a></li>
+<li><a href="#success-criteria" id="toc-success-criteria">🎯 Success
+Criteria</a></li>
+<li><a href="#key-insights" id="toc-key-insights">🔑 Key
+Insights</a></li>
+<li><a href="#completion-certificate" id="toc-completion-certificate">✅
+Completion Certificate</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="vpn-e2e-testing---devops-quick-start-guide">VPN E2E Testing -
+DevOps Quick Start Guide</h1>
+<p><strong>Status:</strong> ✅ Production Ready <strong>Last
+Updated:</strong> March 4, 2026 <strong>Audience:</strong> Affinity
+&amp; Peer DevOps Teams</p>
+<hr />
+<h2 id="quick-overview">🚀 Quick Overview</h2>
+<p>This guide provides DevOps teams with the fastest path to: 1.
+Understand the VPN tunnel testing process 2. Execute E2E verification 3.
+Troubleshoot common issues 4. Sign off on production readiness</p>
+<p><strong>Total Time to Production:</strong> ~2 hours (configuration +
+testing)</p>
+<hr />
+<h2 id="documentation-structure">📚 Documentation Structure</h2>
+<h3 id="for-affinity-devops">For Affinity DevOps</h3>
+<p><strong>Before anything:</strong> Read
+<code>VPN_E2E_TESTING_PROTOCOL.md</code> (Phases 0-1)</p>
+<p><strong>Then follow:</strong> 1. Phase 0: Pre-deployment checklist
+(Pulumi) 2. Phase 1: Prepare handoff package using
+<code>VPN_HANDOFF_TEMPLATE.md</code> 3. Phases 3-7: Follow along with
+peer (see below)</p>
+<p><strong>Tools:</strong></p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Monitor tunnel status</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-connectivity</span> <span class="at">--peer</span> <span class="op">&lt;</span>PEER_NAME<span class="op">&gt;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Full E2E verification</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-e2e-test</span> <span class="at">--peer</span> <span class="op">&lt;</span>PEER_NAME<span class="op">&gt;</span> --e2e</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer-specific testing</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-e2e-test</span> <span class="at">--peer</span> Vimenca <span class="at">--layer</span> 3  <span class="co"># BGP only</span></span></code></pre></div>
+<h3 id="for-peer-devops-teams">For Peer DevOps Teams</h3>
+<p><strong>Step 1:</strong> Receive handoff package from Affinity</p>
+<p><strong>Step 2:</strong> Select your device guide: - Checkpoint
+R80.10+ → <code>peer-guides/CHECKPOINT_SETUP_GUIDE.md</code> - Fortinet
+FortiGate → <code>peer-guides/FORTIGATE_SETUP_GUIDE.md</code> - Palo
+Alto Networks → <code>peer-guides/PALOALTO_SETUP_GUIDE.md</code> - Cisco
+ASA → <code>peer-guides/CISCO_SETUP_GUIDE.md</code></p>
+<p><strong>Step 3:</strong> Follow device guide → Section 4:
+Step-by-Step Configuration (30-45 min)</p>
+<p><strong>Step 4:</strong> Follow device guide → Section 8: Joint E2E
+Testing (Phases 3-7) (30-60 min)</p>
+<hr />
+<h2 id="fast-path-testing-checklist">⚡ Fast Path: Testing
+Checklist</h2>
+<p>Once device is configured, run this checklist:</p>
+<h3 id="phase-3-tunnel-up-5-10-minutes">Phase 3: Tunnel UP (5-10
+minutes)</h3>
+<p><strong>Affinity runs:</strong></p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-connectivity</span> <span class="at">--peer</span> <span class="op">&lt;</span>PEER_NAME<span class="op">&gt;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: Both tunnels show &quot;UP&quot;</span></span></code></pre></div>
+<p><strong>Peer runs:</strong></p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Checkpoint</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">fw</span> stat <span class="at">-sc</span> <span class="kw">|</span> <span class="fu">grep</span> Tunnel</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: Both tunnels show &quot;Established&quot;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Fortigate</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="ex">diagnose</span> vpn tunnel list <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-E</span> <span class="st">&quot;Phase|State&quot;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: Phase 1 &amp; 2 both ESTABLISHED</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Palo Alto</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> vpn ipsec sa <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-E</span> <span class="st">&quot;tunnel:|state&quot;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: Both tunnels show &quot;Established&quot;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Cisco</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ikev2 sa</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ipsec sa</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: IKE SAs ESTABLISHED, IPSec SAs active</span></span></code></pre></div>
+<p><strong>Gate 3.1:</strong> Both tunnels UP on both sides? ✅ Proceed
+to Phase 4</p>
+<hr />
+<h3 id="phase-4-bgp-routes-learned-5-10-minutes">Phase 4: BGP Routes
+Learned (5-10 minutes)</h3>
+<p><strong>Affinity runs:</strong></p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-e2e-test</span> <span class="at">--peer</span> <span class="op">&lt;</span>PEER_NAME<span class="op">&gt;</span> --layer 3</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: Routes from peer CIDR found in TGW route table</span></span></code></pre></div>
+<p><strong>Peer runs:</strong></p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Checkpoint</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">netstat</span> <span class="at">-rn</span> <span class="kw">|</span> <span class="fu">grep</span> 169.254</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: Routes to Affinity CIDRs via tunnel inside IPs</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Fortigate</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="ex">get</span> router bgp summary</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: Neighbors show &quot;Established&quot; with route count &gt; 0</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Palo Alto</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> routing bgp peers</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: Neighbors show &quot;Established&quot;</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Cisco</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp summary</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: Neighbors show &quot;Established&quot; and prefix count &gt; 0</span></span></code></pre></div>
+<p><strong>Gate 4.1:</strong> Routes learned on both sides? ✅ Proceed
+to Phase 5</p>
+<hr />
+<h3 id="phase-5-data-plane-test-5-10-minutes">Phase 5: Data Plane Test
+(5-10 minutes)</h3>
+<p><strong>Affinity runs:</strong></p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From EKS pod or EC2 instance</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> <span class="at">-c</span> 10 <span class="op">&lt;</span>PEER_TEST_IP<span class="op">&gt;</span>    <span class="co"># e.g., 172.16.1.100</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: 0% packet loss, typical latency 45-100ms</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Test MTU</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> <span class="at">-c</span> 3 <span class="at">-M</span> do <span class="at">-s</span> 1350 <span class="op">&lt;</span>PEER_TEST_IP<span class="op">&gt;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: All packets succeed</span></span></code></pre></div>
+<p><strong>Peer confirms:</strong></p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Monitor traffic arrival</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">tcpdump</span> <span class="at">-i</span> any <span class="st">&quot;src 10.0&quot;</span>    <span class="co"># Monitor for Affinity CIDR</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: ICMP echo-request packets arriving</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify tunnel is in use</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Checkpoint: fw stat -sc | grep bytes</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Fortigate: diagnose vpn ipsec sa list | grep bytes</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Palo Alto: show vpn ipsec sa detail | grep bytes</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Cisco: show crypto ipsec sa detail</span></span></code></pre></div>
+<p><strong>Gate 5.1:</strong> Bidirectional ping succeeds with 0% loss?
+✅ Proceed to Sign-Off</p>
+<hr />
+<h3 id="phase-6-failover-test-optional-10-15-minutes">Phase 6: Failover
+Test (Optional, 10-15 minutes)</h3>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Peer: Start continuous ping</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> <span class="at">-i</span> 1 <span class="op">&lt;</span>AFFINITY_TEST_IP<span class="op">&gt;</span> <span class="kw">|</span> <span class="fu">tee</span> failover.log</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Affinity: Disable Tunnel 1 (AWS console)</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Monitor: Peer observes brief interruption (~15-90 seconds)</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Affinity: Re-enable Tunnel 1</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify: Ping resumes, both tunnels return to UP</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Gate 6.1: Single tunnel failure doesn&#39;t cause total loss? ✅</span></span></code></pre></div>
+<hr />
+<h2 id="troubleshooting-quick-links">🚨 Troubleshooting Quick Links</h2>
+<p><strong>Tunnel Stays DOWN?</strong> - Verify PSK is exactly correct
+(case-sensitive, no spaces) - Check firewall allows UDP 500, 4500
+outbound to tunnel endpoints - Verify encryption settings: IKEv2,
+AES-256, SHA2-256 - → See <code>VPN_E2E_TESTING_PROTOCOL.md</code>
+Playbook 1</p>
+<p><strong>BGP Routes Not Appearing?</strong> - Verify tunnels are UP
+first - Check BGP neighbors show as Established - Verify neighbor IPs =
+169.254.x.1 (inside tunnel IPs) - Verify AWS ASN = 64512 - → See
+<code>VPN_E2E_TESTING_PROTOCOL.md</code> Playbook 2</p>
+<p><strong>Traffic Not Passing?</strong> - Verify tunnels UP and routes
+learned - Check security policies/ACLs allow traffic - Verify no NAT
+masking the source IP - Test MTU: <code>ping -M do -s 1350</code> - →
+See <code>VPN_E2E_TESTING_PROTOCOL.md</code> Playbook 3</p>
+<hr />
+<h2 id="sign-off-checklist">📋 Sign-Off Checklist</h2>
+<p>Once all phases pass, complete the sign-off:</p>
+<p><strong>Both teams verify:</strong> - [ ] Tunnels UP (both sides) - [
+] BGP routes learned (both sides) - [ ] Data plane ping 0% loss - [ ]
+MTU ≥1350 bytes working - [ ] Failover tested (or scheduled)</p>
+<p><strong>Both teams sign:</strong> Use sign-off sheet in
+<code>VPN_E2E_TESTING_PROTOCOL.md</code> Phase 7</p>
+<p><strong>Result:</strong> Tunnel is production-ready ✅</p>
+<hr />
+<h2 id="key-commands-reference">🔧 Key Commands Reference</h2>
+<h3 id="affinity-commands">Affinity Commands</h3>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Quick status</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-connectivity</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Deep analysis</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-connectivity</span> <span class="at">--deep</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co"># E2E test</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-e2e-test</span> <span class="at">--peer</span> <span class="op">&lt;</span>NAME<span class="op">&gt;</span> --e2e</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer-specific test</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-e2e-test</span> <span class="at">--peer</span> <span class="op">&lt;</span>NAME<span class="op">&gt;</span> --layer 2  <span class="co"># Tunnel only</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-e2e-test</span> <span class="at">--peer</span> <span class="op">&lt;</span>NAME<span class="op">&gt;</span> --layer 3  <span class="co"># BGP only</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-e2e-test</span> <span class="at">--peer</span> <span class="op">&lt;</span>NAME<span class="op">&gt;</span> --layer 4  <span class="co"># Data plane</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="co"># AWS CLI commands</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> ec2 describe-vpn-connections <span class="dt">\</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">--filters</span> <span class="st">&quot;Name=tag:Name,Values=&lt;PEER&gt;&quot;</span> <span class="dt">\</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">--query</span> <span class="st">&#39;VpnConnections[0].VgwTelemetry[*].[OutsideIpAddress,Status.TunnelStatus]&#39;</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Check route table</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> ec2 describe-transit-gateway-routes <span class="dt">\</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">--transit-gateway-route-table-id</span> tgw-rtb-079e9cb450e5355e6 <span class="dt">\</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">--query</span> <span class="st">&quot;Routes[?DestinationCidrBlock==&#39;&lt;PEER_CIDR&gt;&#39;]&quot;</span></span></code></pre></div>
+<h3 id="device-specific-commands">Device-Specific Commands</h3>
+<p><strong>Checkpoint:</strong></p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">fw</span> stat <span class="at">-sc</span>                    <span class="co"># Tunnel summary</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ex">vpn</span> tunnel get <span class="at">-x</span> 0            <span class="co"># Tunnel 1 details</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">netstat</span> <span class="at">-rn</span> <span class="kw">|</span> <span class="fu">grep</span> 169.254     <span class="co"># BGP routes</span></span></code></pre></div>
+<p><strong>Fortigate:</strong></p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">diagnose</span> vpn tunnel list       <span class="co"># Tunnel summary</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="ex">get</span> router bgp summary         <span class="co"># BGP neighbors</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="ex">diagnose</span> vpn ipsec sa list     <span class="co"># IPSec details</span></span></code></pre></div>
+<p><strong>Palo Alto:</strong></p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> vpn ipsec sa              <span class="co"># Tunnel summary</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> routing bgp peers         <span class="co"># BGP neighbors</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> routing bgp rib routes    <span class="co"># Learned routes</span></span></code></pre></div>
+<p><strong>Cisco:</strong></p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ikev2 sa           <span class="co"># IKE summary</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ipsec sa           <span class="co"># IPSec details</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp summary               <span class="co"># BGP neighbors</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp ipv4 unicast summary  <span class="co"># Learned routes</span></span></code></pre></div>
+<hr />
+<h2 id="support-escalation">📞 Support &amp; Escalation</h2>
+<h3 id="before-contacting-support">Before Contacting Support</h3>
+<p>Complete this checklist:</p>
+<ul class="task-list">
+<li><label><input type="checkbox" />Read relevant section of
+<code>VPN_E2E_TESTING_PROTOCOL.md</code></label></li>
+<li><label><input type="checkbox" />Ran device-specific commands and
+captured output</label></li>
+<li><label><input type="checkbox" />Checked encryption settings match
+standard (IKEv2, AES-256, SHA2-256)</label></li>
+<li><label><input type="checkbox" />Verified PSK is exactly
+correct</label></li>
+<li><label><input type="checkbox" />Confirmed firewall rules allow
+traffic</label></li>
+</ul>
+<h3 id="contact-information">Contact Information</h3>
+<p><strong>Affinity Support:</strong> - Email: support@affinity.com -
+Subject: <code>[ATG VPN] [Device Type] - [Your Organization]</code></p>
+<p><strong>Include in email:</strong> - Peer name - Device type
+(Checkpoint/Fortigate/Palo Alto/Cisco) - Current tunnel status (UP/DOWN)
+- BGP status (neighbors up/down, routes received) - Error messages from
+logs - Output of device-specific status commands</p>
+<hr />
+<h2 id="document-guide">📚 Document Guide</h2>
+<table>
+<colgroup>
+<col style="width: 28%" />
+<col style="width: 25%" />
+<col style="width: 28%" />
+<col style="width: 17%" />
+</colgroup>
+<thead>
+<tr>
+<th>Document</th>
+<th>Purpose</th>
+<th>Audience</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>VPN_E2E_TESTING_PROTOCOL.md</strong></td>
+<td>Master testing protocol (7 phases)</td>
+<td>Both</td>
+<td>20 min</td>
+</tr>
+<tr>
+<td><strong>VPN_HANDOFF_TEMPLATE.md</strong></td>
+<td>Tunnel details delivery template</td>
+<td>Affinity</td>
+<td>10 min</td>
+</tr>
+<tr>
+<td><strong>CHECKPOINT_SETUP_GUIDE.md</strong></td>
+<td>Checkpoint configuration + testing</td>
+<td>Peer</td>
+<td>45 min</td>
+</tr>
+<tr>
+<td><strong>FORTIGATE_SETUP_GUIDE.md</strong></td>
+<td>Fortigate configuration + testing</td>
+<td>Peer</td>
+<td>45 min</td>
+</tr>
+<tr>
+<td><strong>PALOALTO_SETUP_GUIDE.md</strong></td>
+<td>Palo Alto configuration + testing</td>
+<td>Peer</td>
+<td>45 min</td>
+</tr>
+<tr>
+<td><strong>CISCO_SETUP_GUIDE.md</strong></td>
+<td>Cisco configuration + testing</td>
+<td>Peer</td>
+<td>45 min</td>
+</tr>
+<tr>
+<td><strong>skill-vpn-e2e-test</strong></td>
+<td>Automated E2E testing script</td>
+<td>Affinity</td>
+<td>5-15 min</td>
+</tr>
+<tr>
+<td><strong>skill-vpn-connectivity</strong></td>
+<td>VPN status monitoring</td>
+<td>Affinity</td>
+<td>5 min</td>
+</tr>
+<tr>
+<td><strong>DEVOPS_QUICK_START.md</strong></td>
+<td>This guide</td>
+<td>Both</td>
+<td>5 min</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="success-criteria">🎯 Success Criteria</h2>
+<h3 id="tunnel-is-production-ready-when">Tunnel is Production-Ready
+When:</h3>
+<p>✅ Both tunnels reach UP state within 30 seconds of device config</p>
+<p>✅ BGP neighbors show Established with &gt;0 routes within 1
+minute</p>
+<p>✅ Ping from Affinity to peer succeeds with 0% packet loss</p>
+<p>✅ Ping with 1350-byte MTU succeeds (confirms path MTU)</p>
+<p>✅ Failover: Single tunnel DOWN does not cause total loss</p>
+<p>✅ Both teams sign operational readiness sign-off sheet</p>
+<hr />
+<h2 id="key-insights">🔑 Key Insights</h2>
+<ol type="1">
+<li><strong>AWS VPN is responder-only</strong> — Peer device initiates;
+AWS responds</li>
+<li><strong>Tunnels should reach UP in 5-30 seconds</strong> — Check
+PSK, encryption, firewall</li>
+<li><strong>BGP converges in 5-15 seconds</strong> — Wait and
+recheck</li>
+<li><strong>DPD timeout affects failover</strong> — Checkpoint: 30s,
+Others: 10s</li>
+<li><strong>MTU is critical</strong> — Test 1350+ bytes; IPSec adds
+50-70 byte overhead</li>
+</ol>
+<hr />
+<h2 id="completion-certificate">✅ Completion Certificate</h2>
+<p>When all phases pass and both teams sign the operational sign-off
+sheet:</p>
+<p><strong>This tunnel is declared PRODUCTION READY</strong></p>
+<ul>
+<li><strong>Tunnel:</strong> [VPN Name]</li>
+<li><strong>Peer Organization:</strong> [Name]</li>
+<li><strong>Configuration Date:</strong> [YYYY-MM-DD]</li>
+<li><strong>Test Date:</strong> [YYYY-MM-DD]</li>
+<li><strong>Affinity DevOps:</strong> [Name] ________________ Date
+________</li>
+<li><strong>Peer DevOps:</strong> [Name] ________________ Date
+________</li>
+</ul>
+<hr />
+<p><strong>Questions?</strong> Contact support@affinity.com or see
+<code>VPN_E2E_TESTING_PROTOCOL.md</code></p>
+<p><strong>Status:</strong> ✅ Ready for Production Use
+<strong>Version:</strong> 1.0 <strong>Last Updated:</strong> March 4,
+2026</p>
+</body>
+</html>

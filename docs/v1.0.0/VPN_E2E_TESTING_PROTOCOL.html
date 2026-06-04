@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>VPN_E2E_TESTING_PROTOCOL</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="/dev/fd/11" />
+</head>
+<body>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#atg-vpn-end-to-end-e2e-testing-protocol"
+id="toc-atg-vpn-end-to-end-e2e-testing-protocol">ATG VPN End-to-End
+(E2E) Testing Protocol</a>
+<ul>
+<li><a href="#table-of-contents" id="toc-table-of-contents">📋 Table of
+Contents</a></li>
+<li><a href="#protocol-overview" id="toc-protocol-overview">🎯 Protocol
+Overview</a></li>
+<li><a href="#phase-0-affinity-pre-configuration"
+id="toc-phase-0-affinity-pre-configuration">Phase 0: Affinity
+Pre-Configuration</a></li>
+<li><a href="#phase-1-handoff-affinity-peer"
+id="toc-phase-1-handoff-affinity-peer">Phase 1: Handoff (Affinity →
+Peer)</a></li>
+<li><a href="#phase-2-peer-side-configuration"
+id="toc-phase-2-peer-side-configuration">Phase 2: Peer-Side
+Configuration</a></li>
+<li><a href="#phase-3-layer-1-2-tunnel-establishment-ikeipsec"
+id="toc-phase-3-layer-1-2-tunnel-establishment-ikeipsec">Phase 3: Layer
+1-2 Tunnel Establishment (IKE/IPSec)</a></li>
+<li><a href="#phase-4-layer-3-bgp-route-exchange"
+id="toc-phase-4-layer-3-bgp-route-exchange">Phase 4: Layer 3 BGP Route
+Exchange</a></li>
+<li><a href="#phase-5-layer-4-data-plane-traffic-test"
+id="toc-phase-5-layer-4-data-plane-traffic-test">Phase 5: Layer 4 Data
+Plane Traffic Test</a></li>
+<li><a href="#phase-6-layer-5-redundancy-failover-testing"
+id="toc-phase-6-layer-5-redundancy-failover-testing">Phase 6: Layer 5
+Redundancy &amp; Failover Testing</a></li>
+<li><a href="#phase-7-operational-sign-off"
+id="toc-phase-7-operational-sign-off">Phase 7: Operational
+Sign-Off</a></li>
+<li><a href="#remediation-playbooks"
+id="toc-remediation-playbooks">Remediation Playbooks</a></li>
+<li><a href="#failure-decision-tree"
+id="toc-failure-decision-tree">Failure Decision Tree</a></li>
+<li><a href="#key-technical-insights"
+id="toc-key-technical-insights">Key Technical Insights</a></li>
+<li><a href="#version-history" id="toc-version-history">Version
+History</a></li>
+<li><a href="#document-information"
+id="toc-document-information">Document Information</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="atg-vpn-end-to-end-e2e-testing-protocol">ATG VPN End-to-End
+(E2E) Testing Protocol</h1>
+<p><strong>Master Testing Protocol for AWS Transit Gateway VPN
+Connectivity</strong></p>
+<p><strong>Version:</strong> 1.0 <strong>Last Updated:</strong> March 4,
+2026 <strong>Status:</strong> ✅ Production Ready
+<strong>Scope:</strong> All VPN peer configurations (Checkpoint,
+Fortigate, Palo Alto, Cisco)</p>
+<hr />
+<h2 id="table-of-contents">📋 Table of Contents</h2>
+<ol type="1">
+<li><a href="#protocol-overview">Protocol Overview</a></li>
+<li><a href="#phase-0-affinity-pre-configuration">Phase 0: Affinity
+Pre-Configuration</a></li>
+<li><a href="#phase-1-handoff-affinity--peer">Phase 1: Handoff (Affinity
+→ Peer)</a></li>
+<li><a href="#phase-2-peer-side-configuration">Phase 2: Peer-Side
+Configuration</a></li>
+<li><a href="#phase-3-layer-1-2-tunnel-establishment-ikeipsec">Phase 3:
+Layer 1-2 Tunnel Establishment</a></li>
+<li><a href="#phase-4-layer-3-bgp-route-exchange">Phase 4: Layer 3 BGP
+Route Exchange</a></li>
+<li><a href="#phase-5-layer-4-data-plane-traffic-test">Phase 5: Layer 4
+Data Plane Traffic Test</a></li>
+<li><a href="#phase-6-layer-5-redundancy--failover-testing">Phase 6:
+Layer 5 Redundancy &amp; Failover</a></li>
+<li><a href="#phase-7-operational-sign-off">Phase 7: Operational
+Sign-Off</a></li>
+<li><a href="#remediation-playbooks">Remediation Playbooks</a></li>
+<li><a href="#failure-decision-tree">Failure Decision Tree</a></li>
+<li><a href="#key-technical-insights">Key Technical Insights</a></li>
+</ol>
+<hr />
+<h2 id="protocol-overview">🎯 Protocol Overview</h2>
+<p>This protocol defines a <strong>structured 7-phase handoff
+process</strong> between Affinity DevOps and peer organization DevOps to
+bring up VPN tunnels from “Pulumi deployed” to “operationally
+ready.”</p>
+<h3 id="why-this-protocol-exists">Why This Protocol Exists</h3>
+<ol type="1">
+<li><strong>AWS VPN is responder-only</strong> — peer MUST initiate IKE;
+Affinity cannot verify tunnel readiness alone</li>
+<li><strong>No BGP visibility from AWS API</strong> — can’t observe
+neighbor state, only “X BGP ROUTES” in StatusMessage</li>
+<li><strong>Two independent teams</strong> — need clear handoff
+checkpoints and joint go/no-go gates</li>
+<li><strong>Failure isolation</strong> — 5 layers (reachability → IKE →
+IPSec → BGP → traffic) require systematic testing</li>
+</ol>
+<h3 id="phases-at-a-glance">Phases at a Glance</h3>
+<table>
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 19%" />
+<col style="width: 19%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Owner</th>
+<th>Focus</th>
+<th>Go/No-Go Gate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0</strong></td>
+<td>Affinity</td>
+<td>Pre-deployment checklist</td>
+<td>Pulumi stack deployed</td>
+</tr>
+<tr>
+<td><strong>1</strong></td>
+<td>Affinity → Peer</td>
+<td>Deliver tunnel details securely</td>
+<td>Peer acknowledges receipt</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td>Peer</td>
+<td>Configure device per guide</td>
+<td>Peer reports ready</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td>Both</td>
+<td>IKE/IPSec tunnel UP</td>
+<td>Both tunnels UP on both sides</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td>Both</td>
+<td>BGP routes exchanged</td>
+<td>Routes in TGW table + peer learned</td>
+</tr>
+<tr>
+<td><strong>5</strong></td>
+<td>Both</td>
+<td>Bidirectional traffic</td>
+<td>Ping succeeds, MTU verified</td>
+</tr>
+<tr>
+<td><strong>6</strong></td>
+<td>Both (optional)</td>
+<td>Failover works</td>
+<td>Both tunnels recover post-failover</td>
+</tr>
+<tr>
+<td><strong>7</strong></td>
+<td>Both</td>
+<td>Sign-off documents</td>
+<td>Bilateral sign-off form completed</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="phase-0-affinity-pre-configuration">Phase 0: Affinity
+Pre-Configuration</h2>
+<h3 id="prerequisites-for-pulumi-deployment">Prerequisites for Pulumi
+Deployment</h3>
+<p>Before running <code>pulumi up</code>, verify:</p>
+<ul class="task-list">
+<li><label><input type="checkbox" />VPN peer registered in
+<code>vpn-peers.yaml</code></label></li>
+<li><label><input type="checkbox" />Peer device type supported:
+<code>checkpoint</code>, <code>fortigate</code>, <code>paloalto</code>,
+or <code>cisco</code></label></li>
+<li><label><input type="checkbox" />Peer ASN assigned and conflicts
+checked</label></li>
+<li><label><input type="checkbox" />Destination CIDRs for peer
+documented</label></li>
+<li><label><input type="checkbox" />PSK generation method decided
+(Pulumi auto-gen or pre-shared)</label></li>
+</ul>
+<h3 id="pulumi-deployment-checklist">Pulumi Deployment Checklist</h3>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Validate stack</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pulumi</span> preview <span class="at">--stack</span> asg-plat-dev</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Deploy (creates TGW, Customer Gateway, VPN Connection, routes)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">pulumi</span> up <span class="at">--stack</span> asg-plat-dev</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify deployment</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> ec2 describe-vpn-connections <span class="dt">\</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">--filters</span> <span class="st">&quot;Name=tag:Name,Values=&lt;PEER_NAME&gt;&quot;</span> <span class="dt">\</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">--region</span> us-east-2 <span class="dt">\</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">--query</span> <span class="st">&#39;VpnConnections[0].State&#39;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected output: available</span></span></code></pre></div>
+<h3 id="post-pulumi-retrieve-real-tunnel-endpoints">Post-Pulumi:
+Retrieve Real Tunnel Endpoints</h3>
+<p><strong>CRITICAL:</strong> The actual tunnel endpoint IPs are
+assigned by AWS and NOT available until Pulumi completes.</p>
+<h4 id="command-get-real-tunnel-endpoints">Command: Get Real Tunnel
+Endpoints</h4>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Save as: get-vpn-endpoints.sh</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="va">PEER_NAME</span><span class="op">=</span><span class="st">&quot;</span><span class="va">$1</span><span class="st">&quot;</span>  <span class="co"># e.g., &quot;Vimenca&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="va">REGION</span><span class="op">=</span><span class="st">&quot;us-east-2&quot;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> ec2 describe-vpn-connections <span class="dt">\</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--filters</span> <span class="st">&quot;Name=tag:Name,Values=</span><span class="va">$PEER_NAME</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">--region</span> <span class="st">&quot;</span><span class="va">$REGION</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">--query</span> <span class="st">&#39;VpnConnections[0].VgwTelemetry[*].[OutsideIpAddress,Status.TunnelStatus,StatusMessage]&#39;</span> <span class="dt">\</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">--output</span> table</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Example output:</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># |                OutsideIpAddress  |  TunnelStatus  |  StatusMessage             |</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># |-----|                             |                |                            |</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># | a   | 52.14.123.45                | UP             | 4 BGP ROUTES               |</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># | b   | 52.14.123.46                | DOWN           | not connected              |</span></span></code></pre></div>
+<h4 id="command-get-inside-tunnel-cidrs">Command: Get Inside Tunnel
+CIDRs</h4>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> ec2 describe-vpn-connections <span class="dt">\</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--filters</span> <span class="st">&quot;Name=tag:Name,Values=</span><span class="va">$PEER_NAME</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--region</span> us-east-2 <span class="dt">\</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--query</span> <span class="st">&#39;VpnConnections[0].Options.TunnelOptions[*].[TunnelInsideCidr,TunnelInsideIpv6Cidr]&#39;</span> <span class="dt">\</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--output</span> table</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Example output:</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co"># |  TunnelInsideCidr  |  TunnelInsideIpv6Cidr  |</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co"># |----|-----|</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># | a   | 169.254.10.0/30     | (none)               |</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co"># | b   | 169.254.11.0/30     | (none)               |</span></span></code></pre></div>
+<h4 id="command-get-psks-if-stored-in-secrets-manager">Command: Get PSKs
+(if stored in Secrets Manager)</h4>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># If Pulumi stored PSKs in AWS Secrets Manager:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> secretsmanager get-secret-value <span class="dt">\</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--secret-id</span> atg/vpn/<span class="va">$PEER_NAME</span>/psk/tunnel-1 <span class="dt">\</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--region</span> us-east-2 <span class="dt">\</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--query</span> <span class="st">&#39;SecretString&#39;</span> <span class="dt">\</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--output</span> text</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Note: If PSKs were generated inline, retrieve from Pulumi stack:</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="ex">pulumi</span> stack output <span class="at">--stack</span> asg-plat-dev <span class="kw">|</span> <span class="fu">grep</span> psk</span></code></pre></div>
+<h3 id="pre-handoff-verification-checklist">Pre-Handoff Verification
+Checklist</h3>
+<p>Before contacting peer, verify:</p>
+<ul class="task-list">
+<li><label><input type="checkbox" />VPN connection state:
+<code>available</code> (not pending/failed)</label></li>
+<li><label><input type="checkbox" />Both tunnel endpoints assigned
+(52.14.x.x values)</label></li>
+<li><label><input type="checkbox" />Both tunnels status:
+<code>DOWN</code> initially (expected before peer
+initiates)</label></li>
+<li><label><input type="checkbox" />Inside CIDR blocks assigned
+(169.254.x.0/30)</label></li>
+<li><label><input type="checkbox" />PSKs
+retrieved/accessible</label></li>
+<li><label><input type="checkbox" />Affinity target CIDRs
+documented</label></li>
+<li><label><input type="checkbox" />Peer’s assigned ASN
+confirmed</label></li>
+<li><label><input type="checkbox" />Contact information (peer DevOps
+email + phone) ready</label></li>
+</ul>
+<hr />
+<h2 id="phase-1-handoff-affinity-peer">Phase 1: Handoff (Affinity →
+Peer)</h2>
+<h3 id="handoff-package-contents">Handoff Package Contents</h3>
+<p>Create a <code>VPN_HANDOFF_&lt;PEER_NAME&gt;.md</code> document
+containing:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># VPN Tunnel Handoff Package</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>**Prepared By:** <span class="co">[</span><span class="ot">Affinity DevOps Name</span><span class="co">]</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>**Date:** <span class="co">[</span><span class="ot">YYYY-MM-DD</span><span class="co">]</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>**Peer Organization:** <span class="co">[</span><span class="ot">Peer Name</span><span class="co">]</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">## Tunnel 1</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Endpoint:** 52.14.123.45:500 (UDP)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Inside CIDR:** 169.254.10.0/30</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>AWS side: 169.254.10.1/32 (BGP IP)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>Your side: 169.254.10.2/32 (BGP IP)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**PSK:** <span class="co">[</span><span class="ot">delivered via separate secure channel</span><span class="co">]</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="fu">## Tunnel 2</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Endpoint:** 52.14.123.46:500 (UDP)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Inside CIDR:** 169.254.11.0/30</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>AWS side: 169.254.11.1/32 (BGP IP)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>Your side: 169.254.11.2/32 (BGP IP)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**PSK:** <span class="co">[</span><span class="ot">delivered via separate secure channel</span><span class="co">]</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="fu">## BGP Configuration</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**AWS BGP ASN:** 64512</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Your BGP ASN:** <span class="co">[</span><span class="ot">Peer&#39;s ASN</span><span class="co">]</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**AWS Region:** us-east-2</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Transit Gateway ID:** tgw-0572ce4b80ff7445a</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="fu">## Network Ranges</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Affinity Target CIDR Blocks:**</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>10.0.0.0/16 (EKS VPC)</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>10.1.0.0/16 (VPC 2)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span><span class="co">[</span><span class="ot">other ranges...</span><span class="co">]</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Your CIDR Blocks (to route to Affinity):**</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span>172.16.0.0/16 (your network)</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="ss">  - </span><span class="co">[</span><span class="ot">other ranges...</span><span class="co">]</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="fu">## Important Notes</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Tunnels will be DOWN until you initiate IKE from your side</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Both tunnels are active-active (not redundant); traffic flows across both</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>AWS acts as responder only; your device initiates all negotiations</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>MTU for encrypted traffic should be configured to 1350-1394 bytes</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>DPD (Dead Peer Detection) should be enabled (10-30 second timeout)</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a><span class="fu">## Affinity Contact</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Primary:** <span class="co">[</span><span class="ot">Name</span><span class="co">]</span> <span class="ot">&lt;email@affinity.com&gt;</span> | +1-XXX-XXX-XXXX</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Secondary:** <span class="co">[</span><span class="ot">Name</span><span class="co">]</span> <span class="ot">&lt;email@affinity.com&gt;</span> | +1-XXX-XXX-XXXX</span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Support:** support@affinity.com</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Escalation:** On-call engineering (24/7 for critical issues)</span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a><span class="fu">## Next Steps</span></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Acknowledge receipt of this handoff package</span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Follow device-specific setup guide (e.g., CHECKPOINT_SETUP_GUIDE.md)</span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Notify Affinity when ready for Phase 3 testing</span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Follow E2E testing protocol in: VPN_E2E_TESTING_PROTOCOL.md</span></code></pre></div>
+<h3 id="handoff-delivery">Handoff Delivery</h3>
+<ul>
+<li><strong>Method:</strong> Email + secure file share (never include
+PSKs in plaintext email)</li>
+<li><strong>PSK Delivery:</strong> Separate from other parameters; use
+peer’s preferred secure channel</li>
+<li><strong>Verification:</strong> Request email acknowledgment with:
+<ul>
+<li>“Received handoff package”</li>
+<li>“Tunnel details match our records”</li>
+<li>“Ready to proceed with configuration”</li>
+</ul></li>
+</ul>
+<h3 id="affinity-sign-off-for-phase-1">Affinity Sign-Off for Phase
+1</h3>
+<ul class="task-list">
+<li><label><input type="checkbox" />Handoff package created with real
+tunnel endpoints</label></li>
+<li><label><input type="checkbox" />PSKs transmitted securely (not in
+email/Slack)</label></li>
+<li><label><input type="checkbox" />Peer DevOps confirmed
+receipt</label></li>
+<li><label><input type="checkbox" />Affinity contact information
+shared</label></li>
+<li><label><input type="checkbox" />Peer directed to device-specific
+setup guide</label></li>
+</ul>
+<p><strong>Gate 1 Passed:</strong> Peer has all necessary information to
+configure device</p>
+<hr />
+<h2 id="phase-2-peer-side-configuration">Phase 2: Peer-Side
+Configuration</h2>
+<h3 id="peer-pre-configuration-checklist">Peer Pre-Configuration
+Checklist</h3>
+<p>The peer DevOps team completes:</p>
+<ul class="task-list">
+<li><label><input type="checkbox" /><strong>Admin Access:</strong>
+Verified access to firewall management interface</label></li>
+<li><label><input type="checkbox" /><strong>Network Details:</strong>
+Documented all CIDR blocks for both sides</label></li>
+<li><label><input type="checkbox" /><strong>Firewall Rules:</strong>
+Confirmed UDP 500, 4500 outbound to both tunnel endpoints is NOT
+blocked</label></li>
+<li><label><input type="checkbox" /><strong>NAT Check:</strong> Verified
+no NAT is masking the source IP on IPSec traffic</label></li>
+<li><label><input type="checkbox" /><strong>PSK Storage:</strong> PSKs
+securely stored in device (not in plaintext files)</label></li>
+<li><label><input type="checkbox" /><strong>Backup:</strong> Current
+firewall configuration backed up</label></li>
+<li><label><input type="checkbox" /><strong>Timing:</strong> Set aside
+45+ minutes uninterrupted for configuration</label></li>
+</ul>
+<h3 id="device-specific-configuration">Device-Specific
+Configuration</h3>
+<p>Peer team references appropriate guide:</p>
+<ul>
+<li><strong>Checkpoint:</strong>
+<code>peer-guides/CHECKPOINT_SETUP_GUIDE.md</code></li>
+<li><strong>Fortigate:</strong>
+<code>peer-guides/FORTIGATE_SETUP_GUIDE.md</code></li>
+<li><strong>Palo Alto:</strong>
+<code>peer-guides/PALOALTO_SETUP_GUIDE.md</code></li>
+<li><strong>Cisco ASA:</strong>
+<code>peer-guides/CISCO_SETUP_GUIDE.md</code></li>
+</ul>
+<p>Guides include: 1. IKE Phase 1 (encryption, DH group, lifetime) 2.
+IPSec Phase 2 (encryption, authentication, lifetime) 3. Tunnel inside IP
+assignment 4. Firewall policy/ACL allowing tunnel traffic 5. BGP
+neighbor configuration 6. Static route setup (if not using BGP)</p>
+<h3 id="peer-completion-notification">Peer Completion Notification</h3>
+<p>When peer configuration is complete, peer team notifies Affinity:</p>
+<pre><code>Subject: [ATG VPN] Configuration Complete - [Peer Name]
+
+Message:
+Organization: [Peer Name]
+Device Type: [Checkpoint/Fortigate/Palo Alto/Cisco]
+Configuration Status: COMPLETE
+
+The following configuration steps are done:
+- [ ] Phase 1 (IKE) configured
+- [ ] Phase 2 (IPSec) configured
+- [ ] Tunnel inside IPs configured
+- [ ] Firewall policies allowing traffic configured
+- [ ] BGP neighbors configured
+- [ ] Configuration installed/committed
+
+Ready to proceed with Phase 3 (Tunnel Establishment) testing.
+Contact: [peer DevOps name, email, phone]</code></pre>
+<hr />
+<h2 id="phase-3-layer-1-2-tunnel-establishment-ikeipsec">Phase 3: Layer
+1-2 Tunnel Establishment (IKE/IPSec)</h2>
+<h3 id="critical-context-aws-is-responder-only">Critical Context: AWS is
+Responder-Only</h3>
+<p><strong>AWS Transit Gateway VPN is always in responder mode.</strong>
+The peer device MUST initiate IKE Main Mode or Aggressive Mode. AWS will
+respond with tunnel negotiation.</p>
+<p>This means: 1. <strong>Peer initiates:</strong> Device sends
+IKE_SA_INIT to AWS tunnel endpoint 2. <strong>AWS responds:</strong>
+Completes IKE negotiation 3. <strong>IPSec SAs established:</strong>
+Both tunnels come UP 4. <strong>Timely:</strong> Should take 5-30
+seconds from peer initiation</p>
+<h3 id="timeline-responsibilities">Timeline &amp; Responsibilities</h3>
+<table>
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 18%" />
+<col style="width: 21%" />
+<col style="width: 43%" />
+</colgroup>
+<thead>
+<tr>
+<th>Step</th>
+<th>Owner</th>
+<th>Action</th>
+<th>Expected Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Peer</td>
+<td>Initiate IKE from device (enable tunnel/VPN)</td>
+<td>T+0s</td>
+</tr>
+<tr>
+<td>2</td>
+<td>AWS/TGW</td>
+<td>Respond to IKE; negotiate Phase 2</td>
+<td>T+2-5s</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Affinity</td>
+<td>Monitor tunnel state with watch command</td>
+<td>T+0s continuously</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Both</td>
+<td>Verify both tunnels reach UP state</td>
+<td>T+2-10s</td>
+</tr>
+</tbody>
+</table>
+<h3 id="affinity-monitoring-commands">Affinity Monitoring Commands</h3>
+<p><strong>Watch Tunnel State Change in Real-Time:</strong></p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="va">PEER_NAME</span><span class="op">=</span><span class="st">&quot;Vimenca&quot;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="va">REGION</span><span class="op">=</span><span class="st">&quot;us-east-2&quot;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="ex">watch</span> <span class="at">-n</span> 5 <span class="st">&#39;aws ec2 describe-vpn-connections \</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="st">  --filters &quot;Name=tag:Name,Values=&#39;</span><span class="va">$PEER_NAME</span><span class="st">&#39;&quot; \</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="st">  --region &#39;</span><span class="va">$REGION</span><span class="st">&#39; \</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="st">  --query &quot;VpnConnections[0].VgwTelemetry[*].[OutsideIpAddress,Status.TunnelStatus,StatusMessage]&quot; \</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="st">  --output table&#39;</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Screen updates every 5 seconds. Expected progression:</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Initial:   DOWN | DOWN</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="co"># After ~5s: UP   | DOWN    (Tunnel 1 negotiated)</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="co"># After ~10s: UP   | UP      (Both tunnels UP - GATE PASS)</span></span></code></pre></div>
+<p><strong>Get Full Tunnel Details:</strong></p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> ec2 describe-vpn-connections <span class="dt">\</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--filters</span> <span class="st">&quot;Name=tag:Name,Values=</span><span class="va">$PEER_NAME</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--region</span> us-east-2 <span class="dt">\</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--query</span> <span class="st">&#39;VpnConnections[0].[VpnConnectionId,State,VgwTelemetry[*].Status.TunnelStatus]&#39;</span> <span class="dt">\</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--output</span> text</span></code></pre></div>
+<h3 id="peer-side-verification-commands">Peer-Side Verification
+Commands</h3>
+<p>Each device type has specific commands to verify IPSec SA
+establishment:</p>
+<h4 id="checkpoint-commands">Checkpoint Commands</h4>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check tunnel establishment</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">fw</span> stat <span class="at">-sc</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-E</span> <span class="st">&quot;Tunnel|SA&quot;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Detailed tunnel status</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="ex">vpn</span> tunnel get <span class="at">-x</span> 0</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co"># List all Security Associations</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="ex">fw</span> stat <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-i</span> <span class="st">&quot;ike\|ipsec&quot;</span></span></code></pre></div>
+<p><strong>Expected Output:</strong> - Two IKE SAs (one per tunnel) in
+ESTABLISHED state - Two IPSec SAs (one per tunnel) in Active state - No
+error messages in tunnel status</p>
+<h4 id="fortigate-commands">Fortigate Commands</h4>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check IPSec tunnels</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ex">diagnose</span> vpn tunnel list</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Check IKE status</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="ex">diagnose</span> vpn ike gateway list</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Monitor tunnel in real-time</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="ex">diagnose</span> vpn tunnel list <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-E</span> <span class="st">&quot;Phase|Status&quot;</span></span></code></pre></div>
+<p><strong>Expected Output:</strong></p>
+<pre><code>Tunnel 52.14.123.45:
+  Phase 1: ESTABLISHED
+  Phase 2: ESTABLISHED
+
+Tunnel 52.14.123.46:
+  Phase 1: ESTABLISHED
+  Phase 2: ESTABLISHED</code></pre>
+<h4 id="palo-alto-commands">Palo Alto Commands</h4>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Show IPSec SA details</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> vpn ipsec sa</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Show IKE SA</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> vpn ike sa</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Monitor for negotiation</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="ex">request</span> vpn ike-sa-query timeout 60</span></code></pre></div>
+<p><strong>Expected Output:</strong> Both tunnels with SA count &gt; 0,
+status “Active”</p>
+<h4 id="cisco-asa-commands">Cisco ASA Commands</h4>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check crypto maps</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ipsec sa</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Check IKE status</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> crypto ikev2 sa</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Monitor tunnel negotiation</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="ex">debug</span> crypto ipsec 255</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Then test: ping to AWS network</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="ex">debug</span> off</span></code></pre></div>
+<p><strong>Expected Output:</strong></p>
+<pre><code>Crypto map tag: AWS_TUNNEL_1, seq num: 10
+  Peer address(es): 52.14.123.45
+  Encryption domain: 169.254.10.0/30
+  Protected data flows:
+    permit ip any any
+  SA (ref cnt/refgen): 2/1
+  IKEv2 Crypto engines: active</code></pre>
+<h3 id="gono-go-gate-3.1-both-tunnels-up">Go/No-Go Gate 3.1: Both
+Tunnels UP</h3>
+<p><strong>Affinity confirms:</strong></p>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> ec2 describe-vpn-connections <span class="dt">\</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--filters</span> <span class="st">&quot;Name=tag:Name,Values=</span><span class="va">$PEER_NAME</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--region</span> us-east-2 <span class="dt">\</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--query</span> <span class="st">&#39;VpnConnections[0].VgwTelemetry[*].Status.TunnelStatus&#39;</span> <span class="dt">\</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--output</span> text</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: UP UP (both tunnels active)</span></span></code></pre></div>
+<p><strong>Peer confirms:</strong> Device shows both IKE+IPSec SAs in
+ESTABLISHED/Active state</p>
+<p><strong>If Gate Fails: Tunnel Stays DOWN</strong></p>
+<p>See <a href="#remediation-playbooks">Remediation Playbooks</a> →
+“Tunnel Stays DOWN”</p>
+<p><strong>Gate 3.1 Passed:</strong> Both tunnels UP on both sides;
+proceed to Phase 4</p>
+<hr />
+<h2 id="phase-4-layer-3-bgp-route-exchange">Phase 4: Layer 3 BGP Route
+Exchange</h2>
+<h3 id="how-bgp-works-with-aws-vpn">How BGP Works with AWS VPN</h3>
+<ol type="1">
+<li><strong>BGP Neighbors:</strong> Peer and AWS establish BGP session
+over tunnel inside IP (169.254.x.1)</li>
+<li><strong>Peer AS number:</strong> Peer’s assigned ASN (e.g., 65000
+for Vimenca)</li>
+<li><strong>AWS AS number:</strong> 64512 (constant for all VPN
+peers)</li>
+<li><strong>Route Learning:</strong> BGP advertises CIDRs
+automatically</li>
+<li><strong>Affinity visibility:</strong> AWS API returns “X BGP ROUTES”
+in StatusMessage but NOT actual neighbor state</li>
+</ol>
+<h3 id="timeline-responsibilities-1">Timeline &amp;
+Responsibilities</h3>
+<table>
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 18%" />
+<col style="width: 21%" />
+<col style="width: 43%" />
+</colgroup>
+<thead>
+<tr>
+<th>Step</th>
+<th>Owner</th>
+<th>Action</th>
+<th>Expected Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Peer</td>
+<td>BGP neighbors already configured (from Phase 2)</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>2</td>
+<td>AWS/TGW</td>
+<td>Receives tunnel UP; initiates BGP</td>
+<td>T+0-5s post-tunnel UP</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Peer</td>
+<td>Responds to BGP neighbor; exchanges routes</td>
+<td>T+5-10s</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Affinity</td>
+<td>Verifies peer CIDRs in TGW route table</td>
+<td>T+10-15s</td>
+</tr>
+</tbody>
+</table>
+<h3 id="affinity-monitoring-commands-1">Affinity Monitoring
+Commands</h3>
+<p><strong>Check TGW Route Table for Peer’s Routes:</strong></p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="va">PEER_NAME</span><span class="op">=</span><span class="st">&quot;Vimenca&quot;</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="va">EXPECTED_CIDR</span><span class="op">=</span><span class="st">&quot;172.16.0.0/16&quot;</span>  <span class="co"># From handoff package</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="va">REGION</span><span class="op">=</span><span class="st">&quot;us-east-2&quot;</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Get TGW route table</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> ec2 describe-transit-gateway-routes <span class="dt">\</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">--transit-gateway-route-table-id</span> tgw-rtb-079e9cb450e5355e6 <span class="dt">\</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">--filters</span> <span class="st">&quot;Name=state,Values=active&quot;</span> <span class="dt">\</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">--region</span> <span class="st">&quot;</span><span class="va">$REGION</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">--query</span> <span class="st">&quot;Routes[?DestinationCidrBlock==&#39;</span><span class="va">$EXPECTED_CIDR</span><span class="st">&#39;]&quot;</span> <span class="dt">\</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">--output</span> table</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected output:</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="co"># |  DestinationCidrBlock  |  State   |  Type  |  RouteAttachmentId  |</span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="co"># |-----|-----|-----|-----|</span></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a><span class="co"># | 172.16.0.0/16          | active   | vpn    | vpn-0x... |</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="co"># If route is &quot;blackholed&quot; status, BGP hasn&#39;t propagated yet</span></span></code></pre></div>
+<p><strong>Alternative: Check All Active Routes:</strong></p>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> ec2 describe-transit-gateway-routes <span class="dt">\</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--transit-gateway-route-table-id</span> tgw-rtb-079e9cb450e5355e6 <span class="dt">\</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--filters</span> <span class="st">&quot;Name=state,Values=active&quot;</span> <span class="dt">\</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--region</span> us-east-2 <span class="dt">\</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--output</span> table <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-E</span> <span class="st">&quot;172.16|bgp&quot;</span></span></code></pre></div>
+<p><strong>Check BGP Status via AWS StatusMessage:</strong></p>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> ec2 describe-vpn-connections <span class="dt">\</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--filters</span> <span class="st">&quot;Name=tag:Name,Values=</span><span class="va">$PEER_NAME</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--region</span> us-east-2 <span class="dt">\</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--query</span> <span class="st">&#39;VpnConnections[0].VgwTelemetry[*].[OutsideIpAddress,StatusMessage]&#39;</span> <span class="dt">\</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--output</span> table</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected output (if BGP working):</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co"># |  OutsideIpAddress  |  StatusMessage     |</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co"># |-----|-----|</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="co"># | 52.14.123.45       | 4 BGP ROUTES       |</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co"># | 52.14.123.46       | 4 BGP ROUTES       |</span></span></code></pre></div>
+<h3 id="peer-side-verification-commands-1">Peer-Side Verification
+Commands</h3>
+<h4 id="checkpoint-commands-1">Checkpoint Commands</h4>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check BGP status</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">netstat</span> <span class="at">-rn</span> <span class="kw">|</span> <span class="fu">grep</span> 169.254</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: Routes showing 169.254.x.1 as next hop, pointing to tunnel interfaces</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="co"># More detailed BGP</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="ex">fw</span> ctl debug <span class="at">-m</span> cpm +bgp</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="co"># [do some BGP operation]</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="ex">fw</span> ctl debug <span class="at">-off</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="co"># View BGP learned routes</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="fu">netstat</span> <span class="at">-rn</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="st">&quot;169.254&quot;</span></span></code></pre></div>
+<h4 id="fortigate-commands-1">Fortigate Commands</h4>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check BGP neighbors</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="ex">get</span> router bgp summary</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected output:</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Neighbor  AS   State    InQ OutQ Routes</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 169.254.10.1 64512 Established 0 0 3</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 169.254.11.1 64512 Established 0 0 3</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Show received routes</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="ex">get</span> router bgp neighbors 169.254.10.1 advertised-routes</span></code></pre></div>
+<h4 id="palo-alto-commands-1">Palo Alto Commands</h4>
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check BGP peers</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> routing bgp peers</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: Neighbor 169.254.x.1 state &quot;Established&quot; with route count &gt; 0</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Show learned routes</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> routing bgp rib routes</span></code></pre></div>
+<h4 id="cisco-asa-commands-1">Cisco ASA Commands</h4>
+<div class="sourceCode" id="cb22"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check BGP summary</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp summary</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected:</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ Up/Down State/PfxRcd</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 169.254.10.1    4 64512     10      10        5    0    0 00:05:10        3</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 169.254.11.1    4 64512     10      10        5    0    0 00:05:10        3</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Show BGP routes</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="ex">show</span> bgp ipv4 unicast summary</span></code></pre></div>
+<h3 id="gono-go-gate-4.1-routes-in-affinity-tgw">Go/No-Go Gate 4.1:
+Routes in Affinity TGW</h3>
+<p><strong>Affinity confirms:</strong></p>
+<div class="sourceCode" id="cb23"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># At least one route from peer CIDR appears as &quot;active&quot; in TGW route table</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> ec2 describe-transit-gateway-routes <span class="dt">\</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--transit-gateway-route-table-id</span> tgw-rtb-079e9cb450e5355e6 <span class="dt">\</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--filters</span> <span class="st">&quot;Name=state,Values=active&quot;</span> <span class="dt">\</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--region</span> us-east-2 <span class="dt">\</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--query</span> <span class="st">&quot;Routes[?contains(DestinationCidrBlock, &#39;172.16&#39;)]&quot;</span> <span class="dt">\</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--output</span> table</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: At least one row with DestinationCidrBlock = peer&#39;s CIDR</span></span></code></pre></div>
+<p><strong>Peer confirms:</strong></p>
+<pre><code># Device shows BGP neighbors in Established state with &gt;0 routes received
+# See device-specific commands above</code></pre>
+<p><strong>If Gate Fails: BGP Routes Not Learned</strong></p>
+<p>See <a href="#remediation-playbooks">Remediation Playbooks</a> → “BGP
+Routes Not Appearing”</p>
+<p><strong>Gate 4.1 Passed:</strong> Routes appear in both TGW table and
+peer device; proceed to Phase 5</p>
+<hr />
+<h2 id="phase-5-layer-4-data-plane-traffic-test">Phase 5: Layer 4 Data
+Plane Traffic Test</h2>
+<h3 id="purpose">Purpose</h3>
+<p>Verify actual traffic can flow bidirectionally across the tunnel,
+confirming: 1. Network routing is correct 2. MTU is sufficient for
+encrypted traffic 3. Return traffic is using tunnel (not alternate
+path)</p>
+<h3 id="prerequisite-coordinate-test-hosts">Prerequisite: Coordinate
+Test Hosts</h3>
+<p>Before testing, identify test endpoints:</p>
+<p><strong>Affinity side:</strong> - EKS pod or EC2 instance in VPC with
+private IP (e.g., 10.0.1.100) - Must be in a subnet with route pointing
+to TGW for peer CIDR</p>
+<p><strong>Peer side:</strong> - Any host in peer’s network segment
+(e.g., 172.16.1.100) - Must reach the tunnel device for routing</p>
+<h3 id="affinity-test-ping-from-eks-pod">Affinity Test: Ping from EKS
+Pod</h3>
+<div class="sourceCode" id="cb25"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="va">PEER_TEST_IP</span><span class="op">=</span><span class="st">&quot;172.16.1.100&quot;</span>  <span class="co"># Host on peer network</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="va">POD_NAMESPACE</span><span class="op">=</span><span class="st">&quot;default&quot;</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="va">POD_NAME</span><span class="op">=</span><span class="st">&quot;vpn-test-</span><span class="va">$(</span><span class="fu">date</span> +%s<span class="va">)</span><span class="st">&quot;</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Create temporary test pod</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> run <span class="st">&quot;</span><span class="va">$POD_NAME</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">--rm</span> <span class="at">-it</span> <span class="dt">\</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">--image</span><span class="op">=</span>alpine <span class="dt">\</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">--restart</span><span class="op">=</span>Never <span class="dt">\</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">--namespace</span><span class="op">=</span><span class="st">&quot;</span><span class="va">$POD_NAMESPACE</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">--</span> sh <span class="at">-c</span> <span class="st">&quot;</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a><span class="st">    echo &#39;Testing tunnel reachability...&#39;</span></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a><span class="st">    # Test 1: ICMP ping</span></span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a><span class="st">    echo &#39;Test 1: ICMP Ping&#39;</span></span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a><span class="st">    ping -c 10 </span><span class="va">$PEER_TEST_IP</span></span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a><span class="st">    # Test 2: TCP connectivity</span></span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a><span class="st">    echo &#39;Test 2: TCP Connectivity (port 22 example)&#39;</span></span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a><span class="st">    nc -vz -w 5 </span><span class="va">$PEER_TEST_IP</span><span class="st"> 22</span></span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a><span class="st">    # Test 3: Traceroute to verify path</span></span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a><span class="st">    echo &#39;Test 3: Traceroute&#39;</span></span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a><span class="st">    traceroute </span><span class="va">$PEER_TEST_IP</span></span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a><span class="st">    # Test 4: MTU test (see MTU Test section)</span></span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a><span class="st">    echo &#39;Test 4: MTU Test - 1400 bytes&#39;</span></span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a><span class="st">    ping -c 3 -M do -s 1400 </span><span class="va">$PEER_TEST_IP</span><span class="st"> &amp;&amp; echo &#39;MTU 1400: OK&#39; || echo &#39;MTU 1400: FAILED&#39;</span></span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a><span class="st">    echo &#39;Test 5: MTU Test - 1350 bytes&#39;</span></span>
+<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a><span class="st">    ping -c 3 -M do -s 1350 </span><span class="va">$PEER_TEST_IP</span><span class="st"> &amp;&amp; echo &#39;MTU 1350: OK&#39; || echo &#39;MTU 1350: FAILED&#39;</span></span>
+<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span></span></code></pre></div>
+<p><strong>Expected Output:</strong></p>
+<pre><code>ICMP ping test:
+  PING 172.16.1.100 (172.16.1.100) 56(84) bytes of data.
+  64 bytes from 172.16.1.100: icmp_seq=1 ttl=63 time=45.2 ms
+  [9 more packets]
+  --- 172.16.1.100 statistics ---
+  10 packets transmitted, 10 received, 0% packet loss
+
+TCP connectivity: Connection successful
+Traceroute: Final hop is the peer gateway
+
+MTU tests:
+  MTU 1400: OK (or FAILED - see below)
+  MTU 1350: OK</code></pre>
+<h3 id="mtu-test-details">MTU Test Details</h3>
+<p>IPSec adds ~50-70 bytes of header overhead (IKEv2 + ESP header +
+padding). AWS recommends maximum payload of 1394 bytes.</p>
+<p><strong>Test Sequence:</strong></p>
+<ol type="1">
+<li><strong>Test 1400 bytes:</strong> Likely to fail (ICMP + IPSec &gt;
+1500 Ethernet MTU)</li>
+<li><strong>Test 1350 bytes:</strong> Should succeed (standard safe
+limit)</li>
+<li><strong>If 1350 fails:</strong> Check peer MTU configuration, may
+need to lower DF (Don’t Fragment) bit handling</li>
+</ol>
+<p><strong>Peer-Side Confirmation:</strong></p>
+<p>Peer team confirms traffic arriving:</p>
+<div class="sourceCode" id="cb27"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># On peer network host:</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="ex">tcpdump</span> <span class="at">-i</span> eth0 <span class="at">-n</span> <span class="st">&quot;src 10.0.1.100 and dst 172.16.1.100&quot;</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: ICMP echo requests arriving with source IP from Affinity</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Important: Verify traffic arrives from tunnel, not internet:</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="fu">netstat</span> <span class="at">-rn</span> <span class="kw">|</span> <span class="fu">grep</span> 10.0.1.0/24</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Should show route via tunnel device/inside IP</span></span></code></pre></div>
+<h3 id="gono-go-gate-5.1-bidirectional-ping-success">Go/No-Go Gate 5.1:
+Bidirectional Ping Success</h3>
+<p><strong>Affinity confirms:</strong></p>
+<pre><code>✓ Ping to 172.16.1.100: 10 packets, 0% loss
+✓ MTU 1350 bytes: ping succeeds
+✓ Traceroute shows peer gateway as final hop</code></pre>
+<p><strong>Peer confirms:</strong></p>
+<pre><code>✓ ICMP echo-request arrives from 10.0.1.100
+✓ Source IP is Affinity network (not NATed/spoofed)
+✓ Return traffic sent back through tunnel</code></pre>
+<p><strong>If Gate Fails: Traffic Not Passing</strong></p>
+<p>See <a href="#remediation-playbooks">Remediation Playbooks</a> →
+“Traffic Not Passing”</p>
+<p><strong>Gate 5.1 Passed:</strong> Bidirectional traffic verified;
+proceed to Phase 6 (optional) or Phase 7</p>
+<hr />
+<h2 id="phase-6-layer-5-redundancy-failover-testing">Phase 6: Layer 5
+Redundancy &amp; Failover Testing</h2>
+<h3 id="when-to-perform-this-phase">When to Perform This Phase</h3>
+<p><strong>Required for:</strong> Production sign-off (mandatory before
+go-live) <strong>Optional for:</strong> Initial testing (can schedule
+for future maintenance window)</p>
+<p><strong>If deferring:</strong> Document in sign-off sheet “Failover
+test: Scheduled for [date/maintenance window]”</p>
+<h3 id="failover-mechanism">Failover Mechanism</h3>
+<p>AWS VPN uses dual active tunnels (not active-standby). When one
+tunnel fails: 1. <strong>Detection:</strong> DPD timeout triggers (10-30
+seconds per device) 2. <strong>BGP reconvergence:</strong> Neighbor goes
+down; routes via remaining tunnel 3. <strong>Traffic impact:</strong>
+~30-90 second disruption (acceptable for most applications)</p>
+<h3 id="failover-test-procedure">Failover Test Procedure</h3>
+<p><strong>Step 1: Establish Baseline</strong></p>
+<div class="sourceCode" id="cb30"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From Affinity:</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="ex">watch</span> <span class="at">-n</span> 2 <span class="st">&#39;aws ec2 describe-vpn-connections \</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="st">  --filters &quot;Name=tag:Name,Values=$PEER_NAME&quot; \</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="st">  --region us-east-2 \</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="st">  --query &quot;VpnConnections[0].VgwTelemetry[*].[OutsideIpAddress,Status.TunnelStatus]&quot; \</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a><span class="st">  --output table&#39;</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a><span class="co"># From Peer (continuous ping):</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> <span class="at">-i</span> 1 <span class="op">&lt;</span>AFFINITY_TEST_IP<span class="op">&gt;</span> <span class="kw">|</span> <span class="fu">tee</span> failover-test.log</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: Both tunnels UP, ping continuous 0% loss</span></span></code></pre></div>
+<p><strong>Step 2: Disable Tunnel 1 on Affinity</strong></p>
+<div class="sourceCode" id="cb31"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Affinity uses AWS console or CLI to disable Tunnel 1:</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Option A (CLI - Not available via standard describe-vpn-connections)</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Option B (Console): EC2 → VPN Connections → Select connection → Modify → Disable Tunnel 1</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="co"># For testing via script, create custom monitoring:</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> ec2 describe-vpn-connections <span class="dt">\</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--filters</span> <span class="st">&quot;Name=tag:Name,Values=</span><span class="va">$PEER_NAME</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">--region</span> us-east-2 <span class="dt">\</span></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">--query</span> <span class="st">&#39;VpnConnections[0].VgwTelemetry[0].Status.TunnelStatus&#39;</span> <span class="dt">\</span></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">--output</span> text</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected to show: DOWN (once disabled)</span></span></code></pre></div>
+<p><strong>Step 3: Observe Failover from Both Sides</strong></p>
+<p><strong>Affinity observations:</strong> - Tunnel 1 transitions to
+DOWN (immediate) - Tunnel 2 remains UP (continuous traffic) - Possible
+brief BGP route recalculation (5-30 seconds)</p>
+<p><strong>Peer observations:</strong> - Continuous ping shows brief gap
+(may see 1-3 packet loss) - After DPD timeout + BGP reconvergence, ping
+resumes normal</p>
+<p><strong>Step 4: Re-Enable Tunnel 1 and Verify Recovery</strong></p>
+<div class="sourceCode" id="cb32"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Affinity: Re-enable Tunnel 1 in console/via modification</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Monitor as before:</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="ex">watch</span> <span class="at">-n</span> 2 <span class="st">&#39;aws ec2 describe-vpn-connections \</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="st">  --filters &quot;Name=tag:Name,Values=$PEER_NAME&quot; \</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="st">  --region us-east-2 \</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="st">  --query &quot;VpnConnections[0].VgwTelemetry[*].[OutsideIpAddress,Status.TunnelStatus]&quot; \</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="st">  --output table&#39;</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: Tunnel 1 returns to UP, BGP re-learns routes</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Peer: Ping should continue normally, then show re-established</span></span></code></pre></div>
+<h3 id="gono-go-gate-6.1-failover-successful">Go/No-Go Gate 6.1:
+Failover Successful</h3>
+<p><strong>Success Criteria:</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox" />Single tunnel DOWN does not cause
+total connectivity loss</label></li>
+<li><label><input type="checkbox" />Remaining tunnel handles all
+traffic</label></li>
+<li><label><input type="checkbox" />DPD detects failure within 30
+seconds</label></li>
+<li><label><input type="checkbox" />BGP reconvergence completes within
+60 seconds</label></li>
+<li><label><input type="checkbox" />Failed tunnel recovers when
+re-enabled</label></li>
+<li><label><input type="checkbox" />No manual intervention
+required</label></li>
+</ul>
+<p><strong>Acceptable Disruption:</strong> Up to 90 seconds total impact
+(DPD + BGP reconvergence)</p>
+<p><strong>If Gate Fails:</strong> One tunnel DOWN causes total loss or
+slow recovery</p>
+<p>See <a href="#remediation-playbooks">Remediation Playbooks</a> →
+“Failover Not Working”</p>
+<p><strong>Gate 6.1 Passed (or deferred):</strong> Redundancy verified
+or scheduled; proceed to Phase 7</p>
+<hr />
+<h2 id="phase-7-operational-sign-off">Phase 7: Operational Sign-Off</h2>
+<h3 id="joint-sign-off-sheet">Joint Sign-Off Sheet</h3>
+<p>Both Affinity and Peer DevOps teams complete this checklist and
+sign:</p>
+<div class="sourceCode" id="cb33"><pre
+class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># VPN Tunnel Operational Sign-Off</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>**Peer Organization:** <span class="co">[</span><span class="ot">Name</span><span class="co">]</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>**Tunnel Name:** <span class="co">[</span><span class="ot">Vimenca / CIBA / etc.</span><span class="co">]</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>**Configuration Date:** <span class="co">[</span><span class="ot">YYYY-MM-DD</span><span class="co">]</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>**Test Date:** <span class="co">[</span><span class="ot">YYYY-MM-DD</span><span class="co">]</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="fu">## Phase Completion Verification</span></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a><span class="fu">### Phase 3: Tunnel Establishment (IKE/IPSec)</span></span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Affinity:** Both tunnels show UP in AWS console</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Affinity:** <span class="in">`aws ec2 describe-vpn-connections`</span> shows VgwTelemetry<span class="co">[</span><span class="ot">*</span><span class="co">]</span>.Status.TunnelStatus = UP</span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Peer:** Device shows both IKE+IPSec SAs in Established/Active state</span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Peer:** Device-specific verification commands show tunnel health</span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a><span class="fu">### Phase 4: BGP Route Exchange</span></span>
+<span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Affinity:** TGW route table contains peer&#39;s CIDR blocks with state=active</span>
+<span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Affinity:** <span class="in">`aws ec2 describe-vpn-connections`</span> StatusMessage shows &quot;X BGP ROUTES&quot;</span>
+<span id="cb33-21"><a href="#cb33-21" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Peer:** BGP neighbor state shows Established</span>
+<span id="cb33-22"><a href="#cb33-22" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Peer:** Peer can reach Affinity network IP via tunnel (not alternate path)</span>
+<span id="cb33-23"><a href="#cb33-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-24"><a href="#cb33-24" aria-hidden="true" tabindex="-1"></a><span class="fu">### Phase 5: Data Plane Traffic Test</span></span>
+<span id="cb33-25"><a href="#cb33-25" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Affinity:** Ping from EKS pod to peer test host: 0% packet loss</span>
+<span id="cb33-26"><a href="#cb33-26" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Affinity:** MTU test with 1350-byte payload succeeds</span>
+<span id="cb33-27"><a href="#cb33-27" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Peer:** ICMP echo-request arrives from Affinity network CIDR</span>
+<span id="cb33-28"><a href="#cb33-28" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Peer:** Return traffic uses tunnel (verified via netstat/traceroute)</span>
+<span id="cb33-29"><a href="#cb33-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-30"><a href="#cb33-30" aria-hidden="true" tabindex="-1"></a><span class="fu">### Phase 6: Redundancy &amp; Failover (If Performed)</span></span>
+<span id="cb33-31"><a href="#cb33-31" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Both:** One tunnel DOWN does not cause total loss</span>
+<span id="cb33-32"><a href="#cb33-32" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Both:** Remaining tunnel carries all traffic</span>
+<span id="cb33-33"><a href="#cb33-33" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Both:** Failed tunnel recovery is automatic</span>
+<span id="cb33-34"><a href="#cb33-34" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Both:** DPD detects failure within 30 seconds</span>
+<span id="cb33-35"><a href="#cb33-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-36"><a href="#cb33-36" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb33-37"><a href="#cb33-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-38"><a href="#cb33-38" aria-hidden="true" tabindex="-1"></a><span class="fu">## Final Checklist</span></span>
+<span id="cb33-39"><a href="#cb33-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-40"><a href="#cb33-40" aria-hidden="true" tabindex="-1"></a><span class="fu">### Tunnel Configuration</span></span>
+<span id="cb33-41"><a href="#cb33-41" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Encryption:** IKEv2, AES-256, SHA2-256 (matches standard)</span>
+<span id="cb33-42"><a href="#cb33-42" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **DPD:** Enabled with 10-30 second timeout</span>
+<span id="cb33-43"><a href="#cb33-43" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Inside IPs:** Correct 169.254.x.x/30 from handoff package</span>
+<span id="cb33-44"><a href="#cb33-44" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **PSK:** Securely stored, never logged or exposed</span>
+<span id="cb33-45"><a href="#cb33-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-46"><a href="#cb33-46" aria-hidden="true" tabindex="-1"></a><span class="fu">### BGP Configuration</span></span>
+<span id="cb33-47"><a href="#cb33-47" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Peer ASN:** <span class="co">[</span><span class="ot">Your assigned ASN</span><span class="co">]</span></span>
+<span id="cb33-48"><a href="#cb33-48" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **AWS ASN:** 64512</span>
+<span id="cb33-49"><a href="#cb33-49" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Neighbors:** Both tunnel inside IPs (169.254.x.1)</span>
+<span id="cb33-50"><a href="#cb33-50" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Hold Time:** ≥ 180 seconds</span>
+<span id="cb33-51"><a href="#cb33-51" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Routes:** Affinity networks learned, your networks advertised</span>
+<span id="cb33-52"><a href="#cb33-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-53"><a href="#cb33-53" aria-hidden="true" tabindex="-1"></a><span class="fu">### Operational Readiness</span></span>
+<span id="cb33-54"><a href="#cb33-54" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Monitoring:** Tunnel health monitoring configured on peer side</span>
+<span id="cb33-55"><a href="#cb33-55" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Alerting:** Tunnel DOWN alert configured (if applicable)</span>
+<span id="cb33-56"><a href="#cb33-56" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Documentation:** Device configuration backed up and documented</span>
+<span id="cb33-57"><a href="#cb33-57" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Runbooks:** Peer team has troubleshooting procedures</span>
+<span id="cb33-58"><a href="#cb33-58" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Contacts:** Both teams have each other&#39;s escalation contacts</span>
+<span id="cb33-59"><a href="#cb33-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-60"><a href="#cb33-60" aria-hidden="true" tabindex="-1"></a><span class="fu">### Compliance &amp; Security</span></span>
+<span id="cb33-61"><a href="#cb33-61" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Audit:** All configuration changes logged</span>
+<span id="cb33-62"><a href="#cb33-62" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Backup:** Device configuration backed up pre-change</span>
+<span id="cb33-63"><a href="#cb33-63" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Testing:** No production traffic until sign-off complete</span>
+<span id="cb33-64"><a href="#cb33-64" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="va">[ ]</span> **Change Log:** Configuration documented in CMDB/change management system</span>
+<span id="cb33-65"><a href="#cb33-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-66"><a href="#cb33-66" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb33-67"><a href="#cb33-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-68"><a href="#cb33-68" aria-hidden="true" tabindex="-1"></a><span class="fu">## Sign-Off Approval</span></span>
+<span id="cb33-69"><a href="#cb33-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-70"><a href="#cb33-70" aria-hidden="true" tabindex="-1"></a><span class="fu">### Affinity DevOps</span></span>
+<span id="cb33-71"><a href="#cb33-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-72"><a href="#cb33-72" aria-hidden="true" tabindex="-1"></a>**I confirm that all Affinity-side verification gates have passed and tunnels are operational.**</span>
+<span id="cb33-73"><a href="#cb33-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-74"><a href="#cb33-74" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Name:** ___________________________</span>
+<span id="cb33-75"><a href="#cb33-75" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Title:** ___________________________</span>
+<span id="cb33-76"><a href="#cb33-76" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Date:** ____________________________</span>
+<span id="cb33-77"><a href="#cb33-77" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Signature:** ________________________</span>
+<span id="cb33-78"><a href="#cb33-78" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Contact:** __________________________ (phone + email)</span>
+<span id="cb33-79"><a href="#cb33-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-80"><a href="#cb33-80" aria-hidden="true" tabindex="-1"></a><span class="fu">### Peer DevOps</span></span>
+<span id="cb33-81"><a href="#cb33-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-82"><a href="#cb33-82" aria-hidden="true" tabindex="-1"></a>**I confirm that all peer-side verification gates have passed and tunnels are fully operational.**</span>
+<span id="cb33-83"><a href="#cb33-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-84"><a href="#cb33-84" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Name:** ___________________________</span>
+<span id="cb33-85"><a href="#cb33-85" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Title:** ___________________________</span>
+<span id="cb33-86"><a href="#cb33-86" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Date:** ____________________________</span>
+<span id="cb33-87"><a href="#cb33-87" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Signature:** ________________________</span>
+<span id="cb33-88"><a href="#cb33-88" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Contact:** __________________________ (phone + email)</span>
+<span id="cb33-89"><a href="#cb33-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-90"><a href="#cb33-90" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb33-91"><a href="#cb33-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-92"><a href="#cb33-92" aria-hidden="true" tabindex="-1"></a><span class="fu">## Notes &amp; Issues</span></span>
+<span id="cb33-93"><a href="#cb33-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-94"><a href="#cb33-94" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Space for any notes, deferred testing, or open issues</span><span class="co">]</span></span></code></pre></div>
+<h3 id="how-to-use-the-sign-off-sheet">How to Use the Sign-Off
+Sheet</h3>
+<ol type="1">
+<li><strong>After Phase 3:</strong> Both teams complete tunnel
+establishment section</li>
+<li><strong>After Phase 4:</strong> Both teams complete BGP route
+section</li>
+<li><strong>After Phase 5:</strong> Both teams complete data plane
+section</li>
+<li><strong>After Phase 6 (if done):</strong> Both teams complete
+failover section</li>
+<li><strong>Final:</strong> Both teams complete final checklists and
+sign</li>
+</ol>
+<h3 id="storage-distribution">Storage &amp; Distribution</h3>
+<ul>
+<li><strong>Original:</strong> Stored in Affinity documentation system
+(CMDB, wiki, etc.)</li>
+<li><strong>Copy:</strong> Provided to peer organization for their
+records</li>
+<li><strong>Audit Trail:</strong> Archived with VPN peer
+configuration</li>
+<li><strong>Reference:</strong> Used for future troubleshooting
+reference</li>
+</ul>
+<hr />
+<h2 id="remediation-playbooks">Remediation Playbooks</h2>
+<h3 id="playbook-1-tunnel-stays-down">Playbook 1: Tunnel Stays DOWN</h3>
+<p><strong>Symptoms:</strong> Both tunnels show DOWN in AWS console 30+
+seconds after peer initiates config</p>
+<p><strong>Investigation:</strong></p>
+<ol type="1">
+<li><p><strong>Verify peer initiated:</strong></p>
+<pre><code>- Peer confirms: Device configuration committed/applied
+- Peer confirms: Tunnel/VPN service enabled on device
+- Peer confirms: No error messages in device logs</code></pre></li>
+<li><p><strong>Check network reachability:</strong></p>
+<div class="sourceCode" id="cb35"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From peer network (check both endpoints):</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="ex">nc</span> <span class="at">-uz</span> <span class="at">-w</span> 3 52.14.123.45 500 <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">&quot;UDP 500 reachable&quot;</span> <span class="kw">||</span> <span class="bu">echo</span> <span class="st">&quot;Unreachable&quot;</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="ex">nc</span> <span class="at">-uz</span> <span class="at">-w</span> 3 52.14.123.45 4500 <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">&quot;UDP 4500 reachable&quot;</span> <span class="kw">||</span> <span class="bu">echo</span> <span class="st">&quot;Unreachable&quot;</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="ex">nc</span> <span class="at">-uz</span> <span class="at">-w</span> 3 52.14.123.46 500 <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">&quot;UDP 500 reachable&quot;</span> <span class="kw">||</span> <span class="bu">echo</span> <span class="st">&quot;Unreachable&quot;</span></span></code></pre></div>
+<p><strong>If unreachable:</strong> Peer firewall is blocking. Add
+outbound rules for UDP 500, 4500 to tunnel endpoints.</p></li>
+<li><p><strong>Verify PSK exactness:</strong></p>
+<pre><code>Peer confirms: PSK matches character-for-character from handoff package
+Peer checks: No extra spaces, correct case, no typos</code></pre>
+<p><strong>If mismatched:</strong> Update PSK in device config and retry
+tunnel initiation.</p></li>
+<li><p><strong>Check encryption settings:</strong></p>
+<ul>
+<li>Phase 1 Encryption: AES-256</li>
+<li>Phase 1 Integrity: SHA2-256</li>
+<li>Phase 1 DH Group: DH Group 14 (modp4096)</li>
+<li>Phase 2 Encryption: AES-256</li>
+<li>Phase 2 Integrity: SHA2-256</li>
+</ul>
+<p><strong>If mismatched:</strong> Update to match standard (see
+peer-guides), save, and retry.</p></li>
+<li><p><strong>Check MTU on tunnel path:</strong></p>
+<div class="sourceCode" id="cb37"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># From peer to AWS endpoint:</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> <span class="at">-c</span> 1 <span class="at">-M</span> do <span class="at">-s</span> 1400 52.14.123.45</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="co"># If fails: path MTU &lt; 1472; adjust device to 1350 or use fragmentation</span></span></code></pre></div></li>
+<li><p><strong>Last resort: Full trace:</strong></p>
+<div class="sourceCode" id="cb38"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># On peer device, enable IPSec debug:</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="co"># [Device-specific: see troubleshooting in peer guide]</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Attempt tunnel initiation</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Capture packets with tcpdump</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Review IKE packets; identify where negotiation breaks</span></span></code></pre></div></li>
+</ol>
+<p><strong>Resolution:</strong> - [ ] PSK matches - [ ] Encryption
+settings standard - [ ] Network reachability confirmed - [ ] Device
+config committed - [ ] Retry tunnel initiation - [ ] Both tunnels show
+UP after 10 seconds</p>
+<hr />
+<h3 id="playbook-2-bgp-routes-not-appearing">Playbook 2: BGP Routes Not
+Appearing</h3>
+<p><strong>Symptoms:</strong> Tunnels UP but TGW route table shows no
+peer CIDRs; peer device shows no learned routes</p>
+<p><strong>Investigation:</strong></p>
+<ol type="1">
+<li><p><strong>Verify tunnel is actually UP:</strong></p>
+<div class="sourceCode" id="cb39"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> ec2 describe-vpn-connections <span class="dt">\</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--filters</span> <span class="st">&quot;Name=tag:Name,Values=</span><span class="va">$PEER_NAME</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--region</span> us-east-2 <span class="dt">\</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--query</span> <span class="st">&#39;VpnConnections[0].VgwTelemetry[*].Status.TunnelStatus&#39;</span> <span class="dt">\</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--output</span> text</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Must show: UP UP (not DOWN)</span></span></code></pre></div>
+<p><strong>If DOWN:</strong> Resolve tunnel issue first (Playbook
+1)</p></li>
+<li><p><strong>Check BGP neighbor configuration:</strong></p>
+<pre><code>Peer confirms: BGP neighbor IPs = 169.254.X.1 and 169.254.Y.1 (inside tunnel IPs)
+Peer confirms: BGP neighbor AS = 64512
+Peer confirms: Local AS = [peer&#39;s assigned ASN]</code></pre>
+<p><strong>If mismatched:</strong> Correct BGP config and save</p></li>
+<li><p><strong>Check BGP neighbor state on peer device:</strong></p>
+<pre><code>Device-specific command (see Phase 4):
+- Checkpoint: netstat -rn | grep 169.254
+- Fortigate: get router bgp summary
+- Palo Alto: show routing bgp peers
+- Cisco: show bgp summary</code></pre>
+<p><strong>If shows “Down” or “Idle”:</strong> BGP not established
+despite tunnel UP</p></li>
+<li><p><strong>Verify BGP hold timers:</strong></p>
+<pre><code>Peer confirms: Hold time ≥ 180 seconds
+Peer confirms: Keep-alive ≤ 60 seconds</code></pre>
+<p><strong>If not:</strong> Update BGP timers (may speed
+convergence)</p></li>
+<li><p><strong>Check route advertisement:</strong></p>
+<pre><code>Peer confirms: Local routes (172.16.0.0/16, etc.) are advertised
+Affinity confirms: TGW expects to receive these CIDRs</code></pre>
+<p><strong>If not advertised:</strong> Enable route redistribution in
+BGP (device-specific)</p></li>
+<li><p><strong>Affinity-side: Check TGW route table
+acceptance:</strong></p>
+<div class="sourceCode" id="cb44"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> ec2 describe-transit-gateway-routes <span class="dt">\</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--transit-gateway-route-table-id</span> tgw-rtb-079e9cb450e5355e6 <span class="dt">\</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--region</span> us-east-2 <span class="dt">\</span></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--query</span> <span class="st">&#39;Routes[*].[DestinationCidrBlock,State]&#39;</span> <span class="dt">\</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--output</span> table <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-i</span> <span class="st">&quot;172.16\|blackhole&quot;</span></span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Routes may show as &quot;blackholed&quot; initially if VPN not yet accepting</span></span></code></pre></div></li>
+</ol>
+<p><strong>Resolution:</strong> - [ ] Tunnels are UP (both) - [ ] BGP
+neighbors configured with correct IPs/ASNs - [ ] Peer confirms local
+routes advertised - [ ] BGP neighbors show as Established - [ ] Routes
+appear in Affinity TGW table as “active” - [ ] Wait up to 5 minutes for
+BGP convergence</p>
+<hr />
+<h3 id="playbook-3-traffic-not-passing">Playbook 3: Traffic Not
+Passing</h3>
+<p><strong>Symptoms:</strong> Tunnels UP, routes learned, but ping fails
+or traffic is dropped</p>
+<p><strong>Investigation:</strong></p>
+<ol type="1">
+<li><p><strong>Verify routing on Affinity side:</strong></p>
+<div class="sourceCode" id="cb45"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="co"># EKS pod attempts to reach peer network:</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> exec <span class="at">-it</span> <span class="op">&lt;</span>pod<span class="op">&gt;</span> -- ip route show default</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Should show: default via [VPC gateway IP] dev eth0</span></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Check TGW route table includes peer CIDR:</span></span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> ec2 describe-transit-gateway-routes <span class="dt">\</span></span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--transit-gateway-route-table-id</span> tgw-rtb-079e9cb450e5355e6 <span class="dt">\</span></span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">--region</span> us-east-2 <span class="dt">\</span></span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">--query</span> <span class="st">&quot;Routes[?contains(DestinationCidrBlock, &#39;172.16&#39;)]&quot;</span> <span class="dt">\</span></span>
+<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">--output</span> table</span></code></pre></div>
+<p><strong>If route missing:</strong> BGP has not yet propagated; wait
+and retry</p></li>
+<li><p><strong>Verify routing on peer side:</strong></p>
+<div class="sourceCode" id="cb46"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">netstat</span> <span class="at">-rn</span> <span class="kw">|</span> <span class="fu">grep</span> 10.0</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Should show: 10.0.0.0/16 via [tunnel inside IP] dev [tunnel device]</span></span></code></pre></div>
+<p><strong>If missing:</strong> BGP has not yet propagated; wait and
+retry</p></li>
+<li><p><strong>Check security policies/ACLs:</strong></p>
+<p><strong>Checkpoint:</strong></p>
+<pre><code>Verify: Access rule exists allowing source 10.0.0.0/16 to destination 172.16.0.0/16
+Verify: Rule includes VPN community for tunnel
+Verify: Rule enabled (not disabled)</code></pre>
+<p><strong>Fortigate:</strong></p>
+<pre><code>Verify: Security policy exists for VPN traffic
+Verify: Policy allows bidirectional traffic
+Verify: Policy enabled (not grayed out)</code></pre>
+<p><strong>Palo Alto:</strong></p>
+<pre><code>Verify: Security policy allows 10.0.0.0/16 → 172.16.0.0/16
+Verify: Policy includes tunnel zones
+Verify: Application/service allows traffic</code></pre>
+<p><strong>Cisco:</strong></p>
+<pre><code>Verify: Crypto ACL allows interesting traffic
+Verify: Access-list permits source → destination
+Verify: Crypto map references ACL</code></pre></li>
+<li><p><strong>Check NAT:</strong></p>
+<pre><code>Peer confirms: No NAT masking the source IP
+Peer confirms: NAT exemption configured (if applicable)
+Affinity confirms: Traffic arriving with correct source IP (not NATed)</code></pre>
+<p><strong>If NATed:</strong> Disable NAT for tunnel traffic or peer
+will not recognize return traffic</p></li>
+<li><p><strong>Test with tcpdump (if available):</strong></p>
+<div class="sourceCode" id="cb52"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="co"># On Affinity EKS pod:</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="ex">tcpdump</span> <span class="at">-i</span> any <span class="st">&quot;dst 172.16.1.100&quot;</span></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a><span class="co"># [Attempt ping]</span></span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Should show ICMP echo-request going out</span></span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a><span class="co"># On peer network:</span></span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a><span class="ex">tcpdump</span> <span class="at">-i</span> eth0 <span class="st">&quot;src 10.0.1.0/24&quot;</span></span>
+<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Should show ICMP echo-request arriving</span></span></code></pre></div></li>
+<li><p><strong>Check MTU (may cause silent failures):</strong></p>
+<div class="sourceCode" id="cb53"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Packet size test (from Affinity):</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> <span class="at">-c</span> 3 <span class="at">-M</span> do <span class="at">-s</span> 1400 172.16.1.100</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a><span class="co"># If fails: MTU issue</span></span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ping</span> <span class="at">-c</span> 3 <span class="at">-M</span> do <span class="at">-s</span> 1350 172.16.1.100</span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a><span class="co"># If succeeds: Configure path MTU to 1350</span></span></code></pre></div></li>
+</ol>
+<p><strong>Resolution:</strong> - [ ] Routes present in both TGW and
+peer routing tables - [ ] Security policies/ACLs allow traffic
+bidirectionally - [ ] NAT disabled for tunnel traffic - [ ] MTU
+sufficient (≥1350 bytes) - [ ] Ping from Affinity EKS pod succeeds with
+0% loss - [ ] Peer confirms traffic arriving</p>
+<hr />
+<h2 id="failure-decision-tree">Failure Decision Tree</h2>
+<pre><code>START
+├─ Are both tunnels UP?
+│  ├─ NO  → Playbook 1: Tunnel Stays DOWN
+│  └─ YES ↓
+│
+├─ Are BGP routes in TGW table?
+│  ├─ NO  → Playbook 2: BGP Routes Not Appearing
+│  └─ YES ↓
+│
+├─ Does ping from Affinity succeed?
+│  ├─ NO  → Playbook 3: Traffic Not Passing
+│  └─ YES ↓
+│
+├─ Is MTU ≥1350 bytes?
+│  ├─ NO  → Lower MTU on device or path
+│  └─ YES ↓
+│
+├─ Failover test: Does one tunnel DOWN cause total loss?
+│  ├─ YES → Investigate BGP failover, DPD timeout
+│  └─ NO  → All tests passing; proceed to sign-off
+│
+DONE: All gates passed, proceed to Phase 7 sign-off</code></pre>
+<hr />
+<h2 id="key-technical-insights">Key Technical Insights</h2>
+<h3 id="aws-vpn-is-always-responder-only">1. AWS VPN is Always
+Responder-Only</h3>
+<p><strong>Why:</strong> AWS Transit Gateway VPN cannot initiate IKE. It
+only responds to incoming IKE_SA_INIT packets.</p>
+<p><strong>Implication:</strong> Peer device MUST initiate tunnel. This
+is not configurable. If peer forgets to enable VPN, tunnels will never
+come UP.</p>
+<p><strong>How to confirm peer initiated:</strong> Tunnel status changes
+from DOWN to UP within 5-30 seconds of peer starting VPN.</p>
+<hr />
+<h3 id="no-bgp-state-observable-from-aws-api">2. No BGP State Observable
+from AWS API</h3>
+<p><strong>Why:</strong> AWS <code>describe-vpn-connections</code> does
+not expose BGP neighbor state or established/down status.</p>
+<p><strong>Workaround:</strong> AWS returns StatusMessage like “4 BGP
+ROUTES” which indicates BGP is working (routes are being received). But
+we cannot see neighbor state from AWS side.</p>
+<p><strong>Implication:</strong> Always verify BGP from peer device CLI
+to confirm actual neighbor establishment.</p>
+<hr />
+<h3 id="dpd-timeout-varies-by-device">3. DPD Timeout Varies by
+Device</h3>
+<p>Device-specific DPD timeout (how long before detecting a dead
+peer):</p>
+<table>
+<thead>
+<tr>
+<th>Device</th>
+<th>DPD Action</th>
+<th>Default Timeout</th>
+<th>Failover Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Checkpoint</td>
+<td>restart</td>
+<td>30s</td>
+<td>30s + BGP (~60s total)</td>
+</tr>
+<tr>
+<td>Fortigate</td>
+<td>restart</td>
+<td>10s</td>
+<td>10s + BGP (~40s total)</td>
+</tr>
+<tr>
+<td>Palo Alto</td>
+<td>clear</td>
+<td>10s</td>
+<td>10s + BGP (~40s total)</td>
+</tr>
+<tr>
+<td>Cisco</td>
+<td>restart</td>
+<td>10s</td>
+<td>10s + BGP (~40s total)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Implication:</strong> Checkpoint has slower failover (up to
+90s). Fortigate/Palo/Cisco faster (~40s).</p>
+<hr />
+<h3 id="mtu-is-a-known-ipsec-issue">4. MTU is a Known IPSec Issue</h3>
+<p>IPSec adds ~50-70 bytes of overhead: - IKEv2 header: ~50 bytes - ESP
+header + padding + ICV: ~20-40 bytes</p>
+<p>Standard Ethernet MTU = 1500 bytes. With IPSec: - Recommended minimum
+inside MTU = 1350-1370 bytes - AWS recommends maximum payload = 1394
+bytes</p>
+<p><strong>How to test:</strong> Use <code>ping -M do -s 1350</code> to
+verify 1350-byte payload succeeds.</p>
+<hr />
+<h3 id="both-tunnels-are-active-active">5. Both Tunnels are
+Active-Active</h3>
+<p>AWS VPN tunnels are NOT active-standby (primary/secondary). Both
+tunnels are active and carry traffic based on routing (often equal-cost
+multipath if both routes advertised).</p>
+<p><strong>Implication:</strong> - If one tunnel fails, remaining tunnel
+carries all traffic (no switchover needed) - BGP reconvergence
+determines which tunnel is preferred - Both tunnels contribute to
+redundancy; losing one does NOT mean service is degraded</p>
+<hr />
+<h3 id="bgp-convergence-time">6. BGP Convergence Time</h3>
+<p>After tunnel goes DOWN, BGP takes time to converge:</p>
+<ol type="1">
+<li><strong>DPD detects neighbor down:</strong> 10-30 seconds
+(device-dependent)</li>
+<li><strong>BGP neighbor state change:</strong> ~3 seconds after
+DPD</li>
+<li><strong>Route withdrawal and re-learning:</strong> ~5-10
+seconds</li>
+<li><strong>Total failover time:</strong> 15-40 seconds
+(Fortigate/Palo/Cisco) or 30-90 seconds (Checkpoint)</li>
+</ol>
+<p><strong>For SLAs:</strong> Plan for up to 120 seconds of potential
+disruption during single-tunnel failure.</p>
+<hr />
+<h2 id="version-history">Version History</h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0</td>
+<td>2026-03-04</td>
+<td>Initial E2E testing protocol</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="document-information">Document Information</h2>
+<p><strong>Audience:</strong> Affinity DevOps + Peer Organization DevOps
+<strong>Scope:</strong> AWS Transit Gateway VPN connections
+<strong>Devices:</strong> Checkpoint R80.10+, Fortigate, Palo Alto,
+Cisco ASA <strong>Status:</strong> ✅ Production Ready <strong>Last
+Reviewed:</strong> March 4, 2026</p>
+<p><strong>Questions?</strong> Contact support@affinity.com or
+escalation team (24/7)</p>
+</body>
+</html>

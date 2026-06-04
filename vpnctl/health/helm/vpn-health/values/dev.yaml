@@ -1,0 +1,36 @@
+replicaCount: 1
+
+image:
+  tag: latest
+
+aws:
+  region: us-east-2
+  irsaRoleArn: arn:aws:iam::ACCOUNT_ID:role/vpn-health-irsa-dev
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: vpn.assurehub.io
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - vpn.assurehub.io
+      secretName: vpn-health-tls
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

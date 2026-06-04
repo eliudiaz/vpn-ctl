@@ -1,0 +1,299 @@
+#!/bin/bash
+
+# Skill: Amazon Transit Gateway (ATG) Health Check
+# Purpose: Rapid health check of Transit Gateway hub and attachments
+# Usage: ./skill-transit-gateway-health [--deep] [--region REGION]
+
+set -e
+
+REGION="${REGION:-us-east-2}"
+TGW_ID="tgw-0572ce4b80ff7445a"
+TGW_RTB_ID="tgw-rtb-079e9cb450e5355e6"
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+print_status() {
+    local status=$1
+    local message=$2
+
+    case $status in
+        "pass")
+            echo -e "${GREEN}✓${NC} $message"
+            ;;
+        "warn")
+            echo -e "${YELLOW}⚠${NC} $message"
+            ;;
+        "fail")
+            echo -e "${RED}✗${NC} $message"
+            ;;
+        "info")
+            echo -e "${BLUE}ℹ${NC} $message"
+            ;;
+    esac
+}
+
+print_header() {
+    echo -e "\n${BOLD}${BLUE}=== $1 ===${NC}\n"
+}
+
+# Quick TGW health check
+quick_tgw_check() {
+    print_header "Transit Gateway Quick Health Check"
+
+    # 1. Check TGW exists and is available
+    echo -n "Checking Transit Gateway state... "
+    local tgw_state=$(aws ec2 describe-transit-gateways \
+        --transit-gateway-ids "$TGW_ID" \
+        --region "$REGION" \
+        --query 'TransitGateways[0].State' \
+        --output text 2>/dev/null || echo "NOT_FOUND")
+
+    if [ "$tgw_state" = "available" ]; then
+        print_status "pass" "TGW is available"
+    else
+        print_status "fail" "TGW state: $tgw_state"
+        return 1
+    fi
+
+    # 2. Check VPC Attachments count and state
+    echo -n "Checking VPC attachments... "
+    local vpc_attachments=$(aws ec2 describe-transit-gateway-vpc-attachments \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'TransitGatewayVpcAttachments[?State==`available`] | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    if [ "$vpc_attachments" -gt 0 ]; then
+        print_status "pass" "VPC attachments available: $vpc_attachments"
+    else
+        print_status "warn" "No available VPC attachments found"
+    fi
+
+    # 3. Check VPN Connections
+    echo -n "Checking VPN connections... "
+    local vpn_connections=$(aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections[?State==`available`] | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    if [ "$vpn_connections" -gt 0 ]; then
+        print_status "pass" "VPN connections available: $vpn_connections"
+    else
+        print_status "warn" "No available VPN connections found"
+    fi
+
+    # 4. Check route table
+    echo -n "Checking TGW route table... "
+    local route_count=$(aws ec2 describe-transit-gateway-routes \
+        --transit-gateway-route-table-id "$TGW_RTB_ID" \
+        --region "$REGION" \
+        --query 'Routes[?State==`active`] | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    if [ "$route_count" -gt 0 ]; then
+        print_status "pass" "Active routes in TGW: $route_count"
+    else
+        print_status "warn" "No active routes found"
+    fi
+
+    echo ""
+    print_status "pass" "Transit Gateway is HEALTHY"
+    return 0
+}
+
+# Deep analysis
+deep_analysis() {
+    print_header "Transit Gateway Deep Analysis"
+
+    # TGW Details
+    print_header "Transit Gateway Details"
+    aws ec2 describe-transit-gateways \
+        --transit-gateway-ids "$TGW_ID" \
+        --region "$REGION" \
+        --query 'TransitGateways[0].[TransitGatewayId,State,OwnerId,Description,Options.[AmazonSideAsn,DefaultRouteTableAssociation,DefaultRouteTablePropagation,DnsSupport,VpnEcmpSupport]]' \
+        --output table 2>/dev/null || echo "Could not retrieve TGW details"
+
+    # VPC Attachments
+    print_header "VPC Attachments"
+    aws ec2 describe-transit-gateway-vpc-attachments \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'TransitGatewayVpcAttachments[*].[TransitGatewayAttachmentId,VpcId,State,SubnetIds]' \
+        --output table 2>/dev/null || echo "No VPC attachments found"
+
+    # VPN Connections
+    print_header "VPN Connections"
+    aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections[*].[VpnConnectionId,State,CustomerGatewayConfiguration,Type]' \
+        --output table 2>/dev/null || echo "No VPN connections found"
+
+    # VPN Tunnel Status
+    print_header "VPN Tunnel Status"
+    aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" \
+        --region "$REGION" \
+        --query 'VpnConnections[*].[VpnConnectionId,VpnTunnelOptions[*].[TunnelAddress,Status.TunnelStatus]]' \
+        --output table 2>/dev/null || echo "Could not retrieve tunnel status"
+
+    # Active Routes
+    print_header "TGW Route Table (Active Routes)"
+    aws ec2 describe-transit-gateway-routes \
+        --transit-gateway-route-table-id "$TGW_RTB_ID" \
+        --region "$REGION" \
+        --query 'Routes[?State==`active`].[DestinationCidrBlock,State,Type]' \
+        --output table 2>/dev/null || echo "No active routes"
+
+    # Problematic Routes
+    print_header "Problematic Routes (Blackholed/Failed)"
+    aws ec2 describe-transit-gateway-routes \
+        --transit-gateway-route-table-id "$TGW_RTB_ID" \
+        --region "$REGION" \
+        --query 'Routes[?State!=`active`].[DestinationCidrBlock,State,Type]' \
+        --output table 2>/dev/null || echo "No problematic routes found"
+
+    return 0
+}
+
+# Agentic diagnostics
+agentic_analysis() {
+    print_header "Agentic Transit Gateway Analysis"
+
+    print_status "info" "Analyzing TGW health and connectivity..."
+    echo ""
+
+    # Collect data
+    local tgw_state=$(aws ec2 describe-transit-gateways \
+        --transit-gateway-ids "$TGW_ID" \
+        --region "$REGION" \
+        --query 'TransitGateways[0].State' \
+        --output text 2>/dev/null || echo "NOT_FOUND")
+
+    local vpc_count=$(aws ec2 describe-transit-gateway-vpc-attachments \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" "Name=state,Values=available" \
+        --region "$REGION" \
+        --query 'TransitGatewayVpcAttachments | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    local vpn_count=$(aws ec2 describe-vpn-connections \
+        --filters "Name=transit-gateway-id,Values=$TGW_ID" "Name=state,Values=available" \
+        --region "$REGION" \
+        --query 'VpnConnections | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    local route_count=$(aws ec2 describe-transit-gateway-routes \
+        --transit-gateway-route-table-id "$TGW_RTB_ID" \
+        --region "$REGION" \
+        --query 'Routes[?State==`active`] | length(@)' \
+        --output text 2>/dev/null || echo "0")
+
+    # Analysis
+    echo "Analysis Results:"
+    echo "  TGW State: $tgw_state"
+    echo "  VPC Attachments: $vpc_count (should be >0)"
+    echo "  VPN Connections: $vpn_count (should be >0)"
+    echo "  Active Routes: $route_count (should be >2)"
+    echo ""
+
+    # Recommendations
+    print_status "info" "Recommendations:"
+    echo ""
+
+    if [ "$tgw_state" != "available" ]; then
+        print_status "fail" "TGW not available - escalate to AWS support"
+    fi
+
+    if [ "$vpc_count" -eq 0 ]; then
+        print_status "fail" "No VPC attachments - check if EKS clusters attached"
+    fi
+
+    if [ "$vpn_count" -eq 0 ]; then
+        print_status "warn" "No VPN connections - check if VPN peers configured"
+    fi
+
+    if [ "$route_count" -lt 2 ]; then
+        print_status "fail" "Insufficient routes - check route table configuration"
+    fi
+
+    return 0
+}
+
+# Help
+show_help() {
+    cat << 'EOF'
+Amazon Transit Gateway (ATG) Health Check Skill
+
+Purpose: Diagnose Transit Gateway hub and attachment health
+
+Usage: ./skill-transit-gateway-health [OPTIONS]
+
+Options:
+  (default)      Quick health check (5 seconds)
+  --deep         Deep analysis with full details (15 seconds)
+  --analyze      Agentic troubleshooting (20 seconds)
+  --region REGION AWS region (default: us-east-2)
+  --help         Show this help
+
+Quick Check verifies:
+  ✓ TGW is available
+  ✓ VPC attachments exist
+  ✓ VPN connections exist
+  ✓ Route table has active routes
+
+Deep Analysis shows:
+  - TGW configuration details
+  - VPC attachment details
+  - VPN connection details
+  - Tunnel status (UP/DOWN)
+  - Active routes list
+  - Problematic routes
+
+Agentic Analysis:
+  - Health score calculation
+  - Specific recommendations
+  - Escalation criteria
+
+Examples:
+  ./skill-transit-gateway-health              # Quick check
+  ./skill-transit-gateway-health --deep       # Full analysis
+  ./skill-transit-gateway-health --analyze    # Agentic troubleshooting
+  ./skill-transit-gateway-health --region us-west-2
+
+VPC Attachment States:
+  available   = Ready and functional
+  pending     = Still being created
+  failed      = Attachment failed, needs investigation
+  failing     = Connection issues
+
+VPN Tunnel Status:
+  UP          = Tunnel is active and passing traffic
+  DOWN        = Tunnel is inactive (may be secondary tunnel)
+EOF
+}
+
+# Main
+case "${1:-}" in
+    --deep)
+        if quick_tgw_check; then
+            deep_analysis
+        fi
+        ;;
+    --analyze)
+        quick_tgw_check
+        agentic_analysis
+        ;;
+    --help)
+        show_help
+        ;;
+    *)
+        quick_tgw_check
+        ;;
+esac

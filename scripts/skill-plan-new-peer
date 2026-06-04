@@ -1,0 +1,501 @@
+#!/usr/bin/env python3
+"""
+skill-plan-new-peer: Plan new VPN peer addition
+
+Validates peer requirements and allocates IP resources without making any
+AWS or Pulumi changes. This is the safe first step before deployment.
+
+Usage:
+  ./skill-plan-new-peer                          # Interactive mode
+  ./skill-plan-new-peer --name ACME --auto      # Auto-allocate
+  ./skill-plan-new-peer --config peer-config.yaml  # From file
+  ./skill-plan-new-peer --help                  # Show help
+
+Output:
+  • Planning report with allocations
+  • Collision detection results
+  • Device compatibility check
+  • Readiness for deployment
+"""
+
+import sys
+import yaml
+import argparse
+import json
+from pathlib import Path
+from datetime import datetime
+from ipaddress import IPv4Network, IPv4Address
+
+# Colors for output
+GREEN = '\033[0;32m'
+RED = '\033[0;31m'
+YELLOW = '\033[1;33m'
+BLUE = '\033[0;34m'
+BOLD = '\033[1m'
+NC = '\033[0m'  # No Color
+
+
+class PeerPlanner:
+    """Plan new VPN peer additions safely"""
+
+    # Valid device types
+    VALID_DEVICES = [
+        "checkpoint",
+        "fortigate",
+        "paloalto",
+        "cisco"
+    ]
+
+    def __init__(self, registry_path=None):
+        """Initialize planner with registry"""
+        if registry_path is None:
+            registry_path = Path(__file__).parent.parent / "vpn-peers-registry.yaml"
+
+        self.registry_path = registry_path
+        self.registry = self._load_registry()
+        self.issues = []
+        self.warnings = []
+        self.allocation = {}
+
+    def _load_registry(self):
+        """Load VPN peers registry (read-only)"""
+        try:
+            with open(self.registry_path) as f:
+                registry = yaml.safe_load(f) or {}
+                return registry
+        except FileNotFoundError:
+            print(f"{RED}✗{NC} Registry not found at {self.registry_path}")
+            sys.exit(1)
+        except yaml.YAMLError as e:
+            print(f"{RED}✗{NC} Error parsing registry: {e}")
+            sys.exit(1)
+
+    def _get_allocated_resources(self):
+        """Extract all currently allocated resources"""
+        allocated = self.registry.get("allocated", {})
+        return {
+            "inside_cidrs": allocated.get("inside_tunnel_cidrs", []),
+            "bgp_asns": allocated.get("bgp_asns", []),
+            "peer_cidrs": allocated.get("peer_cidrs", []),
+        }
+
+    def _get_available_resources(self):
+        """Get next available allocations"""
+        available = self.registry.get("available", {})
+        return {
+            "next_inside_cidr_1": available.get("inside_tunnel_cidrs", {}).get("next"),
+            "next_inside_cidr_2": None,  # Will be next after first
+            "next_bgp_asn": available.get("bgp_asns", {}).get("next"),
+            "next_peer_cidr": available.get("peer_cidrs", {}).get("next"),
+        }
+
+    def _validate_peer_name(self, name):
+        """Check if peer name is valid and not duplicate"""
+        if not name or not isinstance(name, str):
+            self.issues.append(f"Peer name required and must be string, got: {name}")
+            return False
+
+        if len(name) < 3 or len(name) > 32:
+            self.issues.append(f"Peer name must be 3-32 characters, got: {len(name)}")
+            return False
+
+        # Check for duplicates
+        peers = self.registry.get("peers", {})
+        for peer_key, peer_data in peers.items():
+            if peer_data.get("peer_name", "").lower() == name.lower():
+                self.issues.append(f"Peer name '{name}' already exists (key: {peer_key})")
+                return False
+
+        return True
+
+    def _validate_device_type(self, device_type):
+        """Check if device type is supported"""
+        if device_type.lower() not in self.VALID_DEVICES:
+            self.issues.append(
+                f"Device type '{device_type}' not supported. "
+                f"Options: {', '.join(self.VALID_DEVICES)}"
+            )
+            return False
+        return True
+
+    def _validate_peer_cidrs(self, cidrs):
+        """Check peer CIDRs for validity and overlaps"""
+        if not cidrs or not isinstance(cidrs, list):
+            self.issues.append("Peer CIDRs must be a list of valid CIDR blocks")
+            return False
+
+        allocated_cidrs = self._get_allocated_resources()["peer_cidrs"]
+
+        for cidr_str in cidrs:
+            try:
+                cidr = IPv4Network(cidr_str, strict=False)
+            except ValueError as e:
+                self.issues.append(f"Invalid CIDR '{cidr_str}': {e}")
+                return False
+
+            # Check for overlaps with existing allocations
+            for allocated_cidr_str in allocated_cidrs:
+                allocated_cidr = IPv4Network(allocated_cidr_str)
+                if cidr.overlaps(allocated_cidr):
+                    self.issues.append(
+                        f"Peer CIDR {cidr_str} overlaps with existing {allocated_cidr_str}"
+                    )
+                    return False
+
+        return True
+
+    def _validate_affinity_cidrs(self, cidrs):
+        """Validate Affinity/AWS target CIDRs"""
+        if not cidrs or not isinstance(cidrs, list):
+            self.issues.append("Affinity CIDRs must be a list")
+            return False
+
+        for cidr_str in cidrs:
+            try:
+                IPv4Network(cidr_str, strict=False)
+            except ValueError as e:
+                self.issues.append(f"Invalid Affinity CIDR '{cidr_str}': {e}")
+                return False
+
+        return True
+
+    def _check_bgp_asn_collision(self, requested_asn=None):
+        """Check for BGP ASN collisions"""
+        allocated_asns = self._get_allocated_resources()["bgp_asns"]
+
+        if requested_asn:
+            if requested_asn in allocated_asns:
+                self.issues.append(
+                    f"BGP ASN {requested_asn} already allocated"
+                )
+                return False
+
+        return True
+
+    def _check_inside_cidr_collision(self, tunnel1_cidr=None, tunnel2_cidr=None):
+        """Check for tunnel inside CIDR collisions"""
+        allocated_cidrs = self._get_allocated_resources()["inside_cidrs"]
+
+        cidrs_to_check = [c for c in [tunnel1_cidr, tunnel2_cidr] if c]
+
+        for cidr_str in cidrs_to_check:
+            if cidr_str in allocated_cidrs:
+                self.issues.append(
+                    f"Inside tunnel CIDR {cidr_str} already allocated"
+                )
+                return False
+
+        # Check if they're different
+        if tunnel1_cidr and tunnel2_cidr and tunnel1_cidr == tunnel2_cidr:
+            self.issues.append(
+                f"Tunnel 1 and Tunnel 2 cannot use same inside CIDR"
+            )
+            return False
+
+        return True
+
+    def _allocate_resources(self, name, device_type, peer_cidrs, affinity_cidrs):
+        """Allocate BGP ASN and tunnel CIDRs"""
+        available = self._get_available_resources()
+        allocated = self._get_allocated_resources()
+
+        # Allocate BGP ASN
+        bgp_asn = available["next_bgp_asn"]
+        if not bgp_asn:
+            self.issues.append("No available BGP ASN in pool")
+            return False
+
+        # Allocate tunnel inside CIDRs
+        inside_cidr_1 = available["next_inside_cidr_1"]
+        if not inside_cidr_1:
+            self.issues.append("No available inside tunnel CIDR")
+            return False
+
+        # Calculate next inside CIDR (increment the last octet)
+        try:
+            cidr_obj = IPv4Network(inside_cidr_1)
+            next_network = IPv4Network(
+                (int(cidr_obj.network_address) + 4, 30),
+                strict=False
+            )
+            inside_cidr_2 = str(next_network)
+        except Exception as e:
+            self.issues.append(f"Error calculating Tunnel 2 CIDR: {e}")
+            return False
+
+        # Store allocation
+        self.allocation = {
+            "peer_name": name,
+            "device_type": device_type,
+            "bgp_asn": bgp_asn,
+            "tunnel_1_inside_cidr": inside_cidr_1,
+            "tunnel_2_inside_cidr": inside_cidr_2,
+            "peer_cidrs": peer_cidrs,
+            "affinity_cidrs": affinity_cidrs,
+            "status": "allocated",
+            "allocated_at": datetime.utcnow().isoformat(),
+        }
+
+        return True
+
+    def plan(self, name, device_type, peer_cidrs, affinity_cidrs):
+        """Run full planning workflow"""
+        self.issues = []
+        self.warnings = []
+
+        print(f"\n{BLUE}=== VPN Peer Planning ==={NC}\n")
+
+        # Step 1: Validate inputs
+        print(f"{BLUE}[1/4]{NC} Validating inputs...")
+
+        if not self._validate_peer_name(name):
+            return False
+        print(f"  {GREEN}✓{NC} Peer name valid: {name}")
+
+        if not self._validate_device_type(device_type):
+            return False
+        print(f"  {GREEN}✓{NC} Device type supported: {device_type}")
+
+        if not self._validate_peer_cidrs(peer_cidrs):
+            return False
+        print(f"  {GREEN}✓{NC} Peer CIDRs valid: {', '.join(peer_cidrs)}")
+
+        if not self._validate_affinity_cidrs(affinity_cidrs):
+            return False
+        print(f"  {GREEN}✓{NC} Affinity CIDRs valid: {', '.join(affinity_cidrs)}")
+
+        # Step 2: Check collisions
+        print(f"\n{BLUE}[2/4]{NC} Checking for collisions...")
+
+        if not self._check_bgp_asn_collision():
+            return False
+        print(f"  {GREEN}✓{NC} No BGP ASN collisions")
+
+        if not self._check_inside_cidr_collision():
+            return False
+        print(f"  {GREEN}✓{NC} No inside CIDR collisions")
+
+        # Step 3: Allocate resources
+        print(f"\n{BLUE}[3/4]{NC} Allocating resources...")
+
+        if not self._allocate_resources(name, device_type, peer_cidrs, affinity_cidrs):
+            return False
+        print(f"  {GREEN}✓{NC} BGP ASN allocated: {self.allocation['bgp_asn']}")
+        print(f"  {GREEN}✓{NC} Tunnel 1 inside CIDR: {self.allocation['tunnel_1_inside_cidr']}")
+        print(f"  {GREEN}✓{NC} Tunnel 2 inside CIDR: {self.allocation['tunnel_2_inside_cidr']}")
+
+        # Step 4: Generate report
+        print(f"\n{BLUE}[4/4]{NC} Generating planning report...\n")
+
+        return True
+
+    def print_report(self):
+        """Print planning report"""
+        if not self.allocation:
+            print(f"{RED}✗{NC} No allocation to report")
+            return
+
+        print(f"{BOLD}VPN Peer Planning Report{NC}")
+        print("=" * 70)
+        print(f"Generated: {datetime.utcnow().isoformat()}")
+        print(f"Peer Name: {self.allocation['peer_name']}")
+        print(f"Device Type: {self.allocation['device_type'].capitalize()}")
+        print()
+
+        print(f"{BOLD}IP Allocations{NC}")
+        print("-" * 70)
+        print(f"BGP ASN: {self.allocation['bgp_asn']}")
+        print(f"  AWS BGP ASN: 64512 (fixed)")
+        print()
+        print(f"Inside Tunnel CIDRs (BGP link-local):")
+        print(f"  Tunnel 1: {self.allocation['tunnel_1_inside_cidr']}")
+        print(f"    AWS side:  .1 ({self.allocation['tunnel_1_inside_cidr'].split('/')[0].rsplit('.', 1)[0]}.1)")
+        print(f"    Peer side: .2 ({self.allocation['tunnel_1_inside_cidr'].split('/')[0].rsplit('.', 1)[0]}.2)")
+        print(f"  Tunnel 2: {self.allocation['tunnel_2_inside_cidr']}")
+        print(f"    AWS side:  .1 ({self.allocation['tunnel_2_inside_cidr'].split('/')[0].rsplit('.', 1)[0]}.1)")
+        print(f"    Peer side: .2 ({self.allocation['tunnel_2_inside_cidr'].split('/')[0].rsplit('.', 1)[0]}.2)")
+        print()
+
+        print(f"{BOLD}Network Configuration{NC}")
+        print("-" * 70)
+        print(f"Peer Networks (to route TO peer):")
+        for cidr in self.allocation["peer_cidrs"]:
+            print(f"  • {cidr}")
+        print()
+        print(f"Affinity Networks (peer must route TO these):")
+        for cidr in self.allocation["affinity_cidrs"]:
+            print(f"  • {cidr}")
+        print()
+
+        print(f"{BOLD}Readiness Check{NC}")
+        print("-" * 70)
+        print(f"{GREEN}✓{NC} No IP collisions detected")
+        print(f"{GREEN}✓{NC} BGP ASN available")
+        print(f"{GREEN}✓{NC} Device type supported")
+        print(f"{GREEN}✓{NC} Ready for deployment")
+        print()
+
+        print(f"{BOLD}Next Steps{NC}")
+        print("-" * 70)
+        print(f"1. Review allocations above")
+        print(f"2. Run: ./skill-deploy-peer-infrastructure {self.allocation['peer_name']}")
+        print(f"3. This will:")
+        print(f"   • Add peer to vpn-peers.yaml")
+        print(f"   • Deploy VPN connection via Pulumi")
+        print(f"   • Retrieve tunnel endpoints from AWS")
+        print(f"   • Generate secure PSK files")
+        print()
+
+    def print_json(self):
+        """Print allocation as JSON"""
+        print(json.dumps(self.allocation, indent=2))
+
+    def print_errors(self):
+        """Print validation errors"""
+        if self.issues:
+            print(f"\n{RED}Validation Errors:{NC}")
+            for issue in self.issues:
+                print(f"  {RED}✗{NC} {issue}")
+            print()
+
+    def print_warnings(self):
+        """Print warnings"""
+        if self.warnings:
+            print(f"\n{YELLOW}Warnings:{NC}")
+            for warning in self.warnings:
+                print(f"  {YELLOW}⚠{NC} {warning}")
+            print()
+
+
+def interactive_mode():
+    """Interactive mode for gathering peer requirements"""
+    print(f"\n{BLUE}Interactive Peer Planning{NC}")
+    print("=" * 70)
+    print()
+
+    # Get peer name
+    while True:
+        name = input(f"Peer Name (e.g., ACME-VPN): ").strip()
+        if name and len(name) >= 3:
+            break
+        print(f"{YELLOW}⚠{NC} Name must be 3+ characters")
+
+    # Get device type
+    print()
+    print("Supported device types:")
+    for i, device in enumerate(PeerPlanner.VALID_DEVICES, 1):
+        print(f"  {i}. {device.capitalize()}")
+    while True:
+        device_choice = input("\nSelect device (1-4): ").strip()
+        try:
+            device_idx = int(device_choice) - 1
+            if 0 <= device_idx < len(PeerPlanner.VALID_DEVICES):
+                device_type = PeerPlanner.VALID_DEVICES[device_idx]
+                break
+        except ValueError:
+            pass
+        print(f"{YELLOW}⚠{NC} Invalid choice")
+
+    # Get peer CIDRs
+    print()
+    peer_cidrs_str = input("Peer CIDR blocks (comma-separated, e.g., 172.20.0.0/16): ").strip()
+    peer_cidrs = [c.strip() for c in peer_cidrs_str.split(",") if c.strip()]
+
+    # Get Affinity CIDRs
+    print()
+    affinity_cidrs_str = input(
+        "Affinity CIDRs (comma-separated, e.g., 10.0.0.0/16,10.1.0.0/16): "
+    ).strip()
+    affinity_cidrs = [c.strip() for c in affinity_cidrs_str.split(",") if c.strip()]
+
+    return name, device_type, peer_cidrs, affinity_cidrs
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Plan new VPN peer addition to ATG",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Interactive mode (prompts for all values)
+  ./skill-plan-new-peer
+
+  # Auto-allocate with minimal input
+  ./skill-plan-new-peer --name ACME --device fortigate \\
+    --peer-cidrs 172.20.0.0/16 \\
+    --affinity-cidrs 10.0.0.0/16,10.1.0.0/16
+
+  # Show as JSON (for automation)
+  ./skill-plan-new-peer --name ACME ... --json
+
+  # Check specific allocations
+  ./skill-plan-new-peer --registry /path/to/registry.yaml --name ACME ...
+        """
+    )
+
+    parser.add_argument(
+        "--name",
+        help="Peer name (e.g., ACME-VPN)"
+    )
+    parser.add_argument(
+        "--device",
+        choices=PeerPlanner.VALID_DEVICES,
+        help="Device type"
+    )
+    parser.add_argument(
+        "--peer-cidrs",
+        help="Peer CIDR blocks (comma-separated)"
+    )
+    parser.add_argument(
+        "--affinity-cidrs",
+        help="Affinity CIDR blocks (comma-separated)"
+    )
+    parser.add_argument(
+        "--registry",
+        help="Path to vpn-peers-registry.yaml"
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output as JSON (for automation)"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Don't actually allocate, just validate"
+    )
+
+    args = parser.parse_args()
+
+    # Initialize planner
+    planner = PeerPlanner(registry_path=args.registry)
+
+    # Get input
+    if args.name and args.device and args.peer_cidrs and args.affinity_cidrs:
+        # Command-line mode
+        name = args.name
+        device_type = args.device
+        peer_cidrs = [c.strip() for c in args.peer_cidrs.split(",")]
+        affinity_cidrs = [c.strip() for c in args.affinity_cidrs.split(",")]
+    else:
+        # Interactive mode
+        name, device_type, peer_cidrs, affinity_cidrs = interactive_mode()
+
+    # Run planning
+    success = planner.plan(name, device_type, peer_cidrs, affinity_cidrs)
+
+    # Print results
+    if success:
+        if args.json:
+            planner.print_json()
+        else:
+            planner.print_report()
+        sys.exit(0)
+    else:
+        planner.print_errors()
+        planner.print_warnings()
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

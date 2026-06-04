@@ -1,0 +1,46 @@
+apiVersion: vpn.affinity.io/v1
+kind: VpnPeer
+metadata:
+  name: example-partner
+  namespace: vpn
+spec:
+  customerName: "Example Partner"
+  device: "Checkpoint Firewall"
+  publicIp: "203.0.113.50"  # REPLACE WITH ACTUAL PUBLIC IP
+  bgpAsn: 65001  # REPLACE WITH ACTUAL BGP ASN
+  psk: "auto"  # Auto-generated or provide actual PSK
+
+  # Network configuration
+  networks:
+    - name: "partner-primary"
+      cidr: "10.0.0.0/16"  # REPLACE WITH PARTNER'S ACTUAL CIDR
+      description: "Partner primary network"
+
+  # BGP configuration
+  bgp:
+    enabled: true
+    asn: 65001
+    routeAnnouncement:
+      - "10.0.0.0/16"
+
+  # Tunnel configuration
+  tunnel:
+    dpd:
+      action: "restart"
+      delay: 10
+      timeout: 30
+    encapsulation: "ipsec"
+    encryption: "aes-256-gcm"
+    authentication: "sha512"
+
+  # Health check
+  healthCheck:
+    enabled: true
+    interval: 60
+    timeout: 10
+    threshold: 3
+
+metadata_labels:
+  environment: "development"
+  region: "us-east"
+  tier: "standard"

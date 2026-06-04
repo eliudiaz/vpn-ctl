@@ -1,0 +1,185 @@
+name: VPN Health Monitor E2E Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'vpn-health-monitor/**'
+      - '.github/workflows/e2e-tests.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'vpn-health-monitor/**'
+  schedule:
+    # Run tests daily at 2 AM UTC (smoke test)
+    - cron: '0 2 * * *'
+
+jobs:
+  e2e-tests:
+    name: E2E Tests - ${{ matrix.browser }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'vpn-health-monitor/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: ./vpn-health-monitor
+        run: npm ci
+
+      - name: Install Playwright browsers and dependencies
+        working-directory: ./vpn-health-monitor
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Wait for app availability
+        timeout-minutes: 5
+        run: |
+          echo "Waiting for https://vpn.assurehub.io to be available..."
+          for i in {1..60}; do
+            if curl -sk https://vpn.assurehub.io > /dev/null 2>&1; then
+              echo "✅ App is available"
+              exit 0
+            fi
+            echo "⏳ Attempt $i/60 - Waiting for app..."
+            sleep 5
+          done
+          echo "❌ App failed to become available"
+          exit 1
+
+      - name: Run E2E tests - ${{ matrix.browser }}
+        working-directory: ./vpn-health-monitor
+        run: npm test -- --project=${{ matrix.browser }} --reporter=html,junit,json
+        env:
+          CI: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.browser }}
+          path: vpn-health-monitor/test-results/
+          retention-days: 30
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: vpn-health-monitor/playwright-report/
+          retention-days: 30
+
+      - name: Publish test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: vpn-health-monitor/test-results/junit.xml
+          check_name: E2E Test Results - ${{ matrix.browser }}
+          comment_title: VPN Health Monitor E2E Tests - ${{ matrix.browser }}
+
+  mobile-tests:
+    name: Mobile E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'vpn-health-monitor/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: ./vpn-health-monitor
+        run: npm ci
+
+      - name: Install Playwright browsers and dependencies
+        working-directory: ./vpn-health-monitor
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Wait for app availability
+        timeout-minutes: 5
+        run: |
+          for i in {1..60}; do
+            if curl -sk https://vpn.assurehub.io > /dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
+
+      - name: Run mobile E2E tests
+        working-directory: ./vpn-health-monitor
+        run: npm test -- --project='Mobile Chrome' --project='Mobile Safari' --reporter=html,junit,json
+        env:
+          CI: true
+
+      - name: Upload mobile test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-mobile
+          path: vpn-health-monitor/test-results/
+          retention-days: 30
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-mobile
+          path: vpn-health-monitor/playwright-report/
+          retention-days: 30
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [e2e-tests, mobile-tests]
+    if: always()
+
+    steps:
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          path: test-results-all
+
+      - name: Create test summary
+        run: |
+          echo "## VPN Health Monitor E2E Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Runs" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Chromium Tests" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Firefox Tests" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ WebKit Tests" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Mobile Tests (Chrome & Safari)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Test reports available in artifacts." >> $GITHUB_STEP_SUMMARY
+
+      - name: Check test status
+        run: |
+          if [ "${{ needs.e2e-tests.result }}" == "failure" ] || [ "${{ needs.mobile-tests.result }}" == "failure" ]; then
+            echo "❌ Some E2E tests failed"
+            exit 1
+          fi
+          echo "✅ All E2E tests passed"

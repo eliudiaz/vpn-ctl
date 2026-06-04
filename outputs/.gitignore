@@ -1,0 +1,17 @@
+# Generated Outputs - Ignored by Git
+# This directory contains generated/temporary files
+
+# Peer configurations (generated Pulumi code)
+peer-configs/
+
+# Test configurations
+test-configs/
+
+# Vimenca peer configurations
+vimenca-updated/
+
+# VPN secrets (PSKs, credentials)
+secrets/
+
+# Keep this folder visible but ignore all contents
+!.gitignore

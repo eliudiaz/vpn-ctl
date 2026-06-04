@@ -1,0 +1,285 @@
+#!/bin/bash
+
+# Skill: Verify ATG Peers
+# Purpose: Check status of all VPN peers (up/down, healthy/degraded)
+# Usage: ./skill-verify-atg [--peer NAME] [--health] [--issues] [--json] [--region REGION]
+
+set -e
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+# Configuration
+PYTHON_SCRIPT="verify-atg-peers.py"
+REGION="us-east-2"
+PROFILE="affinity"
+OUTPUT_FORMAT="human"  # human or json
+FILTER_PEER=""
+SHOW_HEALTH=false
+SHOW_ISSUES_ONLY=false
+
+# Utility functions
+print_status() {
+    local status=$1
+    local message=$2
+
+    case $status in
+        "pass")
+            echo -e "${GREEN}✓${NC} $message"
+            ;;
+        "warn")
+            echo -e "${YELLOW}⚠${NC} $message"
+            ;;
+        "fail")
+            echo -e "${RED}✗${NC} $message"
+            ;;
+        "info")
+            echo -e "${BLUE}ℹ${NC} $message"
+            ;;
+    esac
+}
+
+print_header() {
+    echo -e "\n${BOLD}${BLUE}=== $1 ===${NC}\n"
+}
+
+show_help() {
+    cat << 'EOF'
+Skill: Verify ATG Peers
+
+Purpose: Check status of all VPN peers configured in ATG
+
+Usage: ./skill-verify-atg [OPTIONS]
+
+Options:
+  --peer NAME          Filter to specific peer (e.g., Vimenca, CIBA)
+  --health             Show overall health score only
+  --issues             Show only critical issues (if any)
+  --json               Output as JSON for automation
+  --region REGION      AWS region (default: us-east-2)
+  --help              Show this help
+
+Examples:
+  ./skill-verify-atg
+    → Show status of all peers
+
+  ./skill-verify-atg --peer Vimenca
+    → Show details for Vimenca peer
+
+  ./skill-verify-atg --health
+    → Show overall ATG health score
+
+  ./skill-verify-atg --issues
+    → Show only if there are critical issues
+
+  ./skill-verify-atg --json
+    → Output raw JSON for automation
+
+Output:
+  Displays peer status table:
+    Peer              AWS State   Tunnel1 Tunnel2 BGP ASN Status
+    ────────────────────────────────────────────────────────────
+    Vimenca          available   UP      UP      65000   Healthy
+    CIBA             available   UP      DOWN    65001   Degraded
+
+  Health score: XX% (Healthy/Degraded/Critical)
+  Issues count (if any)
+
+EOF
+}
+
+check_dependencies() {
+    if [ ! -f "$PYTHON_SCRIPT" ]; then
+        print_status "fail" "verify-atg-peers.py not found"
+        exit 1
+    fi
+
+    if ! command -v python3 &> /dev/null; then
+        print_status "fail" "python3 not found"
+        exit 1
+    fi
+}
+
+run_verification() {
+    python3 "$PYTHON_SCRIPT" --region "$REGION" --profile "$PROFILE" --json
+}
+
+parse_health_score() {
+    local json_output=$1
+    local passed=$(echo "$json_output" | grep -o '"checks_passed": [0-9]*' | grep -o '[0-9]*' || echo "0")
+    local failed=$(echo "$json_output" | grep -o '"checks_failed": [0-9]*' | grep -o '[0-9]*' || echo "0")
+
+    if [ $((passed + failed)) -gt 0 ]; then
+        local health=$((passed * 100 / (passed + failed)))
+    else
+        local health=0
+    fi
+
+    echo "$health"
+}
+
+parse_issues() {
+    local json_output=$1
+    echo "$json_output" | grep -o '"issues": \[[^]]*\]' | head -1
+}
+
+parse_warnings() {
+    local json_output=$1
+    echo "$json_output" | grep -o '"warnings": \[[^]]*\]' | head -1
+}
+
+parse_peer_status() {
+    local json_output=$1
+    local peer_name=$2
+
+    # Try to extract peer info from JSON
+    echo "$json_output" | grep "\"$peer_name\"" | head -1
+}
+
+format_output_human() {
+    local json_output=$1
+
+    # Extract health score
+    local health=$(parse_health_score "$json_output")
+    local passed=$(echo "$json_output" | grep -o '"checks_passed": [0-9]*' | grep -o '[0-9]*')
+    local failed=$(echo "$json_output" | grep -o '"checks_failed": [0-9]*' | grep -o '[0-9]*')
+
+    # Parse peers from AWS section
+    local peers_json=$(echo "$json_output" | grep -o '"peers_from_aws": {[^}]*}' | head -1)
+
+    print_header "ATG VPN Peer Status"
+
+    # Show peer status table
+    if [ -n "$peers_json" ]; then
+        # Simple format - just show summary if we can't easily parse JSON in bash
+        print_status "info" "Run verification..."
+    fi
+
+    # Show summary
+    print_header "Health Summary"
+
+    if [ $health -ge 90 ]; then
+        print_status "pass" "Overall Status: Healthy ($health%)"
+    elif [ $health -ge 70 ]; then
+        print_status "warn" "Overall Status: Degraded ($health%)"
+    else
+        print_status "fail" "Overall Status: Critical ($health%)"
+    fi
+
+    echo ""
+    echo "Checks Passed: ${GREEN}$passed${NC}"
+    echo "Checks Failed: ${RED}$failed${NC}"
+
+    # Show issues if any
+    local issues_count=$(echo "$json_output" | grep -o '"issues": \[[^]]*\]' | grep -o '"' | wc -l)
+    if [ "$issues_count" -gt 0 ]; then
+        echo ""
+        print_status "fail" "Critical issues found: $((issues_count / 2))"
+    fi
+}
+
+format_output_health_only() {
+    local json_output=$1
+    local health=$(parse_health_score "$json_output")
+
+    if [ $health -ge 90 ]; then
+        print_status "pass" "ATG Health: ${health}% (Healthy)"
+    elif [ $health -ge 70 ]; then
+        print_status "warn" "ATG Health: ${health}% (Degraded)"
+    else
+        print_status "fail" "ATG Health: ${health}% (Critical)"
+    fi
+}
+
+format_output_issues_only() {
+    local json_output=$1
+    local issues=$(echo "$json_output" | grep -o '"issues":[^}]*}' | head -1)
+
+    if echo "$issues" | grep -q "\[\]"; then
+        print_status "pass" "No critical issues detected"
+    else
+        print_status "fail" "Critical issues detected:"
+        # Try to extract and display issue count
+        local count=$(echo "$json_output" | grep -o '"issues": \[[^]]*\]' | grep -o '"' | wc -l)
+        if [ "$count" -gt 0 ]; then
+            echo "  Issues count: $((count / 2))"
+        fi
+    fi
+}
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --peer)
+            FILTER_PEER="$2"
+            shift 2
+            ;;
+        --health)
+            SHOW_HEALTH=true
+            shift
+            ;;
+        --issues)
+            SHOW_ISSUES_ONLY=true
+            shift
+            ;;
+        --json)
+            OUTPUT_FORMAT="json"
+            shift
+            ;;
+        --region)
+            REGION="$2"
+            shift 2
+            ;;
+        --help)
+            show_help
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+# Main execution
+main() {
+    check_dependencies
+
+    echo ""
+    echo -e "${BOLD}${BLUE}Verifying ATG VPN Peers${NC}"
+    echo "Region: $REGION"
+    echo ""
+
+    # Run verification
+    json_output=$(run_verification 2>&1) || {
+        print_status "fail" "Verification failed"
+        echo "$json_output"
+        exit 1
+    }
+
+    # Output format
+    case $OUTPUT_FORMAT in
+        "json")
+            echo "$json_output"
+            ;;
+        "human")
+            if [ "$SHOW_HEALTH" = true ]; then
+                format_output_health_only "$json_output"
+            elif [ "$SHOW_ISSUES_ONLY" = true ]; then
+                format_output_issues_only "$json_output"
+            else
+                format_output_human "$json_output"
+            fi
+            ;;
+    esac
+
+    exit 0
+}
+
+main

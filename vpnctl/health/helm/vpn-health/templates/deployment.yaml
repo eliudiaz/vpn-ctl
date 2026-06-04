@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpn-health
+  namespace: {{ .Values.namespace | default "vpn-health" }}
+  labels:
+    app: vpn-health
+    version: {{ .Chart.AppVersion }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: vpn-health
+  template:
+    metadata:
+      labels:
+        app: vpn-health
+    spec:
+      serviceAccountName: vpn-health
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+
+      containers:
+      - name: vpn-health
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+        ports:
+        - name: http
+          containerPort: {{ .Values.app.port }}
+          protocol: TCP
+
+        env:
+        - name: AWS_REGION
+          value: {{ .Values.aws.region }}
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        {{- if .Values.aws.irsaRoleArn }}
+        - name: AWS_ROLE_ARN
+          value: {{ .Values.aws.irsaRoleArn }}
+        - name: AWS_WEB_IDENTITY_TOKEN_FILE
+          value: /var/run/secrets/eks.amazonaws.com/serviceaccount/token
+        {{- end }}
+
+        livenessProbe:
+          httpGet:
+            path: /health/liveness
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health/readiness
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+
+        volumeMounts:
+        - name: config
+          mountPath: /app/config/vpn-peers.yaml
+          subPath: vpn-peers.yaml
+          readOnly: true
+        - name: infra-config
+          mountPath: /app/infra-config.json
+          subPath: infra-config.json
+          readOnly: true
+        {{- if .Values.aws.irsaRoleArn }}
+        - name: aws-iam-token
+          mountPath: /var/run/secrets/eks.amazonaws.com/serviceaccount
+          readOnly: true
+        {{- end }}
+
+      volumes:
+      - name: config
+        configMap:
+          name: vpn-peers-config
+          optional: true
+      - name: infra-config
+        configMap:
+          name: vpn-infra-config
+          optional: true
+      {{- if .Values.aws.irsaRoleArn }}
+      - name: aws-iam-token
+        projected:
+          sources:
+          - serviceAccountToken:
+              audience: sts.amazonaws.com
+              expirationSeconds: 86400
+              path: token
+      {{- end }}

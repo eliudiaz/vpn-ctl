@@ -1,0 +1,55 @@
+replicaCount: 1
+
+image:
+  repository: vpn-health
+  pullPolicy: IfNotPresent
+  tag: latest
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: vpn-health.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - vpn-health.example.com
+      secretName: vpn-health-tls
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+# Config files mounted as ConfigMaps
+configMaps:
+  vpnPeersEnabled: true
+  infraConfigEnabled: true
+
+# AWS configuration
+aws:
+  region: us-east-2
+  irsaRoleArn: ""  # Set to IAM role ARN for IRSA
+
+# Application configuration
+app:
+  port: 8080
+  refreshInterval: 60

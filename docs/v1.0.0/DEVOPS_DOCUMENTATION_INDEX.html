@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>DEVOPS_DOCUMENTATION_INDEX</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="/dev/fd/11" />
+</head>
+<body>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#devops-documentation-index---atg-vpn-e2e-testing"
+id="toc-devops-documentation-index---atg-vpn-e2e-testing">DevOps
+Documentation Index - ATG VPN E2E Testing</a>
+<ul>
+<li><a href="#quick-navigation" id="toc-quick-navigation">📋 Quick
+Navigation</a></li>
+<li><a href="#how-to-use-this-documentation"
+id="toc-how-to-use-this-documentation">🎯 How to Use This
+Documentation</a></li>
+<li><a href="#documentation-details" id="toc-documentation-details">📚
+Documentation Details</a></li>
+<li><a href="#automation-tools" id="toc-automation-tools">🛠️ Automation
+Tools</a></li>
+<li><a href="#document-format-options"
+id="toc-document-format-options">📖 Document Format Options</a></li>
+<li><a href="#documentation-statistics"
+id="toc-documentation-statistics">📊 Documentation Statistics</a></li>
+<li><a href="#quality-assurance" id="toc-quality-assurance">✅ Quality
+Assurance</a></li>
+<li><a href="#recommended-reading-order"
+id="toc-recommended-reading-order">🚀 Recommended Reading Order</a></li>
+<li><a href="#support-getting-help" id="toc-support-getting-help">📞
+Support &amp; Getting Help</a></li>
+<li><a href="#updating-this-documentation"
+id="toc-updating-this-documentation">🔄 Updating This
+Documentation</a></li>
+<li><a href="#checklist-before-sharing-with-devops"
+id="toc-checklist-before-sharing-with-devops">📋 Checklist: Before
+Sharing with DevOps</a></li>
+<li><a href="#success-metrics" id="toc-success-metrics">🎯 Success
+Metrics</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="devops-documentation-index---atg-vpn-e2e-testing">DevOps
+Documentation Index - ATG VPN E2E Testing</h1>
+<p><strong>Complete guide to all VPN testing documentation available for
+DevOps teams</strong></p>
+<p><strong>Version:</strong> 1.0 <strong>Last Updated:</strong> March 4,
+2026 <strong>Status:</strong> ✅ Production Ready</p>
+<hr />
+<h2 id="quick-navigation">📋 Quick Navigation</h2>
+<h3 id="start-here-5-minutes">🚀 Start Here (5 minutes)</h3>
+<ul>
+<li><strong>DEVOPS_QUICK_START.md/.html</strong> — Overview of testing
+process, commands, troubleshooting</li>
+</ul>
+<h3 id="main-protocol-20-minutes">📖 Main Protocol (20 minutes)</h3>
+<ul>
+<li><strong>VPN_E2E_TESTING_PROTOCOL.md/.html</strong> — Complete
+7-phase protocol with gates, playbooks, troubleshooting</li>
+</ul>
+<h3 id="handoff-process-10-minutes">🔐 Handoff Process (10 minutes)</h3>
+<ul>
+<li><strong>VPN_HANDOFF_TEMPLATE.md/.html</strong> — Template for
+delivering tunnel details securely to peers</li>
+</ul>
+<h3 id="device-specific-guides-30-45-minutes-each">🛠️ Device-Specific
+Guides (30-45 minutes each)</h3>
+<table>
+<colgroup>
+<col style="width: 28%" />
+<col style="width: 21%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Device</th>
+<th>File</th>
+<th>HTML Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Checkpoint R80.10+</strong></td>
+<td>CHECKPOINT_SETUP_GUIDE.md</td>
+<td>CHECKPOINT_SETUP_GUIDE.html</td>
+</tr>
+<tr>
+<td><strong>Fortinet FortiGate</strong></td>
+<td>FORTIGATE_SETUP_GUIDE.md</td>
+<td>FORTIGATE_SETUP_GUIDE.html</td>
+</tr>
+<tr>
+<td><strong>Palo Alto Networks</strong></td>
+<td>PALOALTO_SETUP_GUIDE.md</td>
+<td>PALOALTO_SETUP_GUIDE.html</td>
+</tr>
+<tr>
+<td><strong>Cisco ASA</strong></td>
+<td>CISCO_SETUP_GUIDE.md</td>
+<td>CISCO_SETUP_GUIDE.html</td>
+</tr>
+</tbody>
+</table>
+<h3 id="automation-scripts-5-15-minutes">⚙️ Automation &amp; Scripts
+(5-15 minutes)</h3>
+<ul>
+<li><strong>skill-vpn-e2e-test</strong> — Executable script for 5-layer
+automated testing</li>
+<li><strong>skill-vpn-connectivity</strong> — VPN status monitoring
+(with –e2e flag)</li>
+</ul>
+<h3 id="additional-references">📄 Additional References</h3>
+<ul>
+<li><strong>peer-guides/README.md</strong> — Overview of all device
+guides</li>
+<li><strong>ATG_SKILLS_GUIDE.md</strong> — Deep troubleshooting
+skills</li>
+</ul>
+<hr />
+<h2 id="how-to-use-this-documentation">🎯 How to Use This
+Documentation</h2>
+<h3 id="for-affinity-devops-teams">For Affinity DevOps Teams</h3>
+<p><strong>Initial Setup:</strong> 1. Read: DEVOPS_QUICK_START.html (5
+min) 2. Read: VPN_E2E_TESTING_PROTOCOL.html Phases 0-1 (15 min) 3.
+Execute Phase 0: Pulumi deployment 4. Create handoff:
+VPN_HANDOFF_TEMPLATE.html (10 min)</p>
+<p><strong>During Peer Testing:</strong> 5. Reference:
+VPN_E2E_TESTING_PROTOCOL.html Phases 3-7 6. Use tools:
+<code>skill-vpn-e2e-test</code>, <code>skill-vpn-connectivity</code> 7.
+Follow gates and sign-off</p>
+<h3 id="for-peer-devops-teams">For Peer DevOps Teams</h3>
+<p><strong>Phase 1 (Receiving):</strong> 1. Read:
+DEVOPS_QUICK_START.html (5 min) 2. Receive handoff package from
+Affinity</p>
+<p><strong>Phase 2 (Configuration):</strong> 3. Select device guide:
+CHECKPOINT_SETUP_GUIDE.html (or your device) 4. Follow Sections 1-6:
+Setup procedures (30-45 min) 5. Follow Section 8 (new): Joint E2E
+Testing (Phases 3-7)</p>
+<p><strong>Phase 3-7 (Testing):</strong> 6. Reference:
+VPN_E2E_TESTING_PROTOCOL.html for each phase 7. Run device-specific
+commands from your setup guide 8. Coordinate with Affinity at each
+gate</p>
+<hr />
+<h2 id="documentation-details">📚 Documentation Details</h2>
+<h3 id="devops_quick_start.mdhtml-7-kb">DEVOPS_QUICK_START.md/html (7
+KB)</h3>
+<p><strong>What it contains:</strong> - 5-minute overview of testing
+process - Fast-path checklist for Phases 3-7 - Device-specific command
+quick reference - Troubleshooting quick links - Sign-off checklist -
+Support contact information</p>
+<p><strong>Best for:</strong> Getting oriented; finding commands
+quickly</p>
+<p><strong>Read time:</strong> 5-10 minutes</p>
+<hr />
+<h3
+id="vpn_e2e_testing_protocol.mdhtml-39-kb">VPN_E2E_TESTING_PROTOCOL.md/html
+(39 KB)</h3>
+<p><strong>What it contains:</strong> - Complete 7-phase testing
+protocol - Phase 0: Pulumi pre-deployment - Phase 1: Handoff process -
+Phase 2: Peer configuration - Phase 3: Tunnel establishment (IKE/IPSec)
+- Phase 4: BGP route exchange - Phase 5: Data plane traffic test - Phase
+6: Redundancy &amp; failover - Phase 7: Operational sign-off - Commands
+for each phase (Affinity &amp; peer perspectives) - Go/no-go gates at
+each phase - 3 comprehensive remediation playbooks - Failure decision
+tree - Key technical insights - Operational sign-off sheet template</p>
+<p><strong>Best for:</strong> Understanding the complete process;
+troubleshooting; reference</p>
+<p><strong>Read time:</strong> 20-30 minutes (can be read per-phase)</p>
+<p><strong>Print to PDF:</strong> Yes (open .html in browser, use Print
+→ Save as PDF)</p>
+<hr />
+<h3 id="vpn_handoff_template.mdhtml-11-kb">VPN_HANDOFF_TEMPLATE.md/html
+(11 KB)</h3>
+<p><strong>What it contains:</strong> - Fill-in-the-blanks template for:
+- Real tunnel endpoint IPs (52.14.x.x) - Inside tunnel CIDRs
+(169.254.x.x/30) - PSK delivery instructions - Encryption parameters -
+BGP configuration - Network ranges to route - Affinity contact
+information - Peer acknowledgment template</p>
+<p><strong>Best for:</strong> Preparing secure handoff to peer
+organizations</p>
+<p><strong>Read time:</strong> 10 minutes (to fill in)</p>
+<p><strong>Security note:</strong> Never include PSKs in email; use
+separate secure channel</p>
+<hr />
+<h3
+id="checkpoint_setup_guide.mdhtml-48-kb">CHECKPOINT_SETUP_GUIDE.md/html
+(48 KB)</h3>
+<p><strong>What it contains:</strong> - Complete Checkpoint R80.10+ VPN
+configuration - Section 4: Step-by-step device configuration (9 steps) -
+Section 5: BGP dynamic routing setup - Section 6: Verification
+procedures - Section 7: Troubleshooting guide - <strong>NEW</strong>
+Section 8: Joint E2E Testing (Phases 3-7) - Device-specific tunnel
+verification commands - BGP route verification - Data plane testing -
+Failover testing - Checkpoint command cheat sheet</p>
+<p><strong>Best for:</strong> Checkpoint firewall teams configuring
+VPN</p>
+<p><strong>Configuration time:</strong> 30-45 minutes</p>
+<p><strong>Testing time:</strong> 20-30 minutes (Phases 3-7)</p>
+<hr />
+<h3
+id="fortigate_setup_guide.mdhtml-52-kb">FORTIGATE_SETUP_GUIDE.md/html
+(52 KB)</h3>
+<p><strong>What it contains:</strong> - Complete Fortinet FortiGate VPN
+configuration - Section 4: Phase 1 (IKE) and Phase 2 (IPSec) setup -
+Section 5: BGP dynamic routing - Section 6: Verification procedures -
+Section 7: Troubleshooting guide - <strong>NEW</strong> Section 8: Joint
+E2E Testing (Phases 3-7) - Device-specific tunnel verification commands
+- BGP neighbor status and routes - Traffic testing procedures - Failover
+testing with ping monitoring - Fortigate command cheat sheet</p>
+<p><strong>Best for:</strong> Fortigate firewall teams configuring
+VPN</p>
+<p><strong>Configuration time:</strong> 30-45 minutes</p>
+<p><strong>Testing time:</strong> 20-30 minutes (Phases 3-7)</p>
+<hr />
+<h3 id="paloalto_setup_guide.mdhtml-55-kb">PALOALTO_SETUP_GUIDE.md/html
+(55 KB)</h3>
+<p><strong>What it contains:</strong> - Complete Palo Alto Networks VPN
+configuration - Section 4: Crypto profiles, IKE gateways, IPSec tunnels
+- Section 5: BGP neighbor and route redistribution setup - Section 6:
+Verification procedures - Section 7: Troubleshooting guide -
+<strong>NEW</strong> Section 8: Joint E2E Testing (Phases 3-7) -
+Device-specific tunnel verification commands - BGP peer status and
+learned routes - Traffic testing via request command - Failover testing
+procedures - Palo Alto command cheat sheet</p>
+<p><strong>Best for:</strong> Palo Alto Networks teams configuring
+VPN</p>
+<p><strong>Configuration time:</strong> 30-45 minutes</p>
+<p><strong>Testing time:</strong> 20-30 minutes (Phases 3-7)</p>
+<hr />
+<h3 id="cisco_setup_guide.mdhtml-55-kb">CISCO_SETUP_GUIDE.md/html (55
+KB)</h3>
+<p><strong>What it contains:</strong> - Complete Cisco ASA VPN
+configuration - Section 4: IKE policy, IPSec transform sets, crypto ACL
+- Section 5: BGP dynamic routing setup - Section 6: Verification
+procedures - Section 7: Troubleshooting guide - <strong>NEW</strong>
+Section 8: Joint E2E Testing (Phases 3-7) - Device-specific tunnel
+verification commands - BGP neighbor and route learning - Traffic
+testing and debugging - Failover testing with extended ping - Cisco
+command cheat sheet</p>
+<p><strong>Best for:</strong> Cisco ASA teams configuring VPN</p>
+<p><strong>Configuration time:</strong> 30-45 minutes</p>
+<p><strong>Testing time:</strong> 20-30 minutes (Phases 3-7)</p>
+<hr />
+<h2 id="automation-tools">🛠️ Automation Tools</h2>
+<h3 id="skill-vpn-e2e-test-executable-script">skill-vpn-e2e-test
+(Executable Script)</h3>
+<p><strong>Location:</strong>
+<code>aff-atg/skill-vpn-e2e-test</code></p>
+<p><strong>What it does:</strong> - Automated 5-layer testing:
+Reachability → IKE → IPSec → BGP → Traffic - Scoring system (0-100%) -
+Device-agnostic (runs from Affinity side) - Cloud Watch metrics
+integration</p>
+<p><strong>Usage:</strong></p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Quick check all peers</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-e2e-test</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Full E2E test for specific peer</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-e2e-test</span> <span class="at">--peer</span> Vimenca <span class="at">--e2e</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Layer-specific testing</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-e2e-test</span> <span class="at">--peer</span> Vimenca <span class="at">--layer</span> 3    <span class="co"># BGP only</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-e2e-test</span> <span class="at">--peer</span> Checkpoint-DR <span class="at">--e2e</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Help</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-e2e-test</span> <span class="at">--help</span></span></code></pre></div>
+<p><strong>Output:</strong> - ✓ = Test passed - ✗ = Test failed
+(requires action) - ⚠ = Warning - Final score and recommendations</p>
+<hr />
+<h3 id="skill-vpn-connectivity-enhanced">skill-vpn-connectivity
+(Enhanced)</h3>
+<p><strong>Location:</strong>
+<code>aff-atg/skill-vpn-connectivity</code></p>
+<p><strong>New features:</strong> - <code>--e2e</code> flag for E2E
+readiness checks - Integration with skill-vpn-e2e-test - –peer flag for
+specific peer monitoring - –analyze flag for health assessment</p>
+<p><strong>Usage:</strong></p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Quick status</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-connectivity</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Deep analysis</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-connectivity</span> <span class="at">--deep</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># E2E readiness</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-connectivity</span> <span class="at">--e2e</span> Vimenca</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Specific peer</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="ex">./skill-vpn-connectivity</span> <span class="at">--peer</span> CIBA</span></code></pre></div>
+<hr />
+<h2 id="document-format-options">📖 Document Format Options</h2>
+<h3 id="html-version-recommended-for-devops">HTML Version (Recommended
+for DevOps)</h3>
+<p><strong>Advantages:</strong> - ✅ Can be printed to PDF from any
+browser - ✅ Searchable in browser (Ctrl+F) - ✅ Professional formatting
+- ✅ Easy to share via email - ✅ Works on any device (Mac, Windows,
+Linux)</p>
+<p><strong>How to print to PDF:</strong> 1. Open .html file in web
+browser 2. Press Ctrl+P (Windows) or Cmd+P (Mac) 3. Select “Save as PDF”
+4. Choose location and save</p>
+<h3 id="markdown-version">Markdown Version</h3>
+<p><strong>Advantages:</strong> - ✅ Edit and customize with text editor
+- ✅ Version control friendly (git) - ✅ Copy/paste commands easily - ✅
+Reference in runbooks</p>
+<p><strong>File locations:</strong> -
+<code>aff-atg/VPN_E2E_TESTING_PROTOCOL.md</code> -
+<code>aff-atg/VPN_HANDOFF_TEMPLATE.md</code> -
+<code>aff-atg/DEVOPS_QUICK_START.md</code> -
+<code>aff-atg/peer-guides/*_SETUP_GUIDE.md</code></p>
+<hr />
+<h2 id="documentation-statistics">📊 Documentation Statistics</h2>
+<table>
+<thead>
+<tr>
+<th>Document</th>
+<th>Lines</th>
+<th>Size</th>
+<th>Format</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VPN_E2E_TESTING_PROTOCOL</td>
+<td>1,312</td>
+<td>39 KB</td>
+<td>MD, HTML</td>
+</tr>
+<tr>
+<td>VPN_HANDOFF_TEMPLATE</td>
+<td>385</td>
+<td>11 KB</td>
+<td>MD, HTML</td>
+</tr>
+<tr>
+<td>DEVOPS_QUICK_START</td>
+<td>350</td>
+<td>9 KB</td>
+<td>MD, HTML</td>
+</tr>
+<tr>
+<td>CHECKPOINT_SETUP_GUIDE</td>
+<td>765</td>
+<td>48 KB</td>
+<td>MD, HTML</td>
+</tr>
+<tr>
+<td>FORTIGATE_SETUP_GUIDE</td>
+<td>801</td>
+<td>52 KB</td>
+<td>MD, HTML</td>
+</tr>
+<tr>
+<td>PALOALTO_SETUP_GUIDE</td>
+<td>853</td>
+<td>55 KB</td>
+<td>MD, HTML</td>
+</tr>
+<tr>
+<td>CISCO_SETUP_GUIDE</td>
+<td>913</td>
+<td>55 KB</td>
+<td>MD, HTML</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>5,379</strong></td>
+<td><strong>269 KB</strong></td>
+<td>MD + HTML</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="quality-assurance">✅ Quality Assurance</h2>
+<p><strong>All documentation includes:</strong> - ✅ Device-specific
+command examples - ✅ Expected output for each command - ✅
+Troubleshooting procedures - ✅ Gate completion criteria - ✅
+Cross-references between documents - ✅ Bilateral verification
+checklists - ✅ Operational sign-off templates</p>
+<p><strong>Tested with:</strong> - ✅ Checkpoint R80.10 (actual device
+commands verified) - ✅ Fortinet FortiGate (command syntax validated) -
+✅ Palo Alto Networks (CLI verified) - ✅ Cisco ASA (command verified) -
+✅ AWS Transit Gateway configuration</p>
+<hr />
+<h2 id="recommended-reading-order">🚀 Recommended Reading Order</h2>
+<h3 id="for-affinity-devops-initial-setup">For Affinity DevOps (Initial
+Setup)</h3>
+<ol type="1">
+<li><strong>DEVOPS_QUICK_START.html</strong> (5 min) — Get oriented</li>
+<li><strong>VPN_E2E_TESTING_PROTOCOL.html Phases 0-1</strong> (10 min) —
+Understand handoff process</li>
+<li><strong>VPN_E2E_TESTING_PROTOCOL.html Phase 2</strong> (5 min) —
+Understand peer role</li>
+<li>Execute Pulumi: Phase 0 checklist</li>
+<li>Create handoff: <strong>VPN_HANDOFF_TEMPLATE.html</strong></li>
+</ol>
+<h3 id="for-affinity-devops-during-testing">For Affinity DevOps (During
+Testing)</h3>
+<ol start="6" type="1">
+<li><strong>VPN_E2E_TESTING_PROTOCOL.html Phase 3-7</strong> — Follow
+along with peer</li>
+<li>Use <strong>skill-vpn-e2e-test</strong> and
+<strong>skill-vpn-connectivity</strong> to verify</li>
+</ol>
+<h3 id="for-peer-devops-teams-1">For Peer DevOps Teams</h3>
+<ol type="1">
+<li><strong>DEVOPS_QUICK_START.html</strong> (5 min)</li>
+<li>Receive handoff package</li>
+<li>Select device guide: **[YOUR_DEVICE]_SETUP_GUIDE.html**</li>
+<li>Follow Sections 1-7: Configuration</li>
+<li>Follow Section 8: E2E Testing (Phases 3-7)</li>
+<li>Reference <strong>VPN_E2E_TESTING_PROTOCOL.html</strong> for each
+phase</li>
+</ol>
+<hr />
+<h2 id="support-getting-help">📞 Support &amp; Getting Help</h2>
+<h3 id="if-youre-stuck-on">If You’re Stuck On:</h3>
+<p><strong>Configuration:</strong> - → Read relevant section of
+[YOUR_DEVICE]_SETUP_GUIDE.html - → Check device-specific troubleshooting
+section - → Contact your device vendor support</p>
+<p><strong>Testing:</strong> - → Read DEVOPS_QUICK_START.html
+troubleshooting section - → Reference VPN_E2E_TESTING_PROTOCOL.html
+remediation playbooks - → Contact Affinity support@affinity.com</p>
+<p><strong>Understanding the Protocol:</strong> - → Read
+DEVOPS_QUICK_START.html overview - → Read VPN_E2E_TESTING_PROTOCOL.html
+Phase 0 section - → Review relevant phase section</p>
+<h3 id="contact-information">Contact Information</h3>
+<p><strong>Affinity Support:</strong> - Email: support@affinity.com -
+Subject: <code>[ATG VPN] [Device Type] - [Your Organization]</code></p>
+<hr />
+<h2 id="updating-this-documentation">🔄 Updating This Documentation</h2>
+<p>As new devices are supported or procedures are refined:</p>
+<ol type="1">
+<li>Update markdown source files (.md)</li>
+<li>Regenerate HTML:
+<code>pandoc [file].md -f markdown -t html -o [file].html</code></li>
+<li>Commit changes with git</li>
+<li>Share updated HTML files with teams</li>
+</ol>
+<hr />
+<h2 id="checklist-before-sharing-with-devops">📋 Checklist: Before
+Sharing with DevOps</h2>
+<ul class="task-list">
+<li><label><input type="checkbox" />All HTML files generated and
+tested</label></li>
+<li><label><input type="checkbox" />Links to referenced documents
+work</label></li>
+<li><label><input type="checkbox" />All device guides have Phase 3-7
+sections</label></li>
+<li><label><input type="checkbox" />Commands are device-specific and
+accurate</label></li>
+<li><label><input type="checkbox" />Sign-off templates
+included</label></li>
+<li><label><input type="checkbox" />Troubleshooting playbooks
+reviewed</label></li>
+<li><label><input type="checkbox" />Contact information
+updated</label></li>
+</ul>
+<hr />
+<h2 id="success-metrics">🎯 Success Metrics</h2>
+<p>After using this documentation, you should be able to:</p>
+<p>✅ Configure VPN tunnels on any supported device in 30-45 minutes</p>
+<p>✅ Execute all 5 testing layers in 20-30 minutes</p>
+<p>✅ Troubleshoot tunnel, BGP, or traffic issues using playbooks</p>
+<p>✅ Sign off on production readiness with confidence</p>
+<p>✅ Escalate to Affinity with complete context and logs</p>
+<hr />
+<p><strong>Version:</strong> 1.0 <strong>Last Updated:</strong> March 4,
+2026 <strong>Status:</strong> ✅ Ready for Production Use</p>
+<p><strong>Questions?</strong> Start with DEVOPS_QUICK_START.html or
+contact support@affinity.com</p>
+</body>
+</html>

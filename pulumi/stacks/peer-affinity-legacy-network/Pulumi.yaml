@@ -1,0 +1,6 @@
+description: 'VPN peer: affinity-legacy-network'
+name: aff-atg
+runtime:
+  name: python
+  options:
+    virtualenv: ../../venv

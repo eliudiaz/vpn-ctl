@@ -1,0 +1,56 @@
+# VPN Pool Registry - Tracks reusable VPN resources
+#
+# This file maintains the state of all VPN connections managed by the infrastructure.
+# VPNs in this pool can be:
+# - attached: Currently in use by a peer
+# - detached: Preserved for reuse (not in use)
+# - orphaned: Existing but not managed (rare)
+#
+# When a peer is destroyed, its VPN is marked as detached (not deleted).
+# When a new peer is deployed, it can reuse a detached VPN with the same profile.
+#
+# NOTE: This is a template. Replace placeholder values with actual resource IDs from your AWS account.
+
+version: '1.0'
+created_at: '2026-06-04T00:00:00'
+updated_at: '2026-06-04T00:00:00'
+
+vpns:
+  # Example Partner 1: Checkpoint R80.10 VPN
+  - vpn_id: vpn-XXXXXXXXX  # REPLACE WITH ACTUAL VPN ID
+    customer_gateway_id: cgw-XXXXXXXXX  # REPLACE WITH ACTUAL CGW ID
+    peer_name: example-partner-1
+    state: detached  # Template entry - not in production use
+    tunnel_profile: checkpoint_r80
+    tunnel1_ip: 198.51.100.1  # REPLACE WITH ACTUAL TUNNEL IP
+    tunnel2_ip: 198.51.100.2  # REPLACE WITH ACTUAL TUNNEL IP
+    created_at: '2026-06-01T00:00:00'
+    attached_at: null
+    detached_at: null
+    preserved_count: 0
+
+  # Example Partner 2: Checkpoint R80.10 VPN
+  - vpn_id: vpn-XXXXXXXXX  # REPLACE WITH ACTUAL VPN ID
+    customer_gateway_id: cgw-XXXXXXXXX  # REPLACE WITH ACTUAL CGW ID
+    peer_name: example-partner-2
+    state: detached  # Template entry - not in production use
+    tunnel_profile: checkpoint_r80
+    tunnel1_ip: 198.51.100.3  # REPLACE WITH ACTUAL TUNNEL IP
+    tunnel2_ip: 198.51.100.4  # REPLACE WITH ACTUAL TUNNEL IP
+    created_at: '2026-06-01T00:00:00'
+    attached_at: null
+    detached_at: null
+    preserved_count: 0
+
+  # Example Partner 3: Fortinet FortiGate VPN
+  - vpn_id: vpn-XXXXXXXXX  # REPLACE WITH ACTUAL VPN ID
+    customer_gateway_id: cgw-XXXXXXXXX  # REPLACE WITH ACTUAL CGW ID
+    peer_name: example-partner-3
+    state: detached  # Template entry - not in production use
+    tunnel_profile: fortigate_standard
+    tunnel1_ip: 198.51.100.5  # REPLACE WITH ACTUAL TUNNEL IP
+    tunnel2_ip: 198.51.100.6  # REPLACE WITH ACTUAL TUNNEL IP
+    created_at: '2026-06-01T00:00:00'
+    attached_at: null
+    detached_at: null
+    preserved_count: 0

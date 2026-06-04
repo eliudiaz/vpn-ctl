@@ -1,0 +1,352 @@
+# VPN Health Monitor - Helm Chart Values
+# ============================================================
+# Configure deployment settings, replicas, resources, ingress, etc.
+
+# Global settings
+global:
+  environment: production
+  domain: assurehub.io
+
+# Namespace configuration
+namespace:
+  create: false
+  name: atg
+
+# Image pull secrets for ECR authentication
+imagePullSecrets:
+  - name: ecr-secret
+
+# Deployment configuration
+deployment:
+  # Number of replicas (set to 1 for session persistence, increase to 2+ for HA after Redis integration)
+  replicas: 1
+
+  # Update strategy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  # Pod annotations
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+
+  # Pod security context
+  podSecurityContext:
+    runAsNonRoot: false
+    runAsUser: 0
+    fsGroup: 0
+
+# Container configuration
+image:
+  # Docker image repository
+  repository: 218833996210.dkr.ecr.us-east-2.amazonaws.com/affinity/vpn-health-monitor
+
+  # Image tag/version
+  tag: "2.1.4"
+
+  # Pull policy
+  pullPolicy: IfNotPresent
+
+# Container ports
+port:
+  name: http
+  containerPort: 8000
+  protocol: TCP
+
+# Application settings
+app:
+  # Ping interval (seconds)
+  pingInterval: 60
+
+  # History retention (seconds)
+  historyRetention: 3600
+
+  # Max history per target
+  maxHistoryPerTarget: 60
+
+  # Default timeout (seconds)
+  defaultTimeout: 5
+
+  # Max concurrent pings
+  maxConcurrent: 10
+
+# Log level
+logLevel: INFO
+
+# Resource limits
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Health check probes
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /config
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 2
+
+# Service configuration
+service:
+  # Service type
+  type: ClusterIP
+
+  # Service port
+  port: 80
+
+  # Target port
+  targetPort: http
+
+  # Session affinity - stick client to same pod for session persistence
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800  # 3 hours
+
+  # Service annotations
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  # Enable ingress
+  enabled: true
+
+  # Ingress class
+  ingressClassName: nginx
+
+  # Annotations
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+  # Hosts
+  hosts:
+    - host: vpn.assurehub.io
+      paths:
+        - path: /
+          pathType: Prefix
+
+  # TLS configuration
+  tls:
+    enabled: true
+    secretName: vpn-health-monitor-tls
+    hosts:
+      - vpn.assurehub.io
+
+# Autoscaling configuration
+autoscaling:
+  # Enable autoscaling
+  enabled: true
+
+  # Min replicas
+  minReplicas: 2
+
+  # Max replicas
+  maxReplicas: 5
+
+  # Target CPU utilization
+  targetCPUUtilizationPercentage: 70
+
+  # Target memory utilization
+  targetMemoryUtilizationPercentage: 80
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Network Policy
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+
+# RBAC
+rbac:
+  # Create RBAC resources
+  create: true
+
+# Service Account
+serviceAccount:
+  # Create service account
+  create: true
+
+  # Service account name
+  name: vpn-health-monitor
+
+  # Annotations
+  annotations: {}
+
+# VPN targets configuration (ConfigMap)
+vpnTargets:
+  # Enable/disable inline config
+  enabled: true
+
+  # Config content (will be used for ConfigMap)
+  # If empty, uses default vpn-targets.yaml
+  content: |
+    providers:
+      - name: "Vimenca"
+        description: "Banking services provider"
+        enabled: true
+        targets:
+          - name: "PING"
+            ip: "172.16.65.21"
+            port: 0
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "TCP-443"
+            ip: "172.16.65.21"
+            port: 443
+            protocol: "tcp"
+            timeout: 5
+            enabled: true
+          - name: "Port-8088-HTTP"
+            ip: "172.16.65.21"
+            port: 8088
+            protocol: "http"
+            timeout: 5
+            enabled: true
+          - name: "Port-8088-HTTPS"
+            ip: "172.16.65.21"
+            port: 8088
+            protocol: "https"
+            timeout: 5
+            enabled: true
+          - name: "Port-9090-HTTP"
+            ip: "172.16.65.21"
+            port: 9090
+            protocol: "http"
+            timeout: 5
+            enabled: true
+          - name: "Port-9090-HTTPS"
+            ip: "172.16.65.21"
+            port: 9090
+            protocol: "https"
+            timeout: 5
+            enabled: true
+
+      - name: "CIBAO"
+        description: "Enterprise partner network - TNS production databases"
+        enabled: true
+        targets:
+          - name: "TNS-192.168.150.10"
+            ip: "192.168.150.10"
+            port: 1521
+            protocol: "tcp"
+            timeout: 5
+            enabled: true
+          - name: "TNS-192.168.150.12"
+            ip: "192.168.150.12"
+            port: 1521
+            protocol: "tcp"
+            timeout: 5
+            enabled: true
+          - name: "TNS-192.168.150.11-Prod"
+            ip: "192.168.150.11"
+            port: 8443
+            protocol: "tcp"
+            timeout: 5
+            enabled: true
+
+      - name: "Affinity-Legacy"
+        description: "Legacy MSSQL databases - Original pod IPs visible"
+        enabled: true
+        targets:
+          - name: "APAP-TCP"
+            ip: "192.168.100.8"
+            port: 1433
+            protocol: "tcp"
+            timeout: 5
+            enabled: true
+          - name: "APAP-ICMP"
+            ip: "192.168.100.8"
+            port: 1433
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+
+    monitoring:
+      interval_seconds: 60
+      history_retention: 3600
+      max_history_per_target: 60
+      default_timeout: 5
+      max_concurrent: 10
+
+# Node affinity
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - vpn-health-monitor
+          topologyKey: kubernetes.io/hostname
+
+# Tolerations
+tolerations: []
+
+# Node selector
+nodeSelector: {}
+
+# Security context
+securityContext:
+  allowPrivilegeEscalation: true
+  privileged: false
+  capabilities:
+    add:
+      - NET_RAW
+
+# Environment variables
+env:
+  - name: POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+  - name: POD_NAMESPACE
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.namespace
+  - name: AWS_REGION
+    value: "us-east-2"
+  - name: VPC_CIDR
+    value: "172.31.0.0/16"
+  - name: CLUSTER_CIDRS
+    value: "172.31.0.0/20,172.31.16.0/20,172.31.32.0/20"
+
+# Volume mounts
+volumeMounts: []
+
+# Volumes
+volumes: []
+
+# Init containers
+initContainers: []
+
+# Sidecar containers
+sidecars: []

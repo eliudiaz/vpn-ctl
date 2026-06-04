@@ -1,0 +1,30 @@
+apiVersion: v2
+name: vpn-health-monitor
+description: Modern nodeping-like VPN connectivity monitoring system
+type: application
+
+# Chart version
+version: 1.0.0
+
+# Application version
+appVersion: 1.0.0
+
+# Chart metadata
+keywords:
+  - vpn
+  - monitoring
+  - health-check
+  - ping
+  - nodeping
+
+home: https://github.com/affinity/vpn-health-monitor
+sources:
+  - https://github.com/affinity/vpn-health-monitor
+
+maintainers:
+  - name: Affinity Infrastructure Team
+    email: infrastructure@assurehub.io
+
+icon: https://raw.githubusercontent.com/affinity/vpn-health-monitor/main/icon.png
+
+dependencies: []

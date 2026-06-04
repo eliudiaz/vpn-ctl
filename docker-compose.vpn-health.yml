@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  vpn-health:
+    build:
+      context: .
+      dockerfile: vpnctl/health/Dockerfile
+    image: vpn-health:latest
+    container_name: vpn-health-app
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount config as source of truth
+      - ./config:/app/config:ro
+      # AWS credentials
+      - ~/.aws/credentials:/home/health/.aws/credentials:ro
+      - ~/.aws/config:/home/health/.aws/config:ro
+    environment:
+      AWS_PROFILE: affinity
+      AWS_REGION: us-east-2
+      PYTHONUNBUFFERED: "1"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/liveness"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - vpn-network
+
+  # Optional: Prometheus exporter for metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: vpn-health-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./vpnctl/health/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    depends_on:
+      - vpn-health
+    networks:
+      - vpn-network
+
+networks:
+  vpn-network:
+    driver: bridge

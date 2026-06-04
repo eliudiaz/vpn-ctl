@@ -1,0 +1,401 @@
+---
+# VPN Health Monitor - Kubernetes Deployment Manifests
+# ============================================================
+# Deploys the VPN health monitoring application to Kubernetes
+# Accessible at: vpn.assurehub.io/health (requires DNS & Ingress)
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vpn-monitoring
+  labels:
+    app: vpn-health-monitor
+
+---
+# ConfigMap: VPN Targets Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vpn-targets-config
+  namespace: vpn-monitoring
+data:
+  vpn-targets.yaml: |
+    providers:
+      - name: "Vimenca"
+        description: "Banking services provider"
+        enabled: true
+        targets:
+          - name: "Primary-Banking"
+            ip: "172.16.70.1"
+            port: 8080
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "Securities"
+            ip: "172.16.65.21"
+            port: 443
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "Integration-Hub"
+            ip: "172.16.82.28"
+            port: 8088
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+
+      - name: "CIBAO"
+        description: "Enterprise network"
+        enabled: true
+        targets:
+          - name: "Data-Warehouse"
+            ip: "172.17.10.50"
+            port: 1433
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "CRM-Portal"
+            ip: "172.17.5.10"
+            port: 8080
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "ERP-API"
+            ip: "172.17.5.20"
+            port: 8443
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "Message-Broker"
+            ip: "172.17.20.10"
+            port: 5672
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+
+      - name: "Affinity-Legacy"
+        description: "Legacy MSSQL databases"
+        enabled: true
+        targets:
+          - name: "APAP-Produccion"
+            ip: "192.168.100.8"
+            port: 1433
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "Pruebas"
+            ip: "192.168.100.11"
+            port: 1433
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "Produccion-Secondary"
+            ip: "192.168.100.12"
+            port: 1433
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+          - name: "Application-Gateway"
+            ip: "172.133.5.4"
+            port: 443
+            protocol: "icmp"
+            timeout: 5
+            enabled: true
+
+    monitoring:
+      interval_seconds: 60
+      history_retention: 3600
+      max_history_per_target: 60
+      default_timeout: 5
+      max_concurrent: 10
+
+---
+# ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vpn-health-monitor
+  namespace: vpn-monitoring
+
+---
+# ClusterRole: Allow reading pods and VPN-related resources
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vpn-health-monitor
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list"]
+
+---
+# ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vpn-health-monitor
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: vpn-health-monitor
+subjects:
+  - kind: ServiceAccount
+    name: vpn-health-monitor
+    namespace: vpn-monitoring
+
+---
+# Deployment: VPN Health Monitor Application
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vpn-health-monitor
+  namespace: vpn-monitoring
+  labels:
+    app: vpn-health-monitor
+    version: "1.0.0"
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: vpn-health-monitor
+  template:
+    metadata:
+      labels:
+        app: vpn-health-monitor
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: vpn-health-monitor
+      securityContext:
+        runAsNonRoot: false  # Needs root for ICMP
+        runAsUser: 0
+        fsGroup: 0
+        capabilities:
+          add:
+            - NET_RAW  # Required for ICMP ping
+
+      containers:
+      - name: monitor
+        image: python:3.11-slim
+        imagePullPolicy: IfNotPresent
+
+        workingDir: /app
+        command: ["/bin/bash"]
+        args:
+          - -c
+          - |
+            pip install -q -r requirements.txt && \
+            python main.py
+
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: LOG_LEVEL
+          value: "INFO"
+
+        volumeMounts:
+        - name: app-code
+          mountPath: /app
+        - name: vpn-config
+          mountPath: /app/vpn-targets.yaml
+          subPath: vpn-targets.yaml
+          readOnly: true
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /config
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 2
+
+        securityContext:
+          allowPrivilegeEscalation: true
+          privileged: false
+          capabilities:
+            add:
+              - NET_RAW
+
+      volumes:
+      - name: app-code
+        configMap:
+          name: vpn-monitor-code
+          defaultMode: 0555
+      - name: vpn-config
+        configMap:
+          name: vpn-targets-config
+          defaultMode: 0444
+
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - vpn-health-monitor
+              topologyKey: kubernetes.io/hostname
+
+---
+# Service: Expose application internally
+apiVersion: v1
+kind: Service
+metadata:
+  name: vpn-health-monitor
+  namespace: vpn-monitoring
+  labels:
+    app: vpn-health-monitor
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: vpn-health-monitor
+
+---
+# Ingress: Expose application externally
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vpn-health-monitor
+  namespace: vpn-monitoring
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - vpn.assurehub.io
+    secretName: vpn-health-monitor-tls
+  rules:
+  - host: vpn.assurehub.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: vpn-health-monitor
+            port:
+              number: 80
+
+---
+# HorizontalPodAutoscaler: Auto-scale based on CPU
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: vpn-health-monitor
+  namespace: vpn-monitoring
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vpn-health-monitor
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+# NetworkPolicy: Restrict traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vpn-health-monitor
+  namespace: vpn-monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: vpn-health-monitor
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8000
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow ICMP (ping)
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: ICMP
+  # Allow TCP (for health checks)
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+
+---
+# PodDisruptionBudget: Ensure availability during disruptions
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vpn-health-monitor
+  namespace: vpn-monitoring
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: vpn-health-monitor
