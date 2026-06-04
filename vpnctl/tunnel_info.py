@@ -40,7 +40,7 @@ class TunnelInfo:
 class TunnelInfoCollector:
     """Collect tunnel information from AWS and specs."""
 
-    def __init__(self, aws_profile: str = "affinity", region: str = "us-east-2"):
+    def __init__(self, aws_profile: str = "default", region: str = "us-east-2"):
         self.aws_profile = aws_profile
         self.region = region
 
@@ -64,10 +64,10 @@ class TunnelInfoCollector:
                 for tag in vpn.get("Tags", []):
                     if tag["Key"] == "Name":
                         vpn_name = tag["Value"]
-                        # Extract peer name from VPN name (e.g., "affinity-vimenca-vpn" -> "vimenca")
-                        if vpn_name.startswith("affinity-") and vpn_name.endswith("-vpn"):
-                            # Remove first "affinity-" prefix and last "-vpn" suffix only
-                            peer_name = vpn_name[9:]  # Remove "affinity-" (9 chars)
+                        # Extract peer name from VPN name (e.g., "company-partner-vpn" -> "vimenca")
+                        if vpn_name.startswith("vpn-") and vpn_name.endswith("-vpn"):
+                            # Remove first "vpn-" prefix and last "-vpn" suffix only
+                            peer_name = vpn_name[9:]  # Remove "vpn-" (9 chars)
                             peer_name = peer_name[:-4]  # Remove "-vpn" (4 chars)
                             peer_name = peer_name.lower()
                             break

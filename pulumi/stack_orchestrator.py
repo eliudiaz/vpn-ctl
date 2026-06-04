@@ -135,7 +135,7 @@ class CoreStackOrchestrator(StackOrchestrator):
 
         logger.info("CoreStack: Creating Transit Gateway Hub...")
         hub = TransitGatewayHub(
-            name="affinity-hub",
+            name="vpn-hub",
             region=pulumi.Config("aws").get("region") or "us-east-2",
             description="Transit Gateway Hub for aff-atg (shared)",
             tags={"Environment": "production", "StackType": "core"}

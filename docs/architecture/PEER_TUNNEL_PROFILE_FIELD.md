@@ -9,7 +9,7 @@
 **Current peer manifest structure**:
 
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: vimenca
@@ -28,7 +28,7 @@ spec:
 **Make the profile reference MORE PROMINENT with additional metadata**:
 
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: vimenca
@@ -104,7 +104,7 @@ spec:
     profileRef:
       kind: TunnelProfile
       name: checkpoint_r80
-      apiVersion: vpn.affinity.io/v1
+      apiVersion: vpn.example.io/v1
       namespace: vpn-infrastructure
     
     # Overrides
@@ -162,7 +162,7 @@ spec:
 **Combine clarity with practical validation**:
 
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: vimenca
@@ -245,7 +245,7 @@ vpn-ctl peer list --tunnel-profile=checkpoint_r80 --action=update-dpd
 
 ### vimenca.yaml
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: vimenca
@@ -266,7 +266,7 @@ spec:
 
 ### cibao.yaml
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: cibao
@@ -287,7 +287,7 @@ spec:
 
 ### apap.yaml
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: apap
@@ -306,12 +306,12 @@ spec:
   # ... rest of spec ...
 ```
 
-### affinity-legacy-network.yaml
+### internal-legacy-network.yaml
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
-  name: affinity-legacy-network
+  name: internal-legacy-network
   labels:
     tunnel-profile: checkpoint_r80
     tunnel-vendor: checkpoint

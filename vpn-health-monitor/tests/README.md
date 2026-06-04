@@ -279,4 +279,4 @@ If UI changes, update selectors in:
 
 ## Contact
 
-For issues or improvements, contact the Affinity Infrastructure Team.
+For issues or improvements, contact the Organization Infrastructure Team.

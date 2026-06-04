@@ -21,7 +21,7 @@ class StateSplitter:
             dev_state: Original monolithic dev stack state
 
         Returns:
-            (core_state, vimenca_state, cibao_state, apap_state, affinity_legacy_state)
+            (core_state, vimenca_state, cibao_state, apap_state, vpn_legacy_state)
         """
         resources = dev_state.get("resources", [])
 
@@ -29,7 +29,7 @@ class StateSplitter:
         vimenca_resources = []
         cibao_resources = []
         apap_resources = []
-        affinity_legacy_resources = []
+        vpn_legacy_resources = []
 
         # Categorize resources by peer
         for resource in resources:
@@ -44,8 +44,8 @@ class StateSplitter:
                 cibao_resources.append(resource)
             elif "apap" in name:
                 apap_resources.append(resource)
-            elif "affinity" in name or "legacy" in name:
-                affinity_legacy_resources.append(resource)
+            elif "default" in name or "legacy" in name:
+                vpn_legacy_resources.append(resource)
             else:
                 # Default to core (TGW routes, etc.)
                 core_resources.append(resource)
@@ -55,8 +55,8 @@ class StateSplitter:
         vimenca_state = self._create_state(dev_state, vimenca_resources, "peer-vimenca")
         cibao_state = self._create_state(dev_state, cibao_resources, "peer-cibao")
         apap_state = self._create_state(dev_state, apap_resources, "peer-apap")
-        affinity_legacy_state = self._create_state(
-            dev_state, affinity_legacy_resources, "peer-affinity-legacy-network"
+        vpn_legacy_state = self._create_state(
+            dev_state, vpn_legacy_resources, "peer-internal-legacy-network"
         )
 
         return (
@@ -64,7 +64,7 @@ class StateSplitter:
             vimenca_state,
             cibao_state,
             apap_state,
-            affinity_legacy_state,
+            vpn_legacy_state,
         )
 
     def _is_core_resource(self, urn: str, name: str) -> bool:
@@ -105,7 +105,7 @@ class StateSplitter:
         """Save split states to files.
 
         Args:
-            states: Tuple of (core, vimenca, cibao, apap, affinity_legacy) states
+            states: Tuple of (core, vimenca, cibao, apap, vpn_legacy) states
 
         Returns:
             Dict mapping stack name to file path
@@ -118,17 +118,17 @@ class StateSplitter:
             "peer-vimenca": split_dir / "peer-vimenca-state.json",
             "peer-cibao": split_dir / "peer-cibao-state.json",
             "peer-apap": split_dir / "peer-apap-state.json",
-            "peer-affinity-legacy-network": split_dir / "peer-affinity-legacy-network-state.json",
+            "peer-internal-legacy-network": split_dir / "peer-internal-legacy-network-state.json",
         }
 
-        core, vimenca, cibao, apap, affinity_legacy = states
+        core, vimenca, cibao, apap, vpn_legacy = states
 
         for name, state in [
             ("core", core),
             ("peer-vimenca", vimenca),
             ("peer-cibao", cibao),
             ("peer-apap", apap),
-            ("peer-affinity-legacy-network", affinity_legacy),
+            ("peer-internal-legacy-network", vpn_legacy),
         ]:
             with open(state_files[name], "w") as f:
                 json.dump(state, f, indent=2)

@@ -64,8 +64,8 @@ def analyze_state(state):
             peer = 'cibao'
         elif 'apap' in urn_lower:
             peer = 'apap'
-        elif 'affinity-legacy' in urn_lower:
-            peer = 'affinity-legacy-network'
+        elif 'default-legacy' in urn_lower:
+            peer = 'internal-legacy-network'
         elif 'checkpoint-dr' in urn_lower:
             peer = 'checkpoint-dr'
         else:

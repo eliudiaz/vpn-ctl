@@ -1,4 +1,4 @@
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: example-partner

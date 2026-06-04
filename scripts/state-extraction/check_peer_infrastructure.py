@@ -20,13 +20,13 @@ def get_aws_resources(peer_name):
         'vimenca': ['vpn-05ea9c12f40b67844', 'cgw-09e8da53ae18ef414'],
         'cibao': ['vpn-0e751eec94d5d4743', 'cgw-0badc5b6e98ccc9df'],
         'apap': ['vpn-0603daac887e7abed', 'cgw-0bd99b5d30b39f86f'],
-        'affinity-legacy-network': ['vpn-08a56c49f3c27a1cc', 'cgw-0c066cb9b8e9ca969'],
+        'internal-legacy-network': ['vpn-08a56c49f3c27a1cc', 'cgw-0c066cb9b8e9ca969'],
     }
     return peers_map.get(peer_name, [])
 
 def check_vpn_connection(vpn_id):
     """Check VPN connection status."""
-    cmd = f'aws ec2 describe-vpn-connections --vpn-connection-ids {vpn_id} --region us-east-2 --profile affinity'
+    cmd = f'aws ec2 describe-vpn-connections --vpn-connection-ids {vpn_id} --region us-east-2 --profile default'
     output, code = run_cmd(cmd)
     
     if code != 0:
@@ -48,7 +48,7 @@ def check_vpn_connection(vpn_id):
 
 def check_customer_gateway(cgw_id):
     """Check customer gateway status."""
-    cmd = f'aws ec2 describe-customer-gateways --customer-gateway-ids {cgw_id} --region us-east-2 --profile affinity'
+    cmd = f'aws ec2 describe-customer-gateways --customer-gateway-ids {cgw_id} --region us-east-2 --profile default'
     output, code = run_cmd(cmd)
     
     if code != 0:
@@ -71,7 +71,7 @@ def check_customer_gateway(cgw_id):
 def main():
     os.chdir('/Users/eliudiaz/Documents/code/AFF/dev-ctx-asg2-core/asg-infra/aff-atg')
     
-    peers = ['vimenca', 'cibao', 'apap', 'affinity-legacy-network']
+    peers = ['vimenca', 'cibao', 'apap', 'internal-legacy-network']
     
     print()
     print("=" * 100)

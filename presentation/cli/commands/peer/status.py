@@ -11,7 +11,7 @@ from datetime import datetime
 @click.command()
 @click.argument('peer_name')
 @click.option('--region', default='us-east-2', help='AWS region')
-@click.option('--profile', default='affinity', help='AWS profile')
+@click.option('--profile', default='default', help='AWS profile')
 def status(peer_name, region, profile):
     """
     Show detailed status for a VPN peer.

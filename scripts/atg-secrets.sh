@@ -120,7 +120,7 @@ ${GREEN}CONTACTOS VIMENCA:${NC}
   • Eric Frias (Principal): 809-487-2679
   • Fermir Quezada (Secundario): 809-487-2602
 
-${GREEN}CONTACTOS AFFINITY:${NC}
+${GREEN}CONTACTOS ORGANIZATION:${NC}
 
   • Josué Ubico (Principal): 809.274.0000
   • Ricardo Peña (Secundario): 809.274.0000

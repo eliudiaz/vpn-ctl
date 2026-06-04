@@ -108,7 +108,7 @@ def recreate(peer_name, force, dry_run):
     click.secho("Step 2: Destroying resources from dev stack...", fg='yellow')
     try:
         # Target only this peer's resources using wildcard
-        target_pattern = f"*affinity-{peer['name']}*"
+        target_pattern = f"*default-{peer['name']}*"
         result = subprocess.run(
             ['pulumi', 'destroy', '--yes', '--stack', 'dev', '--target', target_pattern],
             cwd='pulumi',

@@ -23,7 +23,7 @@ from typing import List, Dict
 # AWS config
 aws_config = pulumi.Config("aws")
 region = aws_config.get("region") or "us-east-2"
-aws_profile = aws_config.get("profile") or os.environ.get("AWS_PROFILE", "affinity")
+aws_profile = aws_config.get("profile") or os.environ.get("AWS_PROFILE", "default")
 
 # Get AWS session
 session = boto3.Session(profile_name=aws_profile, region_name=region)
@@ -89,7 +89,7 @@ def get_tgw_id() -> str:
     try:
         response = ec2_client.describe_transit_gateways(
             Filters=[
-                {"Name": "tag:Name", "Values": ["affinity-hub-tgw"]},
+                {"Name": "tag:Name", "Values": ["vpn-hub-tgw"]},
                 {"Name": "state", "Values": ["available"]}
             ]
         )
@@ -131,7 +131,7 @@ print(f"✓ Found TGW: {tgw_id}")
 
 def get_vpn_connection_id(peer_name: str) -> str:
     """Get VPN Connection ID from AWS (created by vpnctl)."""
-    vpn_name = f"affinity-{peer_name.lower()}-vpn"
+    vpn_name = f"vpn-{peer_name.lower()}-vpn"
     
     try:
         response = ec2_client.describe_vpn_connections(
@@ -242,7 +242,7 @@ for cluster_name in eks_clusters:
                 destination_cidr_block=cidr,
                 transit_gateway_id=tgw_id,
                 tags={
-                    "Name": f"affinity-vpc-route-{peer_name}-{cidr}",
+                    "Name": f"default-vpc-route-{peer_name}-{cidr}",
                     "Peer": peer_name,
                     "Cluster": cluster_name,
                 }

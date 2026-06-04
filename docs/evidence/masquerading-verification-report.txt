@@ -53,7 +53,7 @@ Status: ✅ Layer 2 SNAT masquerading configured for all Vimenca CIDRs
 ================================================================================
 LAYER 3: SNAT SUBNET ROUTING (SNAT Instance Exit)
 ================================================================================
-Route Table: affinity-snat-rt
+Route Table: vpn-snat-rt
 Routes configured to Transit Gateway:
   ✅ 172.16.70.0/24    → TGW (tgw-0572ce4b80ff7445a)
   ✅ 172.16.65.21/32   → TGW (tgw-0572ce4b80ff7445a)

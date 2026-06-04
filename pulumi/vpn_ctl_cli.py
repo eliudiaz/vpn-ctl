@@ -144,27 +144,27 @@ class VpnCtlPreviewService:
         # 1. Customer Gateway
         resources.append({
             "type": "aws:ec2/customerGateway:CustomerGateway",
-            "name": f"affinity-{peer_name}-cgw",
+            "name": f"vpn-{peer_name}-cgw",
             "operation": "create",
             "properties": {
                 "bgpAsn": bgp_asn,
                 "publicIp": public_ip,
                 "type": "ipsec.1",
-                "tags": {"Name": f"affinity-{peer_name}-cgw"},
+                "tags": {"Name": f"vpn-{peer_name}-cgw"},
             },
         })
 
         # 2. VPN Connection
         resources.append({
             "type": "aws:ec2/vpnConnection:VpnConnection",
-            "name": f"affinity-{peer_name}-vpn",
+            "name": f"vpn-{peer_name}-vpn",
             "operation": "create",
             "properties": {
-                "customerGatewayId": "${aws_customer_gateway.affinity-" + peer_name + "-cgw.id}",
+                "customerGatewayId": "${aws_customer_gateway.default-" + peer_name + "-cgw.id}",
                 "transitGatewayId": "${data.aws_ec2_transit_gateway.existing.id}",
                 "type": "ipsec.1",
                 "staticRoutesOnly": True,
-                "tags": {"Name": f"affinity-{peer_name}-vpn"},
+                "tags": {"Name": f"vpn-{peer_name}-vpn"},
             },
         })
 
@@ -172,7 +172,7 @@ class VpnCtlPreviewService:
         for i, cidr in enumerate(destination_cidrs, 1):
             resources.append({
                 "type": "aws:ec2transitgateway/route:Route",
-                "name": f"affinity-{peer_name}-tgw-route-{i}",
+                "name": f"vpn-{peer_name}-tgw-route-{i}",
                 "operation": "create",
                 "properties": {
                     "destinationCidrBlock": cidr,
@@ -185,7 +185,7 @@ class VpnCtlPreviewService:
         for i, cidr in enumerate(destination_cidrs, 1):
             resources.append({
                 "type": "aws:ec2/route:Route",
-                "name": f"affinity-{peer_name}-vpc-route-{i}",
+                "name": f"vpn-{peer_name}-vpc-route-{i}",
                 "operation": "create",
                 "properties": {
                     "routeTableId": "${aws_route_table.cluster.id}",
@@ -200,24 +200,24 @@ class VpnCtlPreviewService:
             if snat_type == "nat_instance":
                 resources.append({
                     "type": "aws:ec2/instance:Instance",
-                    "name": f"affinity-{peer_name}-snat",
+                    "name": f"vpn-{peer_name}-snat",
                     "operation": "create",
                     "properties": {
                         "ami": "${data.aws_ami.ubuntu.id}",
                         "instanceType": "t3.micro",
                         "subnetId": "${aws_subnet.private.id}",
                         "sourceDestCheck": False,
-                        "tags": {"Name": f"affinity-{peer_name}-snat"},
+                        "tags": {"Name": f"vpn-{peer_name}-snat"},
                     },
                 })
 
                 # SNAT security group
                 resources.append({
                     "type": "aws:ec2/securityGroup:SecurityGroup",
-                    "name": f"affinity-{peer_name}-snat-sg",
+                    "name": f"vpn-{peer_name}-snat-sg",
                     "operation": "create",
                     "properties": {
-                        "name": f"affinity-{peer_name}-snat-sg",
+                        "name": f"vpn-{peer_name}-snat-sg",
                         "vpcId": "${aws_vpc.main.id}",
                         "ingress": [
                             {"fromPort": 0, "toPort": 65535, "protocol": "-1", "cidrBlocks": ["0.0.0.0/0"]}

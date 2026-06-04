@@ -918,7 +918,7 @@ class VPNTunnelStatus:
                     self.vpn_mappings[provider_name] = vpn_id
                     return vpn_id
 
-                # Try substring match (handles "Affinity-Legacy" vs "affinity-legacy-network")
+                # Try substring match (handles "Organization-Legacy" vs "internal-legacy-network")
                 if customer_tag and (customer_tag in provider_lower or provider_lower in customer_tag):
                     vpn_id = vpn["VpnConnectionId"]
                     self.vpn_mappings[provider_name] = vpn_id

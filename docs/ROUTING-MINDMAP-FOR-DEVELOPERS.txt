@@ -1,17 +1,17 @@
 ================================================================================
-ROUTING ARCHITECTURE: VIMENCA vs AFFINITY-LEGACY-NETWORK
+ROUTING ARCHITECTURE: VIMENCA vs ORGANIZATION-LEGACY-NETWORK
 Mind Map & Visual Guide for Developers
 ================================================================================
 
                                     ┌─────────────────────────────────────────┐
-                                    │   AFFINITY AWS INFRASTRUCTURE            │
+                                    │   ORGANIZATION AWS INFRASTRUCTURE            │
                                     │   (Transit Gateway Multi-VPN Hub)        │
                                     └─────────────────────────────────────────┘
                                                       │
                                 ┌─────────────────────┼─────────────────────┐
                                 │                     │                     │
                         ┌───────▼──────────┐  ┌──────▼──────────┐  ┌──────▼──────────┐
-                        │  VIMENCA VPN     │  │  CIBAO VPN      │  │ AFFINITY-LEGACY  │
+                        │  VIMENCA VPN     │  │  CIBAO VPN      │  │ ORGANIZATION-LEGACY  │
                         │  (ACTIVE)        │  │  (CONFIGURED)   │  │ (CONFIGURED)     │
                         └──────────────────┘  └─────────────────┘  └──────────────────┘
                                 │
@@ -138,7 +138,7 @@ Destination: VIMENCA Server at 172.16.70.1 (Banca Vimenca)
 │  │  172.16.65.21/32  → vpn-05ea9c12f40b67844 (Vimenca)        │           │
 │  │  172.16.82.0/24   → vpn-05ea9c12f40b67844 (Vimenca)        │           │
 │  │  172.17.0.0/16    → vpn-0e751eec94d5d4743 (CIBAO)          │           │
-│  │  192.168.100.0/24 → vpn-028ce4c7f59b83bdd (Affinity-Legacy)│           │
+│  │  192.168.100.0/24 → vpn-028ce4c7f59b83bdd (Organization-Legacy)│           │
 │  │                                                              │           │
 │  │ Decision: Send via VIMENCA VPN CONNECTION                   │           │
 │  └──────────────────────────────────────────────────────────────┘           │
@@ -207,7 +207,7 @@ Destination: VIMENCA Server at 172.16.70.1 (Banca Vimenca)
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ════════════════════════════════════════════════════════════════════════════════
-SCENARIO 2: AFFINITY-LEGACY-NETWORK VPN (WITHOUT SNAT MASQUERADING)
+SCENARIO 2: ORGANIZATION-LEGACY-NETWORK VPN (WITHOUT SNAT MASQUERADING)
 ════════════════════════════════════════════════════════════════════════════════
 
 Destination: Legacy MSSQL Server at 192.168.100.8
@@ -306,11 +306,11 @@ Destination: Legacy MSSQL Server at 192.168.100.8
 │  │  172.16.65.21/32  → vpn-05ea9c12f40b67844 (Vimenca)        │           │
 │  │  172.16.82.0/24   → vpn-05ea9c12f40b67844 (Vimenca)        │           │
 │  │  172.17.0.0/16    → vpn-0e751eec94d5d4743 (CIBAO)          │           │
-│  │  192.168.100.8/32 → vpn-028ce4c7f59b83bdd (Affinity) ← MATCH│          │
-│  │  192.168.100.11/32→ vpn-028ce4c7f59b83bdd (Affinity)        │           │
-│  │  192.168.100.12/32→ vpn-028ce4c7f59b83bdd (Affinity)        │           │
+│  │  192.168.100.8/32 → vpn-028ce4c7f59b83bdd (Organization) ← MATCH│          │
+│  │  192.168.100.11/32→ vpn-028ce4c7f59b83bdd (Organization)        │           │
+│  │  192.168.100.12/32→ vpn-028ce4c7f59b83bdd (Organization)        │           │
 │  │                                                              │           │
-│  │ Decision: Send via AFFINITY-LEGACY VPN CONNECTION            │           │
+│  │ Decision: Send via ORGANIZATION-LEGACY VPN CONNECTION            │           │
 │  └──────────────────────────────────────────────────────────────┘           │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -319,7 +319,7 @@ Destination: Legacy MSSQL Server at 192.168.100.8
 │ LAYER 5: VPN TUNNEL → IPsec ENCRYPTION                                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│  Affinity-Legacy VPN Connection: vpn-028ce4c7f59b83bdd                     │
+│  Organization-Legacy VPN Connection: vpn-028ce4c7f59b83bdd                     │
 │                                                                              │
 │  Tunnel 1 (Ready): 3.13.60.50 (AWS side) ↔ 52.254.86.115 (Legacy side)   │
 │                                                                              │

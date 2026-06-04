@@ -8,7 +8,7 @@ Arquitectura escalable usando POO:
 
 Uso:
     # En clusters.py o directamente aquí
-    hub = TransitGatewayHub("affinity-hub", region="us-east-2")
+    hub = TransitGatewayHub("vpn-hub", region="us-east-2")
 
     cluster1 = EksClusterConnector(
         name="asg-plat-dev",
@@ -1250,16 +1250,16 @@ config = pulumi.Config()
 aws_config = pulumi.Config("aws")
 
 region = aws_config.get("region") or "us-east-2"
-project_name = config.get("project_name") or "affinity"
+project_name = config.get("project_name") or "default"
 
-# CIDRs adicionales de Affinity
-affinity_cidrs_str = config.get("affinity_cidrs") or "172.33.6.0/28,172.33.16.0/28"
-affinity_cidrs = [cidr.strip() for cidr in affinity_cidrs_str.split(",")]
-affinity_aggregate = config.get("affinity_aggregate_cidr") or "172.33.0.0/16"
+# CIDRs adicionales de Organization
+vpn_cidrs_str = config.get("vpn_cidrs") or "172.33.6.0/28,172.33.16.0/28"
+vpn_cidrs = [cidr.strip() for cidr in vpn_cidrs_str.split(",")]
+vpn_aggregate = config.get("vpn_aggregate_cidr") or "172.33.0.0/16"
 
 # Lista de destinos para los clusters
 # Will be set after loading VPN peer configurations
-all_destination_cidrs = [affinity_aggregate]
+all_destination_cidrs = [vpn_aggregate]
 
 logger.info("=" * 80)
 logger.info("INICIANDO DESPLIEGUE: Infraestructura Transit Gateway")
@@ -1577,8 +1577,8 @@ if vpn_peers:
     first_vpn_connector = vpn_connectors.get(first_peer_config.name)
 
     vpn_form_data = {
-        "affinity": {
-            "company": "Affinity",
+        "default": {
+            "company": "Organization",
             "device": "AWS Transit Gateway",
             "version": "AWS Site-to-Site VPN",
             "source_cidrs": [c.cluster_config.vpc_cidr for c in connected_clusters.values()],
@@ -1594,8 +1594,8 @@ if vpn_peers:
     }
 
     if first_vpn_connector:
-        vpn_form_data["affinity"]["tunnel1_ip"] = first_vpn_connector.vpn_connection.tunnel1_address
-        vpn_form_data["affinity"]["tunnel2_ip"] = first_vpn_connector.vpn_connection.tunnel2_address
+        vpn_form_data["default"]["tunnel1_ip"] = first_vpn_connector.vpn_connection.tunnel1_address
+        vpn_form_data["default"]["tunnel2_ip"] = first_vpn_connector.vpn_connection.tunnel2_address
 
     pulumi.export("vpn_form_data", vpn_form_data)
 

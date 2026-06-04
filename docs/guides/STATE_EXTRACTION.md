@@ -27,7 +27,7 @@ pulumi/stacks/dev.json    ← All peers + shared infra mixed (700+ lines)
 ├─ vimenca VPN + routes (11 resources)
 ├─ cibao VPN + routes (6 resources)
 ├─ apap VPN + routes (6 resources)
-└─ affinity-legacy-network VPN + routes (6 resources)
+└─ internal-legacy-network VPN + routes (6 resources)
 ```
 
 ### Problem
@@ -48,7 +48,7 @@ pulumi/stacks/dev.json    ← All peers + shared infra mixed (700+ lines)
 ├─ peer-vimenca.json                  ← vimenca only (8 resources)
 ├─ peer-cibao.json                    ← cibao only (6 resources)
 ├─ peer-apap.json                     ← apap only (6 resources)
-└─ peer-affinity-legacy-network.json  ← affinity-legacy-network only (6 resources)
+└─ peer-internal-legacy-network.json  ← internal-legacy-network only (6 resources)
                                       ════════════════
                                       TOTAL: 36 resources ✓
 ```
@@ -88,7 +88,7 @@ Checks performed:
 
 ```bash
 # Example: If AWS resource count doesn't match
-aws ec2 describe-vpn-connections --profile affinity --region us-east-2 | jq '.VpnConnections | length'
+aws ec2 describe-vpn-connections --profile default --region us-east-2 | jq '.VpnConnections | length'
 
 # Check Pulumi state
 cd pulumi && pulumi stack select dev && pulumi export --json | jq '.resources | length'
@@ -205,7 +205,7 @@ Type 'EXTRACT STATE' to confirm: EXTRACT STATE
     ✓ peer-vimenca-state.json
     ✓ peer-cibao-state.json
     ✓ peer-apap-state.json
-    ✓ peer-affinity-legacy-network-state.json
+    ✓ peer-internal-legacy-network-state.json
 
 3️⃣  Verifying zero data loss...
     ✓ Resource count: 36 (original) = 36 (split) ✓
@@ -217,14 +217,14 @@ Type 'EXTRACT STATE' to confirm: EXTRACT STATE
     ✓ peer-vimenca initialized
     ✓ peer-cibao initialized
     ✓ peer-apap initialized
-    ✓ peer-affinity-legacy-network initialized
+    ✓ peer-internal-legacy-network initialized
 
 5️⃣  Verifying all stacks...
     ✓ core: 12 resources
     ✓ peer-vimenca: 8 resources
     ✓ peer-cibao: 6 resources
     ✓ peer-apap: 6 resources
-    ✓ peer-affinity-legacy-network: 6 resources
+    ✓ peer-internal-legacy-network: 6 resources
 
 6️⃣  Running final validation...
     ✓ All migrations valid
@@ -248,24 +248,24 @@ cd pulumi && pulumi stack ls
   ✓ peer-vimenca
   ✓ peer-cibao
   ✓ peer-apap
-  ✓ peer-affinity-legacy-network
+  ✓ peer-internal-legacy-network
 
 # 2. Specs are valid
 vpn-ctl spec validate
   ✓ vimenca.yaml: valid
   ✓ cibao.yaml: valid
   ✓ apap.yaml: valid
-  ✓ affinity-legacy-network.yaml: valid
+  ✓ internal-legacy-network.yaml: valid
 
 # 3. States match specs (sync check)
 vpn-ctl spec sync --report-only
   ✓ vimenca: IN SYNC
   ✓ cibao: IN SYNC
   ✓ apap: IN SYNC
-  ✓ affinity-legacy-network: IN SYNC
+  ✓ internal-legacy-network: IN SYNC
 
 # 4. Each peer is deployable (preview test)
-for peer in vimenca cibao apap affinity-legacy-network; do
+for peer in vimenca cibao apap internal-legacy-network; do
     cd pulumi/stacks/peers
     pulumi stack select peer-$peer
     pulumi up --preview 2>&1 | grep -E "(Plan:|No changes)"
@@ -277,19 +277,19 @@ vpn-ctl tunnel status
   ✓ vimenca: UP (same as before)
   ✓ cibao: UP (same as before)
   ✓ apap: DOWN (same as before - awaiting customer config)
-  ✓ affinity-legacy-network: UP (same as before)
+  ✓ internal-legacy-network: UP (same as before)
 
 # 6. AWS resources still exist
-aws ec2 describe-vpn-connections --profile affinity --region us-east-2
+aws ec2 describe-vpn-connections --profile default --region us-east-2
   ✓ vpn-05ea9c12f40b67844 (vimenca) - exists
   ✓ vpn-0e751eec94d5d4743 (cibao) - exists
   ✓ vpn-0603daac887e7abed (apap) - exists
-  ✓ affinity-affinity-legacy-network-vpn - exists
+  ✓ default-internal-legacy-network-vpn - exists
 
 # 7. TGW routes still active
 aws ec2 search-transit-gateway-routes \
     --transit-gateway-route-table-id tgw-rtb-079e9cb450e5355e6 \
-    --region us-east-2 --profile affinity
+    --region us-east-2 --profile default
   ✓ All peer CIDRs: active
   ✓ No blackhole routes
 
@@ -335,7 +335,7 @@ git commit -m "feat: Complete state extraction - dev → per-peer stacks
 
 State extraction and verification complete:
 - Original state: dev stack (monolithic)
-- New states: core + peer-vimenca + peer-cibao + peer-apap + peer-affinity-legacy-network
+- New states: core + peer-vimenca + peer-cibao + peer-apap + peer-internal-legacy-network
 - Resource count: 36 (original) = 36 (split) ✓
 - AWS resources: verified in sync ✓
 - Tunnel status: unchanged ✓
@@ -371,7 +371,7 @@ Deleting new stacks...
   ✓ Deleted peer-vimenca
   ✓ Deleted peer-cibao
   ✓ Deleted peer-apap
-  ✓ Deleted peer-affinity-legacy-network
+  ✓ Deleted peer-internal-legacy-network
 
 Restoring dev stack...
   ✓ Restored all 36 resources

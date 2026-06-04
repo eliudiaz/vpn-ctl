@@ -356,7 +356,7 @@ vpn-ctl spec validate
 ```bash
 vpn-ctl peer deploy customer-x --dry-run
 # See what would be deployed before actual deployment
-# Check AWS credentials: aws sts get-caller-identity --profile affinity
+# Check AWS credentials: aws sts get-caller-identity --profile default
 ```
 
 ### Tunnel status offline

@@ -1,12 +1,12 @@
 ================================================================================
 AWS EC2 NETWORKING ENGINEER ASSESSMENT REPORT
-Affinity-Legacy-Network VPN Integration - Packet Flow Verification
+Organization-Legacy-Network VPN Integration - Packet Flow Verification
 Date: 2026-03-11
 ================================================================================
 
 EXECUTIVE SUMMARY
 =================
-✅ VERIFIED: Affinity-Legacy-Network traffic is sending packets with ORIGINAL 
+✅ VERIFIED: Organization-Legacy-Network traffic is sending packets with ORIGINAL 
 pod IP (172.31.x.x), NOT masqueraded IP (203.0.113.10).
 
 The current architecture is CORRECT and requires NO changes.
@@ -31,7 +31,7 @@ DETAILED FINDINGS
        iptables -t nat -A POSTROUTING -d 203.0.113.10/32 -j SNAT --to-source 203.0.113.10
 
    ✅ These rules affect ONLY Vimenca traffic (172.16.x.x networks)
-   ✅ Affinity-legacy-network traffic (192.168.100.x) NOT matched by ANY rule
+   ✅ Organization-legacy-network traffic (192.168.100.x) NOT matched by ANY rule
 
 3. PACKET FLOW ANALYSIS
 
@@ -49,7 +49,7 @@ DETAILED FINDINGS
      ↓
    Vimenca sees source IP: 203.0.113.10 ✅
 
-   For Affinity-Legacy-Network Traffic (192.168.100.x):
+   For Organization-Legacy-Network Traffic (192.168.100.x):
    ───────────────────────────────────────────────────
    Pod (172.31.x.x)
      ↓
@@ -68,8 +68,8 @@ DETAILED FINDINGS
 4. ROUTING VERIFICATION
    ✅ VPC routes exist for 192.168.100.8/32, 192.168.100.11/32, 192.168.100.12/32
    ✅ Routes point to Transit Gateway (TGW)
-   ✅ TGW routes configured for affinity-legacy-network VPN connection
-   ✅ VPN connection status: vpn-028ce4c7f59b83bdd (affinity-legacy-network)
+   ✅ TGW routes configured for internal-legacy-network VPN connection
+   ✅ VPN connection status: vpn-028ce4c7f59b83bdd (internal-legacy-network)
 
 5. SECURITY GROUPS & FIREWALL RULES
    ✅ EKS worker node security groups: Allow all outbound traffic (default)
@@ -87,12 +87,12 @@ The vpn-snat-config-v2 DaemonSet correctly implements provider-specific SNAT:
   Vimenca       | 172.16.70.0/24      | 203.0.113.10 | ✅ APPLIED
   Vimenca       | 172.16.65.21/32     | 203.0.113.10 | ✅ APPLIED
   Vimenca       | 172.16.82.0/24      | 203.0.113.10 | ✅ APPLIED
-  Affinity-Leg  | 192.168.100.0/24    | (no SNAT)    | ✅ CORRECT
+  Organization-Leg  | 192.168.100.0/24    | (no SNAT)    | ✅ CORRECT
   CIBAO         | 172.17.0.0/16       | (no SNAT)    | ✅ CORRECT
 
 Each provider gets the networking treatment it needs:
   - Vimenca: Masqueraded to single IP (as required by their firewall)
-  - Affinity-Legacy: Original pod IP (as required by legacy infrastructure)
+  - Organization-Legacy: Original pod IP (as required by legacy infrastructure)
   - CIBAO: Original pod IP (as configured)
 
 ================================================================================
@@ -116,7 +116,7 @@ RECOMMENDATIONS FROM AWS NETWORKING ENGINEER
 
 1. ✅ NO CHANGES NEEDED to current configuration
    - SNAT rules are provider-specific and correct
-   - Affinity-legacy-network correctly uses original pod IPs
+   - Organization-legacy-network correctly uses original pod IPs
    - All routing and VPN infrastructure is properly configured
 
 2. ✅ VERIFIED: Firewall rule requirement is correct
@@ -127,16 +127,16 @@ RECOMMENDATIONS FROM AWS NETWORKING ENGINEER
 3. ✅ WAIT for legacy network team to apply firewall rules
 
 4. ✅ THEN: Run connectivity tests to confirm:
-   ./scripts/test-affinity-legacy-network.sh all
+   ./scripts/test-internal-legacy-network.sh all
 
 ================================================================================
 CONCLUSION
 ================================================================================
 
-✅ Affinity-Legacy-Network is correctly configured to send packets with 
+✅ Organization-Legacy-Network is correctly configured to send packets with 
    ORIGINAL pod IP (172.31.x.x)
 
-✅ NO masquerading is applied to affinity-legacy-network traffic
+✅ NO masquerading is applied to internal-legacy-network traffic
 
 ✅ The DaemonSet (vpn-snat-config-v2) is correctly implementing 
    provider-specific SNAT rules

@@ -20,7 +20,7 @@ def infra():
 @click.option('--peers-config', type=click.Path(exists=True),
               default='config/vpn-peers.yaml', help='Path to peers config')
 @click.option('--region', default='us-east-2', help='AWS region')
-@click.option('--profile', default='affinity', help='AWS profile')
+@click.option('--profile', default='default', help='AWS profile')
 def export_config(output, peers_config, region, profile):
     """
     Export current infrastructure state to JSON config.
@@ -131,13 +131,13 @@ def get_transit_gateway(ec2):
     """Query Transit Gateway by name tag."""
     response = ec2.describe_transit_gateways(
         Filters=[
-            {'Name': 'tag:Name', 'Values': ['affinity-hub-tgw']},
+            {'Name': 'tag:Name', 'Values': ['vpn-hub-tgw']},
             {'Name': 'state', 'Values': ['available']}
         ]
     )
 
     if not response['TransitGateways']:
-        raise Exception("Transit Gateway 'affinity-hub-tgw' not found")
+        raise Exception("Transit Gateway 'vpn-hub-tgw' not found")
 
     tgw = response['TransitGateways'][0]
     return {

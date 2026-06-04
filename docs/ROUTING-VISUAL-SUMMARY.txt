@@ -17,7 +17,7 @@ Layer 1: POD LAYER
   
   Creates Packet:
   Source: 172.31.x.x (Pod's own IP)
-  Destination: 172.16.70.1 (Vimenca) OR 192.168.100.8 (Affinity-Legacy)
+  Destination: 172.16.70.1 (Vimenca) OR 192.168.100.8 (Organization-Legacy)
   
   ↓ Packet exits pod eth0 interface
 
@@ -44,7 +44,7 @@ Layer 2: NODE LAYER (iptables SNAT Rewrite)
   ─────────────────────────────────────────────────────────────────────────
   
   ╔═════════════════════════════════════════════════════════════════════════╗
-  ║ AFFINITY-LEGACY PATH: WITHOUT SNAT MASQUERADING                         ║
+  ║ ORGANIZATION-LEGACY PATH: WITHOUT SNAT MASQUERADING                         ║
   ╚═════════════════════════════════════════════════════════════════════════╝
   
   iptables POSTROUTING evaluation:
@@ -75,7 +75,7 @@ Layer 3: VPC LAYER (Route Table)
   VIMENCA:
     Destination: 172.16.70.0/24  → Transit Gateway ✓
   
-  AFFINITY-LEGACY:
+  ORGANIZATION-LEGACY:
     Destination: 192.168.100.8/32 → Transit Gateway ✓
   
   ↓ All traffic redirected to TGW
@@ -91,7 +91,7 @@ Layer 4: TRANSIT GATEWAY (Routing Hub)
     → Route to vpn-05ea9c12f40b67844 (Vimenca VPN)
   
   Destination 192.168.100.8/32?
-    → Route to vpn-028ce4c7f59b83bdd (Affinity-Legacy VPN)
+    → Route to vpn-028ce4c7f59b83bdd (Organization-Legacy VPN)
   
   ↓ VPN connection selected
 
@@ -107,7 +107,7 @@ Layer 5: VPN TUNNEL (IPsec Encryption)
     Source: 203.0.113.10 (masqueraded)
     Destination: 172.16.70.1
     
-  AFFINITY-LEGACY VPN:
+  ORGANIZATION-LEGACY VPN:
     Tunnel: 3.13.60.50 (Ready)
     PSK: pruebas1234567890123456789012345678
     Encryption: AES-256-CBC
@@ -133,7 +133,7 @@ Layer 6: CUSTOMER FIREWALL (Verification)
   
   ──────────────────────────────────────────────────────────
   
-  AFFINITY-LEGACY CHECKPOINT:
+  ORGANIZATION-LEGACY CHECKPOINT:
     Firewall IP: 52.254.86.115
     
     Firewall receives encrypted packet → Decrypts
@@ -156,7 +156,7 @@ Layer 7: DESTINATION NETWORK
     iptables REVERSE-NATs: 203.0.113.10 → 172.31.x.x
     Pod receives response from 172.16.70.1 ✅
   
-  AFFINITY-LEGACY:
+  ORGANIZATION-LEGACY:
     MSSQL Server at 192.168.100.8 receives query
     Server executes query and responds
     Response travels BACK through VPN
@@ -168,7 +168,7 @@ Layer 7: DESTINATION NETWORK
 KEY DIFFERENCES SUMMARY
 
 ╔════════════════════════════════════════════════════════════════════════════╗
-║ ASPECT                   │ VIMENCA                │ AFFINITY-LEGACY        ║
+║ ASPECT                   │ VIMENCA                │ ORGANIZATION-LEGACY        ║
 ╠════════════════════════════════════════════════════════════════════════════╣
 ║ Source IP (in transit)   │ 203.0.113.10 (masked)  │ 172.31.x.x (original)  ║
 ║ Firewall sees            │ Single static IP       │ Multiple pod IPs       ║
@@ -189,7 +189,7 @@ Vimenca wanted a single static IP (203.0.113.10):
   ✗ Requires SNAT instance
   ✗ More complex iptables configuration
 
-Affinity-Legacy using original pod IPs (172.31.0.0/16):
+Organization-Legacy using original pod IPs (172.31.0.0/16):
   ✓ Simpler architecture (no SNAT needed)
   ✓ Better visibility (can trace back to original pod)
   ✓ Firewall sees actual source
@@ -208,7 +208,7 @@ If traffic isn't reaching Vimenca (172.16.70.0/24):
   6. ✓ Check Vimenca firewall allows 203.0.113.10
   7. ✓ Check VPN connection state is "available"
 
-If traffic isn't reaching Affinity-Legacy (192.168.100.x):
+If traffic isn't reaching Organization-Legacy (192.168.100.x):
   1. ✓ Check pod has network connectivity: kubectl exec pod -- ping 8.8.8.8
   2. ✓ Check NO iptables rules match 192.168.100.x
   3. ✓ Check VPC route exists for 192.168.100.x/32

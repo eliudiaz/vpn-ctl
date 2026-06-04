@@ -11,7 +11,7 @@ Tengo:
 2. Transit Gateway con VPN Site-to-Site conectado a Vimenca (Checkpoint)
 3. Necesito que pods de EKS puedan comunicarse con:
    - Red de Vimenca (172.16.70.0/24) vía Transit Gateway
-   - Red de Affinity en otras VPCs (172.33.6.0/28, 172.33.16.0/28)
+   - Red de Organization en otras VPCs (172.33.6.0/28, 172.33.16.0/28)
    - Servicios de AWS (ECR, S3, EC2 API, etc.)
 
 Restricciones:
@@ -70,7 +70,7 @@ ARQUITECTURA OBJETIVO (ECONÓMICA)
                                │
               ┌────────────────┼────────────────┐
               │                │                │
-         VPN Vimenca      VPC Affinity    Otras VPCs
+         VPN Vimenca      VPC Organization    Otras VPCs
 
 COSTOS COMPARADOS
 ─────────────────────────────────────────────────────────────────────────────
@@ -99,7 +99,7 @@ ESPECIFICACIONES TÉCNICAS
    - transit_gateway_id: string (TGW existente)
    - region: string (us-east-1, us-west-2, etc.)
    - vimenca_cidr: string (172.16.70.0/24)
-   - affinity_cidrs: list[string] (172.33.6.0/28, 172.33.16.0/28)
+   - vpn_cidrs: list[string] (172.33.6.0/28, 172.33.16.0/28)
 
 2. OBTENER INFORMACIÓN DEL CLUSTER EKS:
    - Usar boto3 para obtener:
@@ -159,7 +159,7 @@ ESPECIFICACIONES TÉCNICAS
    
    Para cada subnet privada de EKS:
    - Ruta a Vimenca: 172.16.70.0/24 → Transit Gateway
-   - Ruta a Affinity: 172.33.0.0/16 → Transit Gateway (ruta agregada)
+   - Ruta a Organization: 172.33.0.0/16 → Transit Gateway (ruta agregada)
    - Rutas a servicios AWS: vía VPC Endpoints (automático)
    
    NO agregar ruta default (0.0.0.0/0) - no hay NAT ni IGW
@@ -175,7 +175,7 @@ ESPECIFICACIONES TÉCNICAS
    b) Actualizar Security Group de Nodes EKS:
       - Agregar egress a VPC Endpoints SG port 443
       - Agregar egress a Vimenca CIDR (172.16.70.0/24)
-      - Agregar egress a Affinity CIDR (172.33.0.0/16)
+      - Agregar egress a Organization CIDR (172.33.0.0/16)
 
 8. DNS RESOLUTION:
    
@@ -228,7 +228,7 @@ export const eksConnectivityConfig = {
   
   routing: {
     to_vimenca: "172.16.70.0/24 → Transit Gateway",
-    to_affinity: "172.33.0.0/16 → Transit Gateway",
+    to_org: "172.33.0.0/16 → Transit Gateway",
     to_aws_services: "via VPC Endpoints (private)",
   },
   
@@ -257,7 +257,7 @@ export const eksConnectivityConfig = {
        # Test Vimenca
        ping 172.16.70.1
        
-       # Test Affinity
+       # Test Organization
        curl http://172.33.6.5
   """,
 };
@@ -371,7 +371,7 @@ Script de validación debe probar:
    - Pull de imagen ECR
    - Acceso a S3
    - Ping a Vimenca
-   - Curl a Affinity
+   - Curl a Organization
 
 EJEMPLO DE USO
 ─────────────────────────────────────────────────────────────────────────────
@@ -381,7 +381,7 @@ pulumi config set aws:region us-east-1
 pulumi config set eks_cluster_name my-cluster
 pulumi config set transit_gateway_id tgw-xxxxx
 pulumi config set vimenca_cidr 172.16.70.0/24
-pulumi config set affinity_cidrs 172.33.6.0/28,172.33.16.0/28
+pulumi config set vpn_cidrs 172.33.6.0/28,172.33.16.0/28
 
 # 2. Preview
 pulumi preview
@@ -431,7 +431,7 @@ INPUTS:
 - eks_cluster_name (obtener VPC/subnets con boto3)
 - transit_gateway_id (existente)
 - vimenca_cidr: 172.16.70.0/24
-- affinity_cidrs: [172.33.6.0/28, 172.33.16.0/28]
+- vpn_cidrs: [172.33.6.0/28, 172.33.16.0/28]
 
 CREAR:
 
@@ -455,7 +455,7 @@ CREAR:
 
 4. Route Tables:
    - 172.16.70.0/24 → TGW (Vimenca)
-   - 172.33.0.0/16 → TGW (Affinity)
+   - 172.33.0.0/16 → TGW (Organization)
    - NO ruta 0.0.0.0/0
 
 5. Security Groups:

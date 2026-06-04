@@ -106,7 +106,7 @@ def _check_specs(verbose: bool) -> Dict:
     try:
         # This would normally load and validate specs
         # For now, returning mock data
-        specs_found = ['vimenca', 'cibao', 'apap', 'affinity-legacy-network']
+        specs_found = ['vimenca', 'cibao', 'apap', 'internal-legacy-network']
         invalid_specs = []
 
         return {
@@ -136,7 +136,7 @@ def _check_pulumi_state(verbose: bool) -> Dict:
             'peer-vimenca': 'initialized',
             'peer-cibao': 'initialized',
             'peer-apap': 'initialized',
-            'peer-affinity-legacy-network': 'initialized'
+            'peer-internal-legacy-network': 'initialized'
         }
 
         return {
@@ -165,11 +165,11 @@ def _check_aws_credentials(verbose: bool) -> Dict:
             'name': 'AWS Credentials',
             'status': 'pass',
             'details': {
-                'profile': 'affinity',
+                'profile': 'default',
                 'account_id': '123456789012',
                 'region': 'us-east-2'
             },
-            'message': 'AWS credentials valid (profile: affinity)'
+            'message': 'AWS credentials valid (profile: default)'
         }
     except Exception as e:
         return {
@@ -186,7 +186,7 @@ def _check_tunnel_status(verbose: bool) -> Dict:
             'vimenca': {'tunnel1': 'UP', 'tunnel2': 'UP'},
             'cibao': {'tunnel1': 'UP', 'tunnel2': 'UP'},
             'apap': {'tunnel1': 'DOWN', 'tunnel2': 'DOWN'},
-            'affinity-legacy-network': {'tunnel1': 'UP', 'tunnel2': 'DOWN'}
+            'internal-legacy-network': {'tunnel1': 'UP', 'tunnel2': 'DOWN'}
         }
 
         all_up = all(
@@ -226,7 +226,7 @@ def _check_state_sync(verbose: bool) -> Dict:
             'vimenca': 'in_sync',
             'cibao': 'in_sync',
             'apap': 'out_of_sync',
-            'affinity-legacy-network': 'in_sync'
+            'internal-legacy-network': 'in_sync'
         }
 
         out_of_sync = sum(1 for status in sync_status.values() if status != 'in_sync')

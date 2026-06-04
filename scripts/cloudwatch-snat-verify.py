@@ -15,7 +15,7 @@ import time
 class CloudWatchSNATVerifier:
     """Verify SNAT masquerading using CloudWatch evidence"""
 
-    def __init__(self, profile='affinity', region='us-east-2'):
+    def __init__(self, profile='default', region='us-east-2'):
         self.profile = profile
         self.region = region
         try:
@@ -186,7 +186,7 @@ class CloudWatchSNATVerifier:
                     print(f"    To enable, run:")
                     print(f"    aws ec2 create-flow-logs --resource-type VPC --resource-ids vpc-0efe6f2c199a72f9a \\")
                     print(f"      --traffic-type ALL --log-destination-type cloud-watch-logs \\")
-                    print(f"      --log-group-name /aws/vpc/flowlogs --region us-east-2 --profile affinity")
+                    print(f"      --log-group-name /aws/vpc/flowlogs --region us-east-2 --profile default")
                     return {'status': 'WARNING', 'note': 'VPC Flow Logs not yet enabled'}
 
                 print(f"  ✓ VPC Flow Logs enabled ({stream_count} streams)")
@@ -371,7 +371,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Verify SNAT masquerading using CloudWatch'
     )
-    parser.add_argument('--profile', default='affinity', help='AWS profile')
+    parser.add_argument('--profile', default='default', help='AWS profile')
     parser.add_argument('--region', default='us-east-2', help='AWS region')
     parser.add_argument('--output', help='Save JSON report to file')
     parser.add_argument('--queries', action='store_true', help='Show recommended queries')

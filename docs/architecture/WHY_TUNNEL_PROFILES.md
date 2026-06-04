@@ -173,7 +173,7 @@ spec:
 
 ---
 
-## Real-World Analysis: Affinity Peers
+## Real-World Analysis: Organization Peers
 
 Let's look at **actual peers**:
 
@@ -182,7 +182,7 @@ Let's look at **actual peers**:
 | Vimenca | Checkpoint R80.10 | checkpoint_r80 | ✅ Reused by CIBAO |
 | CIBAO | Checkpoint R80.10 | checkpoint_r80 | ✅ Shared with Vimenca |
 | APAP | FortiGate 7.2.10 | fortigate_standard | ✅ Reused by future FortiGate peers |
-| affinity-legacy-network | Legacy | checkpoint_r80 | ✅ Shared with Vimenca & CIBAO |
+| internal-legacy-network | Legacy | checkpoint_r80 | ✅ Shared with Vimenca & CIBAO |
 
 **Result**: 3 peers share `checkpoint_r80`, 1 peer uses `fortigate_standard`.
 
@@ -280,9 +280,9 @@ Do you expect to scale beyond 10 peers?
 
 ---
 
-## Current Affinity Situation
+## Current Organization Situation
 
-**Do we need tunnel-profiles.yaml for Affinity VPN?**
+**Do we need tunnel-profiles.yaml for Organization VPN?**
 
 ✅ **YES, for these reasons**:
 
@@ -345,10 +345,10 @@ def get_default_ipsec_for_device(device_type, device_version):
 
 | Situation | Recommendation |
 |-----------|-----------------|
-| Multiple peers + same device = tunnel-profiles.yaml ✅ |  Affinity (Checkpoint: 3 peers) |
+| Multiple peers + same device = tunnel-profiles.yaml ✅ |  Organization (Checkpoint: 3 peers) |
 | Each peer + unique device → Skip tunnel-profiles.yaml ⚠️ | Hypothetical diverse environment |
 | Large scale (50+ peers) → tunnel-profiles.yaml ✅ | Future growth |
 
-**Current Affinity**: ✅ **Tunnel-profiles.yaml is clearly justified**
+**Current Organization**: ✅ **Tunnel-profiles.yaml is clearly justified**
 
 The DRY benefit alone (avoiding 150 lines of duplication across Checkpoint peers) makes it worthwhile.

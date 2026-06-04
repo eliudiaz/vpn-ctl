@@ -2,7 +2,7 @@
 """
 VPN Form Filler - Reusable Script
 
-Fills VPN configuration form with Affinity information.
+Fills VPN configuration form with Organization information.
 Leaves Vimenca section blank for manual completion.
 
 Usage:
@@ -11,8 +11,8 @@ Usage:
 
     # Using command line arguments
     python3 fill-vpn-form.py \\
-        --affinity-ip 3.151.94.15 \\
-        --affinity-device "AWS Transit Gateway" \\
+        --vpn-ip 3.151.94.15 \\
+        --vpn-device "AWS Transit Gateway" \\
         --output form-filled.docx
 
     # Using defaults from ATG
@@ -46,22 +46,22 @@ except ImportError:
 
 
 class VPNFormFiller:
-    """Fills VPN form with Affinity configuration data."""
+    """Fills VPN form with Organization configuration data."""
 
     # ATG Default Configuration
     DEFAULT_CONFIG = {
-        "affinity": {
-            "company": "Affinity",
+        "default": {
+            "company": "Organization",
             "contact_primary": "Josué Ubico",
             "phone_primary": "809.274.0000",
             "phone_primary_alt": "(502) 4540-4017",
-            "email_primary": "jubico@affinity.do",
+            "email_primary": "jubico@example.do",
             "contact_secondary": "Ricardo Peña",
             "phone_secondary": "809.274.0000",
-            "email_secondary": "rpena@affinity.do",
+            "email_secondary": "rpena@example.do",
             "contact_tertiary": "José Miguel Martínez",
             "phone_tertiary": "809.274.0000",
-            "email_tertiary": "jmartinez@affinity.do",
+            "email_tertiary": "jmartinez@example.do",
             "vpn_ip": "3.151.94.15",
             "device_type": "AWS Transit Gateway",
             "device_version": "AWS Site-to-Site VPN",
@@ -107,9 +107,9 @@ class VPNFormFiller:
         else:
             # Try common locations
             possible_paths = [
-                Path.home() / "Downloads" / "Form_VPN_Affinity-Vimenca_V1.docx",
-                Path("/Users/eliudiaz/Downloads/Form_VPN_Affinity-Vimenca_V1.docx"),
-                Path("Form_VPN_Affinity-Vimenca_V1.docx"),
+                Path.home() / "Downloads" / "Form_VPN_Organization-Vimenca_V1.docx",
+                Path("/Users/eliudiaz/Downloads/Form_VPN_Organization-Vimenca_V1.docx"),
+                Path("Form_VPN_Organization-Vimenca_V1.docx"),
             ]
 
             self.template_path = None
@@ -121,8 +121,8 @@ class VPNFormFiller:
         if not self.template_path or not self.template_path.exists():
             raise FileNotFoundError(
                 f"VPN form template not found. Searched:\n"
-                f"  - ~/Downloads/Form_VPN_Affinity-Vimenca_V1.docx\n"
-                f"  - ./Form_VPN_Affinity-Vimenca_V1.docx"
+                f"  - ~/Downloads/Form_VPN_Organization-Vimenca_V1.docx\n"
+                f"  - ./Form_VPN_Organization-Vimenca_V1.docx"
             )
 
         self.doc = Document(self.template_path)
@@ -132,75 +132,75 @@ class VPNFormFiller:
         with open(config_path, 'r') as f:
             return json.load(f)
 
-    def fill_contacts_table(self, affinity_data: Dict, vimenca_data: Dict = None) -> None:
+    def fill_contacts_table(self, vpn_data: Dict, vimenca_data: Dict = None) -> None:
         """
         Fill the contacts table (Table 0).
 
-        Affinity data: Column 1
+        Organization data: Column 1
         Vimenca data: Column 2 (left blank if not provided)
         """
         table = self.doc.tables[0]
 
         # Row 0: Company
-        table.rows[0].cells[1].text = affinity_data.get("company", "Affinity")
+        table.rows[0].cells[1].text = vpn_data.get("company", "Organization")
 
         # Row 1: Primary Contact
-        table.rows[1].cells[1].text = affinity_data.get("contact_primary", "")
+        table.rows[1].cells[1].text = vpn_data.get("contact_primary", "")
 
         # Row 2: Primary Phone
-        phones = affinity_data.get("phone_primary", "")
-        if affinity_data.get("phone_primary_alt"):
-            phones = f"{phones} - {affinity_data.get('phone_primary_alt')}"
+        phones = vpn_data.get("phone_primary", "")
+        if vpn_data.get("phone_primary_alt"):
+            phones = f"{phones} - {vpn_data.get('phone_primary_alt')}"
         table.rows[2].cells[1].text = phones
 
         # Row 3: Primary Email
-        table.rows[3].cells[1].text = affinity_data.get("email_primary", "")
+        table.rows[3].cells[1].text = vpn_data.get("email_primary", "")
 
         # Row 4: Secondary Contact
-        table.rows[4].cells[1].text = affinity_data.get("contact_secondary", "")
+        table.rows[4].cells[1].text = vpn_data.get("contact_secondary", "")
 
         # Row 5: Secondary Phone
-        table.rows[5].cells[1].text = affinity_data.get("phone_secondary", "")
+        table.rows[5].cells[1].text = vpn_data.get("phone_secondary", "")
 
         # Row 6: Secondary Email
-        table.rows[6].cells[1].text = affinity_data.get("email_secondary", "")
+        table.rows[6].cells[1].text = vpn_data.get("email_secondary", "")
 
         # Row 7: Tertiary Contact
-        table.rows[7].cells[1].text = affinity_data.get("contact_tertiary", "")
+        table.rows[7].cells[1].text = vpn_data.get("contact_tertiary", "")
 
         # Row 8: Tertiary Phone
-        table.rows[8].cells[1].text = affinity_data.get("phone_tertiary", "")
+        table.rows[8].cells[1].text = vpn_data.get("phone_tertiary", "")
 
         # Row 9: Tertiary Email
-        table.rows[9].cells[1].text = affinity_data.get("email_tertiary", "")
+        table.rows[9].cells[1].text = vpn_data.get("email_tertiary", "")
 
         # Leave Vimenca column (index 2) blank for manual entry
         if vimenca_data:
             table.rows[0].cells[2].text = vimenca_data.get("company", "")
 
-    def fill_vpn_device_table(self, affinity_data: Dict, vimenca_data: Dict = None) -> None:
+    def fill_vpn_device_table(self, vpn_data: Dict, vimenca_data: Dict = None) -> None:
         """
         Fill the VPN device information table (Table 1).
 
-        Affinity data: Column 1
+        Organization data: Column 1
         Vimenca data: Column 2 (left blank if not provided)
         """
         table = self.doc.tables[1]
 
         # Row 1: VPN IP Address
-        table.rows[1].cells[1].text = affinity_data.get("vpn_ip", "")
+        table.rows[1].cells[1].text = vpn_data.get("vpn_ip", "")
 
         # Row 2: Device Type
-        table.rows[2].cells[1].text = affinity_data.get("device_type", "")
+        table.rows[2].cells[1].text = vpn_data.get("device_type", "")
 
         # Row 3: Device Version
-        table.rows[3].cells[1].text = affinity_data.get("device_version", "")
+        table.rows[3].cells[1].text = vpn_data.get("device_version", "")
 
         # Row 4: Source/Destination CIDR
-        table.rows[4].cells[1].text = affinity_data.get("source_cidr", "")
+        table.rows[4].cells[1].text = vpn_data.get("source_cidr", "")
 
         # Row 5: Services/Ports
-        table.rows[5].cells[1].text = affinity_data.get("ports", "")
+        table.rows[5].cells[1].text = vpn_data.get("ports", "")
 
         # Leave Vimenca column blank for manual entry
         if vimenca_data:
@@ -236,7 +236,7 @@ class VPNFormFiller:
 
     def fill_form(
         self,
-        affinity_data: Dict = None,
+        vpn_data: Dict = None,
         vimenca_data: Dict = None,
         ipsec_data: Dict = None,
     ) -> None:
@@ -244,23 +244,23 @@ class VPNFormFiller:
         Fill all form sections.
 
         Args:
-            affinity_data: Affinity VPN configuration
+            vpn_data: Organization VPN configuration
             vimenca_data: Vimenca VPN configuration (optional)
             ipsec_data: IPSec tunnel properties
         """
         # Use defaults if not provided
-        affinity_data = affinity_data or self.DEFAULT_CONFIG["affinity"]
+        vpn_data = vpn_data or self.DEFAULT_CONFIG["default"]
         vimenca_data = vimenca_data or self.DEFAULT_CONFIG["vimenca"]
         ipsec_data = ipsec_data or self.DEFAULT_CONFIG["ipsec"]
 
-        print("Filling form with Affinity configuration...")
+        print("Filling form with Organization configuration...")
 
         # Fill contacts
-        self.fill_contacts_table(affinity_data, vimenca_data)
+        self.fill_contacts_table(vpn_data, vimenca_data)
         print("  ✓ Contacts table filled")
 
         # Fill VPN device info
-        self.fill_vpn_device_table(affinity_data, vimenca_data)
+        self.fill_vpn_device_table(vpn_data, vimenca_data)
         print("  ✓ VPN device information filled")
 
         # Fill IPSec properties
@@ -348,18 +348,18 @@ Examples:
     )
 
     parser.add_argument(
-        "--affinity-ip",
-        help="Affinity VPN IP address",
+        "--vpn-ip",
+        help="Organization VPN IP address",
     )
 
     parser.add_argument(
-        "--affinity-device",
-        help="Affinity VPN device type",
+        "--vpn-device",
+        help="Organization VPN device type",
     )
 
     parser.add_argument(
-        "--affinity-cidr",
-        help="Affinity source CIDR",
+        "--vpn-cidr",
+        help="Organization source CIDR",
     )
 
     args = parser.parse_args()
@@ -370,7 +370,7 @@ Examples:
         print(f"✓ Form template loaded: {filler.template_path}\n")
 
         # Determine configuration source
-        affinity_data = None
+        vpn_data = None
         vimenca_data = None
         ipsec_data = None
 
@@ -378,8 +378,8 @@ Examples:
             print("Loading ATG configuration...")
             atg_config = VPNFormFiller.load_atg_config()
             if atg_config:
-                affinity_data = {
-                    **filler.DEFAULT_CONFIG["affinity"],
+                vpn_data = {
+                    **filler.DEFAULT_CONFIG["default"],
                     "vpn_ip": atg_config.get("tunnel1_address", ""),
                 }
                 vimenca_data = {
@@ -392,28 +392,28 @@ Examples:
         elif args.config:
             print(f"Loading configuration from {args.config}...")
             config = filler.load_config(args.config)
-            affinity_data = config.get("affinity")
+            vpn_data = config.get("default")
             vimenca_data = config.get("vimenca")
             ipsec_data = config.get("ipsec")
             print("✓ Configuration loaded\n")
 
         else:
             # Use defaults with CLI overrides
-            affinity_data = filler.DEFAULT_CONFIG["affinity"].copy()
+            vpn_data = filler.DEFAULT_CONFIG["default"].copy()
             vimenca_data = filler.DEFAULT_CONFIG["vimenca"].copy()
             ipsec_data = filler.DEFAULT_CONFIG["ipsec"].copy()
 
             # Apply CLI overrides
-            if args.affinity_ip:
-                affinity_data["vpn_ip"] = args.affinity_ip
-            if args.affinity_device:
-                affinity_data["device_type"] = args.affinity_device
-            if args.affinity_cidr:
-                affinity_data["source_cidr"] = args.affinity_cidr
+            if args.vpn_ip:
+                vpn_data["vpn_ip"] = args.vpn_ip
+            if args.vpn_device:
+                vpn_data["device_type"] = args.vpn_device
+            if args.vpn_cidr:
+                vpn_data["source_cidr"] = args.vpn_cidr
 
         # Fill the form
         print("Filling form with configuration...\n")
-        filler.fill_form(affinity_data, vimenca_data, ipsec_data)
+        filler.fill_form(vpn_data, vimenca_data, ipsec_data)
 
         # Save the form
         print()
@@ -425,7 +425,7 @@ Examples:
         print("=" * 80)
         print(f"✓ Output file: {output_file}")
         print("\nVimenca Section: BLANK (ready for manual completion)")
-        print("Affinity Section: FILLED with configuration\n")
+        print("Organization Section: FILLED with configuration\n")
 
     except FileNotFoundError as e:
         print(f"ERROR: {e}", file=sys.stderr)

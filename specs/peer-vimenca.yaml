@@ -1,4 +1,4 @@
-apiVersion: vpnctl.affinity.io/v1
+apiVersion: vpnctl.example.io/v1
 kind: PeerStackDeployment
 metadata:
   annotations:
@@ -13,7 +13,7 @@ metadata:
   namespace: aff-atg
 spec:
   config:
-    aws_profile: affinity
+    aws_profile: default
     aws_region: us-east-2
     transit_gateway_id: tgw-0fe87898e57c8d9c7
     transit_gateway_route_table_id: $(aws:transit_gateway_route_table_id)
@@ -37,12 +37,12 @@ spec:
   - config:
       bgp_asn: 65000
       public_ip: 191.97.106.141
-    name: affinity-vimenca-cgw
+    name: company-partner-cgw
     type: customer-gateway
   - config:
       static_routes_only: true
       tunnel_profile: checkpoint_r80
-    name: affinity-vimenca-vpn
+    name: company-partner-vpn
     type: vpn-connection
   - config:
       destination_cidr_block: '{{ item }}'

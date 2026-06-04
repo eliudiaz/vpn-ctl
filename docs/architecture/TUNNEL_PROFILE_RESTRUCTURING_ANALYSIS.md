@@ -16,7 +16,7 @@ config/
     ├── vimenca.yaml              ← References: checkpoint_r80
     ├── cibao.yaml                ← References: checkpoint_r80
     ├── apap.yaml                 ← References: fortigate_standard
-    └── affinity-legacy-network.yaml
+    └── internal-legacy-network.yaml
 ```
 
 **Problem**: Two separate files — peers and profiles decoupled.
@@ -30,7 +30,7 @@ config/
 ### Example: vimenca.yaml (with inline profile)
 
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: vimenca
@@ -72,7 +72,7 @@ spec:
 ### Example: apap.yaml (with inline profile)
 
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: apap
@@ -183,7 +183,7 @@ _tunnel_profiles:
 
 # Peers reference profiles using YAML anchors
 peers:
-  - apiVersion: vpn.affinity.io/v1
+  - apiVersion: vpn.example.io/v1
     kind: VpnPeer
     metadata:
       name: vimenca
@@ -197,7 +197,7 @@ peers:
         public_ip: "191.97.106.141"
         # ... rest of config ...
 
-  - apiVersion: vpn.affinity.io/v1
+  - apiVersion: vpn.example.io/v1
     kind: VpnPeer
     metadata:
       name: cibao
@@ -211,7 +211,7 @@ peers:
         public_ip: "186.148.92.203"
         # ... rest of config ...
 
-  - apiVersion: vpn.affinity.io/v1
+  - apiVersion: vpn.example.io/v1
     kind: VpnPeer
     metadata:
       name: apap
@@ -239,7 +239,7 @@ checkpoint_r80: &checkpoint_r80_profile
 
 **File**: `config/peers/vimenca.yaml`
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: vimenca
@@ -292,12 +292,12 @@ config/
     ├── vimenca.yaml               ← References checkpoint:r80
     ├── cibao.yaml                 ← References checkpoint:r80
     ├── apap.yaml                  ← References fortinet:standard
-    └── affinity-legacy-network.yaml
+    └── internal-legacy-network.yaml
 ```
 
 **File**: `config/profiles/checkpoint-profiles.yaml`
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: CheckpointTunnelProfiles
 metadata:
   name: checkpoint-tunnel-profiles
@@ -317,7 +317,7 @@ profiles:
 
 **File**: `config/peers/vimenca.yaml`
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: vimenca
@@ -380,13 +380,13 @@ config/
     ├── vimenca.yaml              ← References checkpoint_r80
     ├── cibao.yaml                ← References checkpoint_r80
     ├── apap.yaml                 ← References fortigate_standard + custom overrides
-    └── affinity-legacy-network.yaml
+    └── internal-legacy-network.yaml
 ```
 
 **File**: `config/peers/apap.yaml` (with custom profile tuning)
 
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: apap
@@ -468,7 +468,7 @@ The **current architecture (Option 4)** is optimal for this use case:
 ```
 tunnel-profiles.yaml       ← 3 profiles (checkpoint_r80, fortigate_standard, palo_alto_standard)
      ↓ (referenced by)
-config/peers/*.yaml        ← 4 peers (vimenca, cibao, apap, affinity-legacy-network)
+config/peers/*.yaml        ← 4 peers (vimenca, cibao, apap, internal-legacy-network)
 ```
 
 ### **Why This Wins**:
@@ -584,7 +584,7 @@ If you decide to move to Option 1 (inline profiles):
 
 ```bash
 # 1. Extract profiles from tunnel-profiles.yaml for each peer
-for peer in vimenca cibao apap affinity-legacy-network; do
+for peer in vimenca cibao apap internal-legacy-network; do
   PROFILE=$(grep "profile:" config/peers/$peer.yaml | awk '{print $2}')
   # Find profile definition in tunnel-profiles.yaml
   # Copy into config/peers/$peer.yaml under spec.tunnel.profileDefinition

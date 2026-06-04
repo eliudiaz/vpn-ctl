@@ -25,7 +25,7 @@ fill-form.sh (4.5 KB)
 Usage Examples:
   ./fill-form.sh atg                                # Use ATG defaults
   ./fill-form.sh config vpn-config.json             # Use custom JSON
-  ./fill-form.sh custom --affinity-ip X.X.X.X      # Use CLI args
+  ./fill-form.sh custom --default-ip X.X.X.X      # Use CLI args
 
 ================================================================================
 2. GENERATED FORM OUTPUT
@@ -33,17 +33,17 @@ Usage Examples:
 
 Form_VPN_Filled_20251225_230440.docx (40 KB)
   • Pre-filled VPN form with ATG configuration
-  • Affinity section: COMPLETELY FILLED ✓
+  • Organization section: COMPLETELY FILLED ✓
   • Vimenca section: BLANK (ready for manual entry)
   • IPSec properties: ALL FILLED ✓
   • Ready to send to Vimenca
   • Professional Word 2007+ format
 
 Contents:
-  ✓ Affinity Company: Affinity
+  ✓ Organization Company: Organization
   ✓ Primary Contact: Josué Ubico
   ✓ Phone: 809.274.0000 - (502) 4540-4017
-  ✓ Email: jubico@affinity.do
+  ✓ Email: jubico@example.do
   ✓ VPN IP: 3.151.94.15
   ✓ Device Type: AWS Transit Gateway
   ✓ Device Version: AWS Site-to-Site VPN
@@ -162,11 +162,11 @@ PYTHON DIRECT:
 ================================================================================
 
 {
-  "affinity": {
-    "company": "Affinity",
+  "default": {
+    "company": "Organization",
     "contact_primary": "Name",
     "phone_primary": "XXX.XXX.XXXX",
-    "email_primary": "email@affinity.do",
+    "email_primary": "email@example.do",
     "vpn_ip": "X.X.X.X",
     "device_type": "Device Type",
     "device_version": "Version",
@@ -220,7 +220,7 @@ Documentation:
 
 3. Verify Output:
    $ open Form_VPN_Filled_*.docx
-   Check: Affinity section filled, Vimenca blank
+   Check: Organization section filled, Vimenca blank
 
 4. Test Custom Config:
    $ ./fill-form.sh config vpn-custom.json
@@ -235,7 +235,7 @@ Documentation:
    Opens: Form_VPN_Filled_20251225_230440.docx
 
 2. REVIEW:
-   • Verify Affinity section is filled correctly
+   • Verify Organization section is filled correctly
    • Verify Vimenca section is blank
    • Check IPSec properties are present
 
@@ -271,7 +271,7 @@ First Time:
 Subsequent Times:
   $ ./fill-form.sh atg --output my-form.docx
   $ ./fill-form.sh config vpn-custom.json
-  $ ./fill-form.sh custom --affinity-ip X.X.X.X
+  $ ./fill-form.sh custom --default-ip X.X.X.X
 
 Help:
   $ ./fill-form.sh help
@@ -283,7 +283,7 @@ Help:
 ✓ Form generation time: < 2 seconds
 ✓ Output file size: ~40 KB
 ✓ All sections correctly populated
-✓ No manual editing needed for Affinity section
+✓ No manual editing needed for Organization section
 ✓ Vimenca section blank as intended
 ✓ File opens in Microsoft Word without issues
 ✓ Can be printed directly

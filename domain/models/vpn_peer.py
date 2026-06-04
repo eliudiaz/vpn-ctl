@@ -47,7 +47,7 @@ class VpnPeer:
     - public_ip must be valid IPv4
     - bgp_asn must be in valid range
     - destination_cidrs must be valid CIDRs
-    - destination_cidrs must not overlap with Affinity reserved CIDRs
+    - destination_cidrs must not overlap with Organization reserved CIDRs
     - tunnel_profile_name must reference existing profile
     - psk values must be 32+ chars or empty
     - device type and version must be provided
@@ -120,15 +120,15 @@ class VpnPeer:
         self._validate_contacts()
 
     def _validate_destination_cidrs(self):
-        """Validate destination CIDRs don't overlap with Affinity reserved."""
-        # Reserved: Affinity internal network
-        affinity_reserved = [CIDR("172.33.0.0/16")]
+        """Validate destination CIDRs don't overlap with Organization reserved."""
+        # Reserved: Organization internal network
+        vpn_reserved = [CIDR("172.33.0.0/16")]
 
         for cidr in self.destination_cidrs:
-            for reserved in affinity_reserved:
+            for reserved in vpn_reserved:
                 if cidr.overlaps_with(reserved):
                     raise DomainValidationError(
-                        f"CIDR {cidr} overlaps with reserved Affinity network {reserved}"
+                        f"CIDR {cidr} overlaps with reserved Organization network {reserved}"
                     )
 
     def _validate_tunnel_profile_reference(self):

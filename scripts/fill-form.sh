@@ -60,9 +60,9 @@ ${GREEN}OPTIONS (for 'custom' command):${NC}
 
   --template FILE              Path to VPN form template
   --output FILE                Output file path
-  --affinity-ip IP             Affinity VPN IP address
-  --affinity-device DEVICE     Affinity VPN device type
-  --affinity-cidr CIDR         Affinity source CIDR
+  --org-ip IP             Organization VPN IP address
+  --org-device DEVICE     Organization VPN device type
+  --org-cidr CIDR         Organization source CIDR
 
 ${GREEN}EXAMPLES:${NC}
 
@@ -77,8 +77,8 @@ ${GREEN}EXAMPLES:${NC}
 
   # Fill with custom parameters
   $ ./fill-form.sh custom \\
-      --affinity-ip 3.151.94.15 \\
-      --affinity-device "AWS Transit Gateway" \\
+      --org-ip 3.151.94.15 \\
+      --org-device "AWS Transit Gateway" \\
       --output form.docx
 
 ${GREEN}OUTPUT:${NC}
@@ -87,7 +87,7 @@ ${GREEN}OUTPUT:${NC}
 
 ${GREEN}NOTES:${NC}
   • Vimenca section will be left BLANK for manual completion
-  • Affinity section will be filled with provided configuration
+  • Organization section will be filled with provided configuration
   • All signature fields will be left blank for manual signatures
   • A Python virtual environment will be created automatically
 

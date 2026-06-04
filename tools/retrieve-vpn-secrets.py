@@ -246,11 +246,11 @@ class VPNSecretsManager:
 
         checkpoint_config = f"""
 ================================================================================
-CONFIGURACIÓN VPN CHECKPOINT - AFFINITY TO VIMENCA
+CONFIGURACIÓN VPN CHECKPOINT - COMPANY TO VIMENCA
 ================================================================================
 
 Generado: {datetime.now().isoformat()}
-Customer: Affinity
+Customer: Organization
 
 ================================================================================
 1. INFORMACIÓN DE CONEXIÓN
@@ -259,12 +259,12 @@ Customer: Affinity
 VPN Connection ID (AWS):      {config.get('vpn_connection_id')}
 Customer Gateway ID:          {config.get('customer_gateway_id')}
 Checkpoint Firewall Version:  R80.10
-Affinity Outside IP:          191.97.106.141
+Organization Outside IP:          191.97.106.141
 
-Destinos de Affinity (CIDR):
+Destinos de Organization (CIDR):
   - 172.31.0.0/16        (EKS VPC Principal)
-  - 172.33.6.0/28        (VPC Affinity 1)
-  - 172.33.16.0/28       (VPC Affinity 2)
+  - 172.33.6.0/28        (VPC Organization 1)
+  - 172.33.16.0/28       (VPC Organization 2)
 
 ================================================================================
 2. TÚNEL 1 (PRIMARIO)
@@ -314,8 +314,8 @@ Replay Detection:             Habilitado
 
 Destino                 Gateway
 172.31.0.0/16          VPN Tunnel (EKS VPC)
-172.33.6.0/28          VPN Tunnel (Affinity VPC 1)
-172.33.16.0/28         VPN Tunnel (Affinity VPC 2)
+172.33.6.0/28          VPN Tunnel (Organization VPC 1)
+172.33.16.0/28         VPN Tunnel (Organization VPC 2)
 
 ================================================================================
 6. REGLAS DE FIREWALL REQUERIDAS
@@ -338,15 +338,15 @@ Egress     | ICMP   | ICMP      | 172.31.0.0/16   | ALLOW
 2. Configurar túnel 1 (primario) con PSK proporcionada
 3. Configurar túnel 2 (backup) con PSK proporcionada
 4. Verificar que ambos túneles están UP
-5. Agregar rutas estáticas hacia Affinity
+5. Agregar rutas estáticas hacia Organization
 6. Aplicar reglas de firewall
-7. Contactar a Affinity para confirmar ambos lados UP
+7. Contactar a Organization para confirmar ambos lados UP
 
 Contacto Vimenca:
   - Eric Frias (Principal): 809-487-2679
   - Fermir Quezada (Secundario): 809-487-2602
 
-Contacto Affinity:
+Contacto Organization:
   - Josué Ubico (Principal): 809.274.0000
   - Ricardo Peña (Secundario): 809.274.0000
 

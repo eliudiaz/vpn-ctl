@@ -4,7 +4,7 @@
 Generate PDF Setup Guides for VPN Peers
 
 Generates professional device-specific PDFs for external VPN peers
-to configure their firewalls/VPN devices to connect to Affinity's ATG.
+to configure their firewalls/VPN devices to connect to Organization's ATG.
 
 Usage:
     python3 generate-peer-guides.py --device checkpoint
@@ -86,7 +86,7 @@ DEVICE_CONFIGS = {
 }
 
 # Common configuration parameters
-AFFINITY_CONFIG = {
+VPN_CONFIG = {
     "transit_gateway_id": "tgw-0572ce4b80ff7445a",
     "aws_asn": "64512",
     "region": "us-east-2",
@@ -160,7 +160,7 @@ SECTION 1: OVERVIEW
 
 This guide provides step-by-step instructions for configuring your
 {self.config['full_name']} device to establish a secure VPN tunnel to
-Affinity's Transit Gateway infrastructure.
+Organization's Transit Gateway infrastructure.
 
 Benefits of this architecture:
   • High-availability with dual tunnels
@@ -178,7 +178,7 @@ SECTION 2: PREREQUISITES
 
 Before starting, ensure you have:
   ✓ Admin access to {self.config['interface']}
-  ✓ Access to tunnel endpoint details (provided by Affinity)
+  ✓ Access to tunnel endpoint details (provided by Organization)
   ✓ Pre-shared keys (PSKs) for both tunnels
   ✓ BGP ASN number
   ✓ Network CIDR blocks to route through tunnel
@@ -194,23 +194,23 @@ Phase 1 (IKE):
   - Version: {self.config['ike_version']}
   - Encryption: {self.config['encryption']}
   - Integrity: {self.config['integrity']}
-  - DH Group: {AFFINITY_CONFIG['phase1_dh']}
-  - Lifetime: {AFFINITY_CONFIG['phase1_lifetime']}
+  - DH Group: {VPN_CONFIG['phase1_dh']}
+  - Lifetime: {VPN_CONFIG['phase1_lifetime']}
 
 Phase 2 (IPSec):
   - Encryption: {self.config['encryption']}
   - Integrity: {self.config['integrity']}
   - PFS (Perfect Forward Secrecy): Optional (recommended)
-  - Lifetime: {AFFINITY_CONFIG['phase2_lifetime']}
+  - Lifetime: {VPN_CONFIG['phase2_lifetime']}
 
 Dead Peer Detection (DPD):
-  - Timeout: {AFFINITY_CONFIG['dgp_timeout']}
-  - Action: {AFFINITY_CONFIG['dgp_action']}
+  - Timeout: {VPN_CONFIG['dgp_timeout']}
+  - Action: {VPN_CONFIG['dgp_action']}
 
 BGP Configuration:
-  - AWS ASN: {AFFINITY_CONFIG['aws_asn']}
+  - AWS ASN: {VPN_CONFIG['aws_asn']}
   - Your ASN: [Provided separately]
-  - Tunnel subnet range: {AFFINITY_CONFIG['tunnel_ip_range']}
+  - Tunnel subnet range: {VPN_CONFIG['tunnel_ip_range']}
   - Inside subnet IPs: [Provided separately]
 
 {'='*70}
@@ -235,10 +235,10 @@ After configuration, verify:
    Check that both tunnels show "UP" status in your device
 
 2. BGP Routes:
-   Verify that BGP routes from Affinity are being learned
+   Verify that BGP routes from Organization are being learned
 
 3. Connectivity Test:
-   Ping test from your side to Affinity network range
+   Ping test from your side to Organization network range
 
 4. Traffic Inspection:
    Review logs for successful tunnel establishment
@@ -272,14 +272,14 @@ SECTION 7: SUPPORT & ESCALATION
 
 If you encounter issues:
 
-1. Affinity DevOps Support
-   Email: support@affinity.com
+1. Organization DevOps Support
+   Email: support@example.com
 
 2. On-call Support
    Phone: +1-XXX-XXX-XXXX (24/7)
 
 3. Documentation
-   Full guides: https://docs.affinity.com/vpn/
+   Full guides: https://docs.example.com/vpn/
 
 4. Escalation Checklist
    ☐ Verified tunnel endpoints

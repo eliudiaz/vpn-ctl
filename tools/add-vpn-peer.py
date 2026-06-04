@@ -212,7 +212,7 @@ class ATGVPNPeerConfigurator:
 
 vpn_{self.peer_name.lower()} = VpnConnector(
     name="{self.peer_name}",
-    hub=affinity_hub,
+    hub=vpn_hub,
     peer_config=VpnPeerConfig(
         name="{self.peer_name}",
         public_ip="{self.peer_public_ip}",
@@ -243,7 +243,7 @@ pulumi.export("vpn_{self.peer_name.lower()}_tunnel2_ip", vpn_{self.peer_name.low
                 'region': self.region,
                 'security_level': 'Production'
             },
-            'affinity': {
+            'default': {
                 'vpn_endpoint_1': '3.151.94.15',
                 'vpn_endpoint_2': '18.117.210.11',
                 'transit_gateway_asn': 64512,
@@ -282,7 +282,7 @@ pulumi.export("vpn_{self.peer_name.lower()}_tunnel2_ip", vpn_{self.peer_name.low
                 'hash_verification': self.config.get('hash_keys', {}).get('sha256', '')
             },
             'bgp': {
-                'affinity_asn': 64512,
+                'vpn_asn': 64512,
                 'peer_asn': self.bgp_asn,
                 'hold_time': 30,
                 'keepalive_interval': 10
@@ -372,7 +372,7 @@ Generated: {self.timestamp}
 - Config: {self.config.get('hash_keys', {}).get('config_hash', 'N/A')}
 
 ## BGP Configuration
-- Affinity ASN: 64512
+- Organization ASN: 64512
 - Peer ASN: {self.bgp_asn}
 - Hold Time: 30s
 - Keepalive: 10s

@@ -52,7 +52,7 @@ config/
     ├── vimenca.yaml             (Vimenca specification)
     ├── cibao.yaml               (CIBAO specification)
     ├── apap.yaml                (APAP specification)
-    └── affinity-legacy-network.yaml  (Legacy network specification)
+    └── internal-legacy-network.yaml  (Legacy network specification)
 ```
 
 ### File Format: K8s-Inspired Manifest
@@ -61,7 +61,7 @@ Each peer file follows Kubernetes resource pattern:
 
 **`config/peers/vimenca.yaml`** (Example):
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: vimenca
@@ -137,7 +137,7 @@ status:
 
 **`config/peers/apap.yaml`** (SNAT Example):
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: apap
@@ -198,7 +198,7 @@ status:
 
 **`config/tunnel-profiles.yaml`** (Shared):
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: TunnelProfiles
 metadata:
   name: tunnel-profiles
@@ -458,7 +458,7 @@ peers:
     ...
 
 # config/peers/vimenca.yaml (new, also works)
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: vimenca
@@ -509,7 +509,7 @@ Deprecate `vpn-peers.yaml`, use only individual manifests and shared `tunnel-pro
 - [ ] Migrate vimenca → `config/peers/vimenca.yaml`
 - [ ] Migrate cibao → `config/peers/cibao.yaml`
 - [ ] Migrate apap → `config/peers/apap.yaml`
-- [ ] Migrate affinity-legacy-network → `config/peers/affinity-legacy-network.yaml`
+- [ ] Migrate internal-legacy-network → `config/peers/internal-legacy-network.yaml`
 - [ ] Update `vpn_config_manager.py` to load manifests with fallback to monolithic
 - [ ] Add dual-stack support in orchestrator
 - [ ] Test: Each peer deploys identically via manifest vs. monolithic

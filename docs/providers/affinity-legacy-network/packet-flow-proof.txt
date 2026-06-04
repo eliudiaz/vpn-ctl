@@ -6,7 +6,7 @@ Date: 2026-03-11 21:59 UTC
 
 EXECUTIVE CONCLUSION
 ====================
-✅ PROVEN: Affinity-Legacy-Network packets are sent with ORIGINAL pod IP
+✅ PROVEN: Organization-Legacy-Network packets are sent with ORIGINAL pod IP
          (172.31.x.x), NOT masqueraded to 203.0.113.10
 
 Evidence Level: DEFINITIVE (packet-level inspection from pod namespace)
@@ -98,7 +98,7 @@ Finding: ✓ Packet path verified
 TECHNICAL EXPLANATION
 ================================================================================
 
-Why Affinity-Legacy-Network Does NOT Masquerade to 203.0.113.10:
+Why Organization-Legacy-Network Does NOT Masquerade to 203.0.113.10:
 ─────────────────────────────────────────────────────────────────
 
 1. The vpn-snat-config-v2 DaemonSet applies iptables rules on WORKER NODES:
@@ -110,7 +110,7 @@ Why Affinity-Legacy-Network Does NOT Masquerade to 203.0.113.10:
 
 2. Rules ONLY match when DESTINATION is 172.16.x.x or 203.0.113.10 (Vimenca)
 
-3. When pod sends to 192.168.100.x (affinity-legacy):
+3. When pod sends to 192.168.100.x (org-legacy):
    - Packet leaves pod with source: 172.31.6.202
    - Packet reaches worker node iptables POSTROUTING chain
    - Rules check: "Is destination 172.16.70.0/24?" → NO
@@ -125,7 +125,7 @@ Why Affinity-Legacy-Network Does NOT Masquerade to 203.0.113.10:
 5. Legacy Firewall sees: Source IP 172.31.6.202 (original pod IP)
 
 ================================================================================
-COMPARISON: Vimenca vs Affinity-Legacy
+COMPARISON: Vimenca vs Organization-Legacy
 ================================================================================
 
 VIMENCA Traffic (172.16.70.0/24):
@@ -135,7 +135,7 @@ VIMENCA Traffic (172.16.70.0/24):
   SNAT rewrite applied: Source becomes 203.0.113.10
   Vimenca Firewall sees: 203.0.113.10 (masqueraded IP)
 
-AFFINITY-LEGACY Traffic (192.168.100.8):
+ORGANIZATION-LEGACY Traffic (192.168.100.8):
 ──────────────────────────────────────
   Pod sends: Source 172.31.6.202 → Destination 192.168.100.8
   iptables rules checked: (no match for 192.168.100.x)
@@ -158,7 +158,7 @@ Correct Rule for Legacy Network Team:
   Logging:        Enable
 
 INCORRECT (do not use):
-  Source:         203.0.113.10    ← This is VIMENCA's masqueraded IP, NOT affinity-legacy
+  Source:         203.0.113.10    ← This is VIMENCA's masqueraded IP, NOT org-legacy
 
 ================================================================================
 ENGINEERING SIGN-OFF
@@ -168,7 +168,7 @@ As AWS EC2 Networking Engineer, I certify:
 
 ✅ Packet-level inspection proves source IP is 172.31.6.202 (original pod IP)
 ✅ 203.0.113.10 masquerading is ONLY for Vimenca traffic
-✅ Affinity-legacy-network traffic uses original pod IPs from 172.31.0.0/16
+✅ Organization-legacy-network traffic uses original pod IPs from 172.31.0.0/16
 ✅ Architecture is correctly implemented
 ✅ SNAT rules are provider-specific and function as intended
 ✅ Firewall rule specification is correct

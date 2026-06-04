@@ -16,7 +16,7 @@ import yaml
 class InfrastructureCertifier:
     """Certifies VPN infrastructure is correctly deployed."""
 
-    def __init__(self, region: str = "us-east-2", profile: str = "affinity"):
+    def __init__(self, region: str = "us-east-2", profile: str = "default"):
         """Initialize certifier with AWS session."""
         self.session = boto3.Session(profile_name=profile, region_name=region)
         self.ec2 = self.session.client("ec2")
@@ -34,13 +34,13 @@ class InfrastructureCertifier:
             # Check Transit Gateway exists
             tgw_response = self.ec2.describe_transit_gateways(
                 Filters=[
-                    {"Name": "tag:Name", "Values": ["affinity-hub-tgw"]},
+                    {"Name": "tag:Name", "Values": ["vpn-hub-tgw"]},
                     {"Name": "state", "Values": ["available"]},
                 ]
             )
 
             if not tgw_response["TransitGateways"]:
-                self.errors.append("❌ Transit Gateway not found (affinity-hub-tgw)")
+                self.errors.append("❌ Transit Gateway not found (vpn-hub-tgw)")
                 return False
 
             tgw = tgw_response["TransitGateways"][0]
@@ -91,7 +91,7 @@ class InfrastructureCertifier:
             # Get TGW for routes
             tgw_response = self.ec2.describe_transit_gateways(
                 Filters=[
-                    {"Name": "tag:Name", "Values": ["affinity-hub-tgw"]},
+                    {"Name": "tag:Name", "Values": ["vpn-hub-tgw"]},
                     {"Name": "state", "Values": ["available"]},
                 ]
             )
@@ -195,7 +195,7 @@ class InfrastructureCertifier:
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
-        peers_to_check = ["vimenca", "cibao", "apap", "affinity-legacy-network"]
+        peers_to_check = ["vimenca", "cibao", "apap", "internal-legacy-network"]
 
         all_good = True
         for peer_name in peers_to_check:
@@ -249,7 +249,7 @@ def certify():
 
 @certify.command()
 @click.option("--region", default="us-east-2", help="AWS region")
-@click.option("--profile", default="affinity", help="AWS profile")
+@click.option("--profile", default="default", help="AWS profile")
 @click.option("--json", "output_json", is_flag=True, help="Output as JSON")
 def all(region: str, profile: str, output_json: bool):
     """Certify all infrastructure."""
@@ -276,7 +276,7 @@ def all(region: str, profile: str, output_json: bool):
 @certify.command()
 @click.argument("peer_name")
 @click.option("--region", default="us-east-2", help="AWS region")
-@click.option("--profile", default="affinity", help="AWS profile")
+@click.option("--profile", default="default", help="AWS profile")
 @click.option("--json", "output_json", is_flag=True, help="Output as JSON")
 def peer(peer_name: str, region: str, profile: str, output_json: bool):
     """Certify specific peer infrastructure."""
@@ -301,7 +301,7 @@ def peer(peer_name: str, region: str, profile: str, output_json: bool):
 
 @certify.command()
 @click.option("--region", default="us-east-2", help="AWS region")
-@click.option("--profile", default="affinity", help="AWS profile")
+@click.option("--profile", default="default", help="AWS profile")
 def core(region: str, profile: str):
     """Certify core infrastructure only."""
     certifier = InfrastructureCertifier(region=region, profile=profile)

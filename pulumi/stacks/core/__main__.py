@@ -31,7 +31,7 @@ logging.basicConfig(level=logging.INFO)
 # AWS config
 aws_config = pulumi.Config("aws")
 region = aws_config.get("region") or "us-east-2"
-aws_profile = aws_config.get("profile") or os.environ.get("AWS_PROFILE", "affinity")
+aws_profile = aws_config.get("profile") or os.environ.get("AWS_PROFILE", "default")
 
 # Get AWS session
 session = boto3.Session(profile_name=aws_profile, region_name=region)
@@ -52,12 +52,12 @@ print(f"   Region: {region}, Environment: {environment}")
 print("\n📡 Creating Transit Gateway Hub...")
 
 tgw = aws.ec2transitgateway.TransitGateway(
-    "affinity-hub-tgw",
+    "vpn-hub-tgw",
     description="Central VPN hub for multi-cluster connectivity",
     default_route_table_association="disable",
     default_route_table_propagation="disable",
     tags={
-        "Name": "affinity-hub-tgw",
+        "Name": "vpn-hub-tgw",
         "Environment": environment,
         "ManagedBy": "Pulumi",
         "Component": "CoreTransitGateway",
@@ -66,10 +66,10 @@ tgw = aws.ec2transitgateway.TransitGateway(
 
 # Create TGW route table
 tgw_route_table = aws.ec2transitgateway.RouteTable(
-    "affinity-hub-tgw-rt",
+    "vpn-hub-tgw-rt",
     transit_gateway_id=tgw.id,
     tags={
-        "Name": "affinity-hub-tgw-rt",
+        "Name": "vpn-hub-tgw-rt",
         "Environment": environment,
     }
 )
@@ -97,7 +97,7 @@ def attach_eks_cluster(cluster_name: str):
             vpc_id=vpc_id,
             subnet_ids=subnet_ids,
             tags={
-                "Name": f"affinity-tgw-attach-{cluster_name}",
+                "Name": f"default-tgw-attach-{cluster_name}",
                 "ClusterName": cluster_name,
                 "ManagedBy": "Pulumi",
             }

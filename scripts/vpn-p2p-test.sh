@@ -24,7 +24,7 @@
 #   ./vpn-p2p-test.sh --peer-ip 172.16.70.1 --report vpn-test-report.md
 #
 # Architecture:
-#   - AWS Side (Affinity)
+#   - AWS Side (Organization)
 #     ├─ EKS VPC (172.31.0.0/16)
 #     ├─ Transit Gateway
 #     └─ VPN Connection to Vimenca
@@ -56,7 +56,7 @@ DEEP_TEST=false
 GENERATE_REPORT=false
 REPORT_FILE=""
 REGION="${AWS_REGION:-us-east-1}"
-AWS_PROFILE="${AWS_PROFILE:-affinity}"
+AWS_PROFILE="${AWS_PROFILE:-default}"
 VERBOSE=false
 
 # Test results tracking (using arrays for compatibility)
@@ -138,7 +138,7 @@ ${GREEN}OPTIONS:${NC}
   --deep                      Run comprehensive deep diagnostic tests
   --report <FILE>             Generate diagnostic report to file
   --region <REGION>           AWS region (default: us-east-1)
-  --profile <PROFILE>         AWS profile (default: affinity)
+  --profile <PROFILE>         AWS profile (default: default)
   --verbose, -v               Verbose output
   --help, -h                  Show this help message
 
@@ -306,7 +306,7 @@ test_transit_gateway() {
 test_routes() {
     print_subheader "Route Table Configuration"
 
-    local routes vimenca_route affinity_routes
+    local routes vimenca_route vpn_routes
     routes=$(aws ec2 describe-route-tables \
         --query 'RouteTables[].Routes[?TransitGatewayId!=`null`]' \
         --region "$REGION" \
@@ -321,12 +321,12 @@ test_routes() {
         print_test "Route to Vimenca (172.16.70.0/24)" "FAIL" "Route not found"
     fi
 
-    affinity_routes=$(echo "$routes" | jq '[.[] | select(.DestinationCidrBlock | startswith("172.33"))] | length' 2>/dev/null || echo "0")
+    vpn_routes=$(echo "$routes" | jq '[.[] | select(.DestinationCidrBlock | startswith("172.33"))] | length' 2>/dev/null || echo "0")
 
-    if [ "$affinity_routes" -gt 0 ]; then
-        print_test "Routes to Affinity VPCs" "PASS" "$affinity_routes routes found"
+    if [ "$vpn_routes" -gt 0 ]; then
+        print_test "Routes to Organization VPCs" "PASS" "$vpn_routes routes found"
     else
-        print_test "Routes to Affinity VPCs" "WARN" "No Affinity routes found"
+        print_test "Routes to Organization VPCs" "WARN" "No Organization routes found"
     fi
 }
 

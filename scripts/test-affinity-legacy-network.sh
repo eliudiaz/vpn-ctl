@@ -2,16 +2,16 @@
 set -e
 
 # =============================================================================
-# Test Pod Deployment for affinity-legacy-network VPN (MSSQL)
+# Test Pod Deployment for internal-legacy-network VPN (MSSQL)
 # =============================================================================
 # This script deploys test pods to verify connectivity to legacy MSSQL databases
-# Usage: ./test-affinity-legacy-network.sh [test-type]
+# Usage: ./test-internal-legacy-network.sh [test-type]
 #   test-type: ping, port, mssql, or all (default: all)
 # =============================================================================
 
 TEST_TYPE=${1:-all}
 NAMESPACE=${NAMESPACE:-default}
-TEST_POD_PREFIX="affinity-legacy-test"
+TEST_POD_PREFIX="org-legacy-test"
 LEGACY_IPS=("192.168.100.8" "192.168.100.11" "192.168.100.12")
 LEGACY_NAMES=("APAP-Produccion" "Pruebas" "Produccion")
 MSSQL_PORT=1433
@@ -19,7 +19,7 @@ MSSQL_USER=${MSSQL_USER:-sa}
 MSSQL_PASS=${MSSQL_PASS:-YourPassword}
 
 echo "================================================================================"
-echo "AFFINITY-LEGACY-NETWORK TEST POD DEPLOYMENT (MSSQL)"
+echo "ORGANIZATION-LEGACY-NETWORK TEST POD DEPLOYMENT (MSSQL)"
 echo "================================================================================"
 echo ""
 echo "Test Type: $TEST_TYPE"
@@ -185,7 +185,7 @@ echo "Querying VPC Flow Logs for traffic to legacy network (192.168.100.0/24)...
 echo ""
 
 LOGS_FOUND=$(aws logs filter-log-events \
-  --profile affinity \
+  --profile default \
   --region us-east-2 \
   --log-group-name '/aws/vpc/flowlogs/asg-plat-dev' \
   --start-time $((START_TIME * 1000)) \
@@ -196,7 +196,7 @@ if [ "$LOGS_FOUND" -gt 0 ]; then
   echo "Found $LOGS_FOUND log entries for legacy network traffic:"
   echo ""
   aws logs filter-log-events \
-    --profile affinity \
+    --profile default \
     --region us-east-2 \
     --log-group-name '/aws/vpc/flowlogs/asg-plat-dev' \
     --start-time $((START_TIME * 1000)) \

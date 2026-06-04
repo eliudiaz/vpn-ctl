@@ -154,7 +154,7 @@ Force health check refresh
 ## 🔒 Security & Authentication
 
 ### Local Development:
-- Uses AWS_PROFILE=affinity from ~/.aws/credentials
+- Uses AWS_PROFILE=default from ~/.aws/credentials
 - Docker mounts read-only config directories
 
 ### Kubernetes (Production):
@@ -177,20 +177,20 @@ Force health check refresh
 ### 1. AWS Setup:
 ```bash
 # Create ECR repository
-aws ecr create-repository --repository-name vpn-health --region us-east-2 --profile affinity
+aws ecr create-repository --repository-name vpn-health --region us-east-2 --profile default
 
 # Create IRSA role
 aws iam create-role \
   --role-name vpn-health-irsa-prod \
   --assume-role-policy-document file://trust-policy.json \
-  --profile affinity
+  --profile default
 
 # Attach EC2 permissions (describe-vpn-connections, TGW queries, routes)
 aws iam put-role-policy \
   --role-name vpn-health-irsa-prod \
   --policy-name vpn-health-ec2-access \
   --policy-document file://ec2-policy.json \
-  --profile affinity
+  --profile default
 ```
 
 ### 2. Kubernetes Setup:

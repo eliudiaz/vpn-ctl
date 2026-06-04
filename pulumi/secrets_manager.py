@@ -31,7 +31,7 @@ class VpnSecretsManager:
         try:
             # Use Pulumi's AWS profile/credentials
             import os
-            profile = os.environ.get("AWS_PROFILE") or "affinity"
+            profile = os.environ.get("AWS_PROFILE") or "default"
             session = boto3.Session(profile_name=profile, region_name=self.region)
             self.client = session.client("secretsmanager")
             logger.info(f"Secrets Manager initialized (region: {self.region}, profile: {profile})")

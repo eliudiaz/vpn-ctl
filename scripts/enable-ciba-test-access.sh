@@ -12,7 +12,7 @@
 set -e
 
 # Configuration
-AWS_PROFILE="${AWS_PROFILE:-affinity}"
+AWS_PROFILE="${AWS_PROFILE:-default}"
 AWS_REGION="us-east-2"
 EKS_CLUSTER="asg-plat-dev"
 EKS_VPC_ID="vpc-0efe6f2c199a72f9a"
@@ -156,7 +156,7 @@ Options:
   --help          Show this help message
 
 Environment Variables:
-  AWS_PROFILE     AWS profile to use (default: affinity)
+  AWS_PROFILE     AWS profile to use (default: default)
   AWS_REGION      AWS region (default: us-east-2)
 
 Examples:

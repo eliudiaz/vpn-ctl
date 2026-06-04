@@ -449,7 +449,7 @@ vpn-ctl spec validate
 vpn-ctl peer deploy customer-x --dry-run
 
 # Check AWS credentials
-aws sts get-caller-identity --profile affinity
+aws sts get-caller-identity --profile default
 
 # Check Pulumi stack
 cd pulumi && pulumi stack select peer-customer-x && pulumi export

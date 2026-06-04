@@ -44,7 +44,7 @@ class PeerHealth:
 class VPNHealthState:
     """Manages VPN health state by comparing config with AWS reality using boto3 and infra-config resource IDs."""
 
-    def __init__(self, infra_config: Optional[Dict[str, Any]] = None, aws_profile: str = "affinity", region: str = "us-east-2"):
+    def __init__(self, infra_config: Optional[Dict[str, Any]] = None, aws_profile: str = "default", region: str = "us-east-2"):
         """
         Initialize health state manager.
 

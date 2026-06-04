@@ -75,7 +75,7 @@ vpnctl/
 
 **What it does:**
 1. Loads peer definitions from `config/vpn-peers.yaml`
-2. Queries AWS Transit Gateway (affinity-hub-tgw)
+2. Queries AWS Transit Gateway (vpn-hub-tgw)
 3. Queries EKS cluster (asg-plat-dev)
 4. Queries TGW route table and routes
 5. For each peer: Gets VPN connection ID, tunnel IPs, tunnel status, TGW attachment state
@@ -84,7 +84,7 @@ vpnctl/
 **Usage:**
 ```bash
 vpnctl infra export-config
-vpnctl infra export-config --output prod-infra.json --region us-east-2 --profile affinity
+vpnctl infra export-config --output prod-infra.json --region us-east-2 --profile default
 ```
 
 **Output Structure:**
@@ -100,7 +100,7 @@ vpnctl infra export-config --output prod-infra.json --region us-east-2 --profile
   "infrastructure": {
     "transit_gateway": {
       "id": "tgw-0123456789...",
-      "name": "affinity-hub-tgw",
+      "name": "vpn-hub-tgw",
       "asn": 64512,
       "state": "available"
     },
@@ -152,7 +152,7 @@ vpns = json.loads(result.stdout)
 
 **After (boto3 + resource IDs):**
 ```python
-session = boto3.Session(profile_name='affinity', region_name='us-east-2')
+session = boto3.Session(profile_name='default', region_name='us-east-2')
 ec2 = session.client('ec2')
 # Direct query by VPN ID from infra-config.json
 vpn = ec2.describe_vpn_connections(VpnConnectionIds=[vpn_id])
@@ -216,7 +216,7 @@ vpn = ec2.describe_vpn_connections(VpnConnectionIds=[vpn_id])
    create_app(
      config_file='config/vpn-peers.yaml',
      infra_config_file='infra-config.json',
-     aws_profile='affinity',
+     aws_profile='default',
      region='us-east-2'
    )
    ```
@@ -370,7 +370,7 @@ vpnctl health deploy --target docker --port 8080
    # AWS_ROLE_ARN - service account annotation
    # AWS_WEB_IDENTITY_TOKEN_FILE - token mount
    # For local testing:
-   ENV AWS_PROFILE=affinity
+   ENV AWS_PROFILE=default
    ```
 
 ---
@@ -380,7 +380,7 @@ vpnctl health deploy --target docker --port 8080
 ### Local Development (Docker)
 ```bash
 vpnctl health deploy --target docker
-# Uses: AWS_PROFILE=affinity environment variable
+# Uses: AWS_PROFILE=default environment variable
 # Mounts: ~/.aws credentials (read-only)
 ```
 
@@ -586,7 +586,7 @@ kubectl exec -it deployment/vpn-health -n vpn-health -- env | grep AWS
    aws ecr create-repository \
      --repository-name vpn-health \
      --region us-east-2 \
-     --profile affinity
+     --profile default
    ```
 
 2. **IRSA Role**
@@ -594,7 +594,7 @@ kubectl exec -it deployment/vpn-health -n vpn-health -- env | grep AWS
    aws iam create-role \
      --role-name vpn-health-irsa-prod \
      --assume-role-policy-document file://trust-policy.json \
-     --profile affinity
+     --profile default
    ```
 
 3. **EC2 Permissions**

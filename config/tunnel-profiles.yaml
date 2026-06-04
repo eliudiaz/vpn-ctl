@@ -11,7 +11,7 @@
 #   phase1:
 #     lifetime: 14400  # 4 hours instead of 8
 
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: TunnelProfiles
 metadata:
   name: tunnel-profiles

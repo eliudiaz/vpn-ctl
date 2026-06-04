@@ -27,7 +27,7 @@ echo ""
 echo "Deleting new stacks..."
 cd pulumi
 
-for STACK in core peer-vimenca peer-cibao peer-apap peer-affinity-legacy-network; do
+for STACK in core peer-vimenca peer-cibao peer-apap peer-internal-legacy-network; do
     if pulumi stack ls | grep -q "^$STACK\$"; then
         echo "   Deleting $STACK..."
         pulumi stack rm "$STACK" --force --yes 2>/dev/null || true

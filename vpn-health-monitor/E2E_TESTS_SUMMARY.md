@@ -396,4 +396,4 @@ npx playwright test -g "test name"
 **Created**: April 8, 2026  
 **Status**: Production Ready ✅  
 **Maintenance**: Automated via CI/CD  
-**Support**: Affinity Infrastructure Team
+**Support**: Organization Infrastructure Team

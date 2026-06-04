@@ -108,7 +108,7 @@ peers:
         phone: "TBD"
         email: "operations@cibao.local"
 
-  affinity_legacy_network:
+  org_legacy_network:
     enabled: true
     tunnel_profile: checkpoint_r80
     public_ip: "52.254.86.115"

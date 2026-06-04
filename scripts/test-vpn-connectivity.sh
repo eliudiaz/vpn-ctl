@@ -21,9 +21,9 @@ NC='\033[0m'
 # Configuración
 VIMENCA_CIDR="172.16.70.0/24"
 VIMENCA_TEST_IP="172.16.70.1"
-AFFINITY_CIDRS=("172.33.6.0/28" "172.33.16.0/28")
+ORGANIZATION_CIDRS=("172.33.6.0/28" "172.33.16.0/28")
 REGION="${AWS_REGION:-us-east-1}"
-AWS_PROFILE="${AWS_PROFILE:-affinity}"
+AWS_PROFILE="${AWS_PROFILE:-default}"
 
 print_header() {
     echo -e "\n${BLUE}${BOLD}════════════════════════════════════════════════════════════════════════════════${NC}"
@@ -49,7 +49,7 @@ print_check() {
     fi
 }
 
-print_header "TEST DE CONECTIVIDAD VPN - Affinity <-> Vimenca"
+print_header "TEST DE CONECTIVIDAD VPN - Organization <-> Vimenca"
 echo -e "\nFecha: $(date)"
 echo -e "Región: $REGION"
 echo -e "Profile: $AWS_PROFILE"
@@ -273,7 +273,7 @@ if [ "$TUNNEL1_STATUS" != "UP" ] || [ "$TUNNEL2_STATUS" != "UP" ]; then
 
   ${YELLOW}2. Enviar información de configuración a Vimenca:${NC}
      - IPs de túneles AWS: $TUNNEL1_IP, $TUNNEL2_IP
-     - Redes Affinity: $VIMENCA_CIDR
+     - Redes Organization: $VIMENCA_CIDR
      - Configuración IPSec: IKEv2, AES256, SHA256, DH Group 14
 
   ${YELLOW}3. Esperar confirmación de Vimenca y verificar túneles UP${NC}

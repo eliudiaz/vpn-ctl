@@ -112,7 +112,7 @@ if [ "$CONFIG_OK" = false ]; then
     echo -e "  pulumi config set transit_gateway_id tgw-xxxxx"
     echo -e "\nOpcionales:"
     echo -e "  pulumi config set vimenca_cidr 172.16.70.0/24"
-    echo -e "  pulumi config set affinity_cidrs 172.33.6.0/28,172.33.16.0/28"
+    echo -e "  pulumi config set vpn_cidrs 172.33.6.0/28,172.33.16.0/28"
     exit 1
 fi
 
@@ -146,7 +146,7 @@ Este script creará los siguientes recursos en AWS:
 
   ${BOLD}Rutas:${NC}
     - 172.16.70.0/24 -> Transit Gateway (Vimenca)
-    - 172.33.0.0/16 -> Transit Gateway (Affinity)
+    - 172.33.0.0/16 -> Transit Gateway (Organization)
 
   ${GREEN}Costo mensual estimado: \$86-126/mes${NC}
   ${GREEN}Ahorro vs NAT Gateway: \$64-174/mes${NC}
@@ -240,7 +240,7 @@ PYTHON_EOF
    # Test Vimenca
    ping -c 3 172.16.70.1
 
-   # Test Affinity
+   # Test Organization
    curl -v http://172.33.6.5
 
 3. ${BOLD}Ver outputs completos:${NC}

@@ -21,7 +21,7 @@ def peer():
 @peer.command()
 @click.argument('peer_name')
 @click.option('--region', default='us-east-2', help='AWS region')
-@click.option('--profile', default='affinity', help='AWS profile')
+@click.option('--profile', default='default', help='AWS profile')
 def deploy(peer_name, region, profile):
     """Deploy a VPN peer infrastructure (VPN + routes)."""
     click.echo(f"\n🚀 DEPLOYING PEER: {peer_name.upper()}")
@@ -79,7 +79,7 @@ def _wait_for_vpn_available(peer_config, region, profile, max_wait=180):
     ec2 = session.client("ec2")
 
     peer_name = peer_config["name"].lower().replace(" ", "-")
-    vpn_name = f"affinity-{peer_name}-vpn"
+    vpn_name = f"vpn-{peer_name}-vpn"
 
     click.echo(f"  ⏳ Waiting for VPN to become available (max {max_wait}s)...")
     start_time = time.time()
@@ -112,7 +112,7 @@ def _ensure_vpn_exists(peer_config, region, profile):
     ec2 = session.client("ec2")
 
     peer_name = peer_config["name"].lower().replace(" ", "-")
-    vpn_name = f"affinity-{peer_name}-vpn"
+    vpn_name = f"vpn-{peer_name}-vpn"
 
     # Check if VPN exists (and is not deleted)
     response = ec2.describe_vpn_connections(
@@ -131,7 +131,7 @@ def _ensure_vpn_exists(peer_config, region, profile):
     # Get TGW ID
     tgw_response = ec2.describe_transit_gateways(
         Filters=[
-            {"Name": "tag:Name", "Values": ["affinity-hub-tgw"]},
+            {"Name": "tag:Name", "Values": ["vpn-hub-tgw"]},
             {"Name": "state", "Values": ["available"]}
         ]
     )
@@ -152,7 +152,7 @@ def _ensure_vpn_exists(peer_config, region, profile):
             {
                 "ResourceType": "customer-gateway",
                 "Tags": [
-                    {"Key": "Name", "Value": f"affinity-{peer_name}-cgw"},
+                    {"Key": "Name", "Value": f"vpn-{peer_name}-cgw"},
                     {"Key": "Peer", "Value": peer_name},
                 ]
             }
@@ -286,7 +286,7 @@ def _verify_aws_resources(peer_name, region, profile):
     # Check TGW routes
     tgw_response = ec2.describe_transit_gateways(
         Filters=[
-            {"Name": "tag:Name", "Values": ["affinity-hub-tgw"]},
+            {"Name": "tag:Name", "Values": ["vpn-hub-tgw"]},
             {"Name": "state", "Values": ["available"]}
         ]
     )

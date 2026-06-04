@@ -43,7 +43,7 @@ deployment:
 # Container configuration
 image:
   # Docker image repository
-  repository: 218833996210.dkr.ecr.us-east-2.amazonaws.com/affinity/vpn-health-monitor
+  repository: 218833996210.dkr.ecr.us-east-2.amazonaws.com/organization/vpn-health-monitor
 
   # Image tag/version
   tag: "2.1.4"

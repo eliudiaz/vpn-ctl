@@ -17,7 +17,7 @@ class VPNHealthApp:
     """VPN Health Monitoring Application."""
 
     def __init__(self, config_file: str = "config/vpn-peers.yaml", infra_config_file: str = "infra-config.json",
-                 aws_profile: str = "affinity", region: str = "us-east-2"):
+                 aws_profile: str = "default", region: str = "us-east-2"):
         """
         Initialize health app.
 
@@ -177,7 +177,7 @@ class VPNHealthApp:
 
 
 def create_app(config_file: str = "config/vpn-peers.yaml", infra_config_file: str = "infra-config.json",
-               aws_profile: str = "affinity", region: str = "us-east-2") -> Flask:
+               aws_profile: str = "default", region: str = "us-east-2") -> Flask:
     """Factory function for WSGI deployment."""
     app = VPNHealthApp(config_file=config_file, infra_config_file=infra_config_file,
                        aws_profile=aws_profile, region=region)

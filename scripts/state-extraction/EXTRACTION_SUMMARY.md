@@ -19,7 +19,7 @@
   - `peer-vimenca` → 5 resources
   - `peer-cibao` → 3 resources  
   - `peer-apap` → 3 resources
-  - `peer-affinity-legacy-network` → 3 resources
+  - `peer-internal-legacy-network` → 3 resources
 
 **Total:** 36 resources ✅
 
@@ -70,7 +70,7 @@
 - **Tunnel Profile:** FortiGate with IKEv2 + PFS
 - **Contacts:** 2 (Operations, Support)
 
-### affinity-legacy-network ✅
+### internal-legacy-network ✅
 - **Status:** ENABLED
 - **Device:** Legacy Infrastructure
 - **Public IP:** 52.254.86.115
@@ -133,7 +133,7 @@ pulumi/
     │   └── Pulumi.yaml
     ├── peer-apap/
     │   └── Pulumi.yaml
-    └── peer-affinity-legacy-network/
+    └── peer-internal-legacy-network/
         └── Pulumi.yaml
 
 .pulumi-backups/              ← NEW
@@ -149,7 +149,7 @@ pulumi/
 | **Pulumi** | v3.192.0 | ✅ OK |
 | **AWS CLI** | 2.16.10 | ✅ OK |
 | **Python** | 3.14.2 | ✅ OK |
-| **AWS Profile** | affinity (us-east-2) | ✅ OK |
+| **AWS Profile** | default (us-east-2) | ✅ OK |
 
 ---
 
@@ -167,7 +167,7 @@ pulumi/
 vpn-ctl peer status vimenca
 vpn-ctl peer status cibao
 vpn-ctl peer status apap
-vpn-ctl peer status affinity-legacy-network
+vpn-ctl peer status internal-legacy-network
 
 # Deploy specific peer (if changes needed)
 pulumi --cwd pulumi/stacks/peer-vimenca up -s peer-vimenca
@@ -214,7 +214,7 @@ Total Resources: 36
     ├── Vimenca: 5 (14%)
     ├── CIBAO: 3 (8%)
     ├── APAP: 3 (8%)
-    └── affinity-legacy-network: 3 (8%)
+    └── internal-legacy-network: 3 (8%)
 ```
 
 ---

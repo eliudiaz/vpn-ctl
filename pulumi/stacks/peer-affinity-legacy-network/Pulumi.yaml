@@ -1,4 +1,4 @@
-description: 'VPN peer: affinity-legacy-network'
+description: 'VPN peer: internal-legacy-network'
 name: aff-atg
 runtime:
   name: python

@@ -1,4 +1,4 @@
-apiVersion: vpnctl.affinity.io/v1
+apiVersion: vpnctl.example.io/v1
 kind: StackDeployment
 metadata:
   annotations:
@@ -10,7 +10,7 @@ metadata:
   namespace: aff-atg
 spec:
   config:
-    aws_profile: affinity
+    aws_profile: default
     aws_region: us-east-2
     project_name: aff-atg
   provider: pulumi
@@ -20,7 +20,7 @@ spec:
       tags:
         Environment: production
         StackType: core
-    name: affinity-hub
+    name: vpn-hub
     type: transit-gateway-hub
   - clusters:
     - name: asg-plat-dev

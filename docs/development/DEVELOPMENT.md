@@ -8,7 +8,7 @@ This guide is for developers working on the vpn-ctl platform itself (not users o
 
 - Python 3.10+
 - Pulumi CLI
-- AWS CLI with credentials configured (`--profile affinity`)
+- AWS CLI with credentials configured (`--profile default`)
 - Git
 
 ### Install Development Environment

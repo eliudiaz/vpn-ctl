@@ -65,7 +65,7 @@ class PulumiProvider(IInfrastructureProvider):
                 "vpn_id": vpn_id_result.stdout.strip(),
                 "tunnel1_ip": tunnel1_result.stdout.strip(),
                 "tunnel2_ip": tunnel2_result.stdout.strip(),
-                "cgw_id": f"affinity-{peer.name}-cgw",  # From naming convention
+                "cgw_id": f"vpn-{peer.name}-cgw",  # From naming convention
             }
         except Exception as e:
             raise RuntimeError(f"Failed to get deployment outputs: {e}")
@@ -113,7 +113,7 @@ class PulumiProvider(IInfrastructureProvider):
         # Filter to peer-specific resources
         resources = []
         for line in result.stdout.split("\n"):
-            if f"affinity-{peer_name}-" in line or f"{peer_name.lower()}-" in line:
+            if f"vpn-{peer_name}-" in line or f"{peer_name.lower()}-" in line:
                 resources.append(line.strip())
 
         return resources

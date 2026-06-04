@@ -170,7 +170,7 @@ config/
    │        ├─ profile: fortigate_standard  ← Different reference
    │        └─ overrides: {}
    │
-   └─ affinity-legacy-network.yaml (280 lines)
+   └─ internal-legacy-network.yaml (280 lines)
       └─ spec:
          └─ tunnel:
             ├─ profile: checkpoint_r80
@@ -207,9 +207,9 @@ git add config/peers/vimenca.yaml
 # Change: dpd.timeout: 30 → 15
 git add config/peers/cibao.yaml
 
-# Edit affinity-legacy-network.yaml
+# Edit internal-legacy-network.yaml
 # Change: dpd.timeout: 30 → 15
-git add config/peers/affinity-legacy-network.yaml
+git add config/peers/internal-legacy-network.yaml
 
 # Commit
 git commit -m "fix: Update Checkpoint DPD timeout for security"
@@ -252,7 +252,7 @@ git commit -m "fix: Update Checkpoint DPD timeout for security"
 **Option 1 (Inline)**:
 ```yaml
 # Create: config/peers/customer-100.yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: customer-100
@@ -272,7 +272,7 @@ spec:
 **Option 4 (Hybrid)**:
 ```yaml
 # Create: config/peers/customer-100.yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: VpnPeer
 metadata:
   name: customer-100

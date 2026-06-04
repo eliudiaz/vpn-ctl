@@ -53,7 +53,7 @@ def print_header(title: str):
 class ATGVerifier:
     """Verify ATG infrastructure and peer configurations"""
 
-    def __init__(self, region: str = "us-east-2", registry_file: str = "vpn-peers-registry.yaml", profile: str = "affinity"):
+    def __init__(self, region: str = "us-east-2", registry_file: str = "vpn-peers-registry.yaml", profile: str = "default"):
         """Initialize verifier with AWS region and registry file"""
         self.region = region
         self.registry_file = registry_file
@@ -68,7 +68,7 @@ class ATGVerifier:
         self.checks_failed = 0
 
     def connect_aws(self) -> bool:
-        """Connect to AWS using affinity profile"""
+        """Connect to AWS using default profile"""
         try:
             session = boto3.Session(profile_name=self.profile)
             self.ec2_client = session.client('ec2', region_name=self.region)
@@ -122,8 +122,8 @@ class ATGVerifier:
                         peer_name = tag.get('Value', vpn['VpnConnectionId'])
                         break
                     elif tag.get('Key') == 'Name':
-                        # Fallback: extract peer name from VPN name (e.g., "affinity-vimenca-vpn" -> "Vimenca")
-                        name_value = tag.get('Value', '').replace('affinity-', '').replace('-vpn', '')
+                        # Fallback: extract peer name from VPN name (e.g., "company-partner-vpn" -> "Vimenca")
+                        name_value = tag.get('Value', '').replace('vpn-', '').replace('-vpn', '')
                         peer_name = name_value.capitalize() if name_value else vpn['VpnConnectionId']
 
                 # Extract tunnel information
@@ -564,8 +564,8 @@ def main():
     )
     parser.add_argument(
         '--profile',
-        default='affinity',
-        help='AWS CLI profile to use (default: affinity)'
+        default='default',
+        help='AWS CLI profile to use (default: default)'
     )
 
     args = parser.parse_args()

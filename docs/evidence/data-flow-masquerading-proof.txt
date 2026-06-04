@@ -111,7 +111,7 @@ Step 4: iptables SNAT Rule Evaluation (MASQUERADING ENGINE)
 
 Step 5: SNAT Subnet Route Table (Exit SNAT Instance)
   SNAT instance looks up route for destination 172.16.82.28
-  Route Table: affinity-snat-rt (SNAT subnet route table)
+  Route Table: vpn-snat-rt (SNAT subnet route table)
 
   Lookup: 172.16.82.28 destination
   Longest match: 172.16.82.0/24? YES ✅

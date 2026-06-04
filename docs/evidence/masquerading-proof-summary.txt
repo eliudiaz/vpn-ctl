@@ -6,7 +6,7 @@ Status: ✅ INFRASTRUCTURE FULLY CONFIGURED FOR IP MASQUERADING (203.0.113.10)
 ================================================================================
 
 TO: Vimenca DevOps Team (Eric Frias / Fermir Quezada)
-FROM: Affinity Engineering
+FROM: Engineering Team
 RE: Proof that pod traffic will be masqueraded to 203.0.113.10
 
 ================================================================================
@@ -173,13 +173,13 @@ To complete the integration and enable pod-to-Vimenca traffic:
    • Simpler firewall maintenance
    • Better security auditing
 
-2. NOTIFY AFFINITY WHEN RULE IS ACTIVE
+2. NOTIFY ORGANIZATION WHEN RULE IS ACTIVE
 
    Contact: [your-email@company.com]
    Message: "Firewall rule configured for 203.0.113.10"
    ETA:     Within 1-4 hours from now
 
-3. AFFINITY WILL THEN:
+3. ORGANIZATION WILL THEN:
    • Generate test traffic from EKS pods
    • Verify CloudWatch logs show 203.0.113.10 as source
    • Confirm HTTP 200 responses from test endpoints
@@ -248,10 +248,10 @@ Immediate Next Steps (Today):
   1. Vimenca: Configure firewall rule
      Est. time: 1-4 hours
      
-  2. Affinity: Generate test traffic
+  2. Organization: Generate test traffic
      Est. time: 5 minutes (after firewall ready)
      
-  3. Affinity: Verify CloudWatch evidence
+  3. Organization: Verify CloudWatch evidence
      Est. time: 5-10 minutes after traffic starts
      
   4. Declare integration complete
@@ -342,7 +342,7 @@ Next: Vimenca firewall rule → Traffic flows → CloudWatch proves it ✅
 Ready for integration.
 Awaiting Vimenca firewall configuration.
 
-Contact Affinity when rule is configured:
+Contact Organization when rule is configured:
 Eric Frias / Fermir Quezada (809-487-2679 / 809-487-2602)
 
 Generated: 2026-03-10 18:27 UTC

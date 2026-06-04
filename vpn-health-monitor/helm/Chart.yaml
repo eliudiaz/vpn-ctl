@@ -17,14 +17,14 @@ keywords:
   - ping
   - nodeping
 
-home: https://github.com/affinity/vpn-health-monitor
+home: https://github.com/organization/vpn-health-monitor
 sources:
-  - https://github.com/affinity/vpn-health-monitor
+  - https://github.com/organization/vpn-health-monitor
 
 maintainers:
   - name: Affinity Infrastructure Team
     email: infrastructure@assurehub.io
 
-icon: https://raw.githubusercontent.com/affinity/vpn-health-monitor/main/icon.png
+icon: https://raw.githubusercontent.com/organization/vpn-health-monitor/main/icon.png
 
 dependencies: []

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- ✅ AWS credentials configured: `~/.aws/credentials` with `affinity` profile
+- ✅ AWS credentials configured: `~/.aws/credentials` with `default` profile
 - ✅ EKS cluster access: `kubectl` configured for asg-plat-dev
 - ✅ Docker installed locally
 - ✅ Helm 3 installed
@@ -153,7 +153,7 @@ vpnctl health deploy --target helm --no-build --no-push
 
 ```bash
 # Verify image in ECR
-aws ecr list-images --repository-name vpn-health --profile affinity
+aws ecr list-images --repository-name vpn-health --profile default
 
 # Check pod events
 kubectl describe pod -n vpn-health $(kubectl get pods -n vpn-health -o name | head -1)
@@ -230,7 +230,7 @@ vpnctl health stop
 ```
 
 This uses:
-- AWS_PROFILE=affinity (local credentials from ~/.aws)
+- AWS_PROFILE=default (local credentials from ~/.aws)
 - Mounted config/ directory (read-only)
 - Port 8080 on localhost
 

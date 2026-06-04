@@ -79,14 +79,14 @@ class ValueResolver:
     """Resolve dynamic values without hardcoding."""
 
     @staticmethod
-    def resolve_transit_gateway_id(aws_profile: str = "affinity", region: str = "us-east-2") -> Optional[str]:
-        """Query AWS for Transit Gateway ID (affinity-hub)."""
+    def resolve_transit_gateway_id(aws_profile: str = "default", region: str = "us-east-2") -> Optional[str]:
+        """Query AWS for Transit Gateway ID (vpn-hub)."""
         try:
             result = subprocess.run([
                 "aws", "ec2", "describe-transit-gateways",
                 "--profile", aws_profile,
                 "--region", region,
-                "--filters", "Name=tag:Name,Values=*affinity-hub*",
+                "--filters", "Name=tag:Name,Values=*vpn-hub*",
                 "--query", "TransitGateways[0].TransitGatewayId",
                 "--output", "text"
             ], capture_output=True, text=True)
@@ -103,7 +103,7 @@ class ValueResolver:
         return None
 
     @staticmethod
-    def resolve_transit_gateway_route_table_id(tgw_id: str, aws_profile: str = "affinity", region: str = "us-east-2") -> Optional[str]:
+    def resolve_transit_gateway_route_table_id(tgw_id: str, aws_profile: str = "default", region: str = "us-east-2") -> Optional[str]:
         """Query AWS for Transit Gateway Route Table ID."""
         if not tgw_id:
             return None
@@ -153,7 +153,7 @@ class ValueResolver:
         return None
 
     @staticmethod
-    def resolve_value(value: Any, aws_profile: str = "affinity", region: str = "us-east-2") -> Any:
+    def resolve_value(value: Any, aws_profile: str = "default", region: str = "us-east-2") -> Any:
         """Resolve dynamic value expressions."""
         if not isinstance(value, str):
             return value
@@ -178,7 +178,7 @@ class ValueResolver:
         return value
 
     @staticmethod
-    def resolve_spec_values(spec: Dict[str, Any], aws_profile: str = "affinity", region: str = "us-east-2") -> Dict[str, Any]:
+    def resolve_spec_values(spec: Dict[str, Any], aws_profile: str = "default", region: str = "us-east-2") -> Dict[str, Any]:
         """Recursively resolve all dynamic values in spec config."""
         if not isinstance(spec, dict):
             return spec
@@ -356,7 +356,7 @@ class SpecRunner:
 
         # CRITICAL: Resolve dynamic values (no hardcoding!)
         print(f"🔍 Resolving dynamic configuration values...")
-        aws_profile = spec.spec.get('config', {}).get('aws_profile', 'affinity')
+        aws_profile = spec.spec.get('config', {}).get('aws_profile', 'default')
         aws_region = spec.spec.get('config', {}).get('aws_region', 'us-east-2')
         spec.spec = ValueResolver.resolve_spec_values(spec.spec, aws_profile, aws_region)
 

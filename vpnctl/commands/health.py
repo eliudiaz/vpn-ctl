@@ -317,7 +317,7 @@ def _deploy_helm(namespace: str, release: str, environment: str, ecr_registry: s
         if not ecr_registry:
             # Try to infer from AWS account
             result = subprocess.run(
-                ["aws", "sts", "get-caller-identity", "--query", "Account", "--output", "text", "--profile", "affinity"],
+                ["aws", "sts", "get-caller-identity", "--query", "Account", "--output", "text", "--profile", "default"],
                 capture_output=True,
                 text=True
             )
@@ -332,7 +332,7 @@ def _deploy_helm(namespace: str, release: str, environment: str, ecr_registry: s
 
         # Login to ECR
         result = subprocess.run(
-            ["aws", "ecr", "get-login-password", "--region", "us-east-2", "--profile", "affinity"],
+            ["aws", "ecr", "get-login-password", "--region", "us-east-2", "--profile", "default"],
             capture_output=True,
             text=True
         )
@@ -566,7 +566,7 @@ def _deploy_docker(port: int, build: bool) -> None:
         "--name", "vpn-health-app",
         "-p", f"{port}:8080",
         "-v", f"{config_path}:/app/config:ro",
-        "-e", "AWS_PROFILE=affinity",
+        "-e", "AWS_PROFILE=default",
         "-e", "AWS_REGION=us-east-2",
         "-e", "PYTHONUNBUFFERED=1",
         "--restart", "unless-stopped",

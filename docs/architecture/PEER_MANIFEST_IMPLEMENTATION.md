@@ -25,7 +25,7 @@ This guide walks through implementing K8s-style peer manifests in the existing P
 Contains shared IPsec/IKE profiles referenced by peers.
 
 ```yaml
-apiVersion: vpn.affinity.io/v1
+apiVersion: vpn.example.io/v1
 kind: TunnelProfiles
 metadata:
   name: tunnel-profiles
@@ -52,7 +52,7 @@ mkdir -p config/peers
 - `config/peers/vimenca.yaml` ✅ Created
 - `config/peers/cibao.yaml` ✅ Created
 - `config/peers/apap.yaml` ✅ Created
-- `config/peers/affinity-legacy-network.yaml` ✅ Created
+- `config/peers/internal-legacy-network.yaml` ✅ Created
 
 Each contains complete peer specification in K8s-style manifest format.
 
@@ -177,7 +177,7 @@ Loaded 4 enabled peers:
   - vimenca: Checkpoint Firewall
   - cibao: Checkpoint Firewall
   - apap: Firewall Fortinet
-  - affinity-legacy-network: Legacy Infrastructure
+  - internal-legacy-network: Legacy Infrastructure
 ```
 
 ### Step 4.3: Test Config Extraction
@@ -223,7 +223,7 @@ print(f'Peers: {sorted(names)}')
 **Expected output**:
 ```
 Total peers: 5 (or 4 if monolithic is removed)
-Peers: ['affinity-legacy-network', 'apap', 'cibao', 'vimenca']
+Peers: ['internal-legacy-network', 'apap', 'cibao', 'vimenca']
 ```
 
 ### Step 4.5: Verify Backward Compatibility
@@ -423,7 +423,7 @@ print(f'SNAT IP: {config[\"snat_provider_ip\"]}')
 - ✅ `config/peers/vimenca.yaml` — Vimenca peer manifest
 - ✅ `config/peers/cibao.yaml` — CIBAO peer manifest
 - ✅ `config/peers/apap.yaml` — APAP peer manifest with SNAT
-- ✅ `config/peers/affinity-legacy-network.yaml` — Legacy network peer
+- ✅ `config/peers/internal-legacy-network.yaml` — Legacy network peer
 - ✅ `pulumi/vpn_manifest_loader.py` — Manifest loading code
 
 ### Modified Files

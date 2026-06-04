@@ -6,7 +6,7 @@
 # Usage: ./test-all-providers.sh [provider|all]
 # Examples:
 #   ./test-all-providers.sh vimenca
-#   ./test-all-providers.sh affinity-legacy
+#   ./test-all-providers.sh org-legacy
 #   ./test-all-providers.sh cibao
 #   ./test-all-providers.sh all
 ################################################################################
@@ -182,8 +182,8 @@ test_cibao() {
     print_summary "CIBAO" $pass $fail
 }
 
-test_affinity_legacy() {
-    print_header "AFFINITY-LEGACY - MSSQL Databases (Original Pod IPs)"
+test_vpn_legacy() {
+    print_header "ORGANIZATION-LEGACY - MSSQL Databases (Original Pod IPs)"
 
     echo "Service Details:"
     echo "  • APAP Producción: 192.168.100.8:1433 (SQL Server)"
@@ -218,7 +218,7 @@ test_affinity_legacy() {
     test_port "172.133.5.4" "AppGateway" "443" && ((pass++)) || ((fail++))
     echo ""
 
-    print_summary "AFFINITY-LEGACY" $pass $fail
+    print_summary "ORGANIZATION-LEGACY" $pass $fail
 }
 
 print_summary() {
@@ -252,7 +252,7 @@ print_final_summary() {
     echo -e "${BLUE}For more detailed information:${NC}"
     echo "  • Vimenca:          providers-conn-docs/VIMENCA.md"
     echo "  • CIBAO:            providers-conn-docs/CIBAO.md"
-    echo "  • Affinity-Legacy:  providers-conn-docs/AFFINITY-LEGACY.md"
+    echo "  • Organization-Legacy:  providers-conn-docs/ORGANIZATION-LEGACY.md"
     echo ""
 
     echo -e "${BLUE}Quick Troubleshooting:${NC}"
@@ -281,8 +281,8 @@ main() {
             test_cibao
             print_final_summary
             ;;
-        affinity-legacy|affinity)
-            test_affinity_legacy
+        org-legacy|default)
+            test_vpn_legacy
             print_final_summary
             ;;
         all)
@@ -290,16 +290,16 @@ main() {
             echo ""
             test_cibao
             echo ""
-            test_affinity_legacy
+            test_vpn_legacy
             print_final_summary
             ;;
         *)
-            echo "Usage: $0 [vimenca|cibao|affinity-legacy|all]"
+            echo "Usage: $0 [vimenca|cibao|org-legacy|all]"
             echo ""
             echo "Examples:"
             echo "  $0 vimenca          - Test Vimenca banking services"
             echo "  $0 cibao            - Test CIBAO enterprise network"
-            echo "  $0 affinity-legacy  - Test Affinity-Legacy MSSQL databases"
+            echo "  $0 org-legacy  - Test Organization-Legacy MSSQL databases"
             echo "  $0 all              - Test all providers"
             exit 1
             ;;

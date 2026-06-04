@@ -66,14 +66,14 @@ class VpnPeerValidator:
                 except ValueError:
                     errors.append(f"Invalid CIDR: {cidr}")
 
-            # Check for overlaps with Affinity reserved
-            affinity_reserved = ipaddress.ip_network("172.33.0.0/16")
+            # Check for overlaps with Organization reserved
+            vpn_reserved = ipaddress.ip_network("172.33.0.0/16")
             for cidr in cidrs:
                 try:
                     net = ipaddress.ip_network(cidr, strict=False)
-                    if net.overlaps(affinity_reserved):
+                    if net.overlaps(vpn_reserved):
                         errors.append(
-                            f"CIDR {cidr} overlaps with reserved Affinity network"
+                            f"CIDR {cidr} overlaps with reserved Organization network"
                         )
                 except ValueError:
                     pass  # Already reported above

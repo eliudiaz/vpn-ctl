@@ -27,7 +27,7 @@ Kubernetes Helm chart for deploying the VPN Health Monitoring Service to EKS clu
 aws iam create-role \
   --role-name vpn-health-irsa-dev \
   --assume-role-policy-document file://trust-policy.json \
-  --profile affinity
+  --profile default
 ```
 
 Trust policy (`trust-policy.json`):
@@ -58,7 +58,7 @@ aws iam put-role-policy \
   --role-name vpn-health-irsa-dev \
   --policy-name vpn-health-ec2-access \
   --policy-document file://ec2-policy.json \
-  --profile affinity
+  --profile default
 ```
 
 EC2 policy (`ec2-policy.json`):
@@ -149,7 +149,7 @@ helm uninstall vpn-health -n vpn-health
 
 ```bash
 # Check image in ECR
-aws ecr list-images --repository-name vpn-health --profile affinity
+aws ecr list-images --repository-name vpn-health --profile default
 
 # Update image tag in values
 helm upgrade vpn-health . \

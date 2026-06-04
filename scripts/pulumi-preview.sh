@@ -89,7 +89,7 @@ check_config "transit_gateway_id" || CONFIG_OK=false
 # Valores opcionales (tienen defaults)
 echo -e "\n${YELLOW}Configuración opcional (con defaults):${NC}"
 pulumi config get vimenca_cidr 2>/dev/null && echo -e "${GREEN}  ✓ vimenca_cidr configurado${NC}" || echo -e "${YELLOW}  - vimenca_cidr: usando default (172.16.70.0/24)${NC}"
-pulumi config get affinity_cidrs 2>/dev/null && echo -e "${GREEN}  ✓ affinity_cidrs configurado${NC}" || echo -e "${YELLOW}  - affinity_cidrs: usando default (172.33.6.0/28,172.33.16.0/28)${NC}"
+pulumi config get vpn_cidrs 2>/dev/null && echo -e "${GREEN}  ✓ vpn_cidrs configurado${NC}" || echo -e "${YELLOW}  - vpn_cidrs: usando default (172.33.6.0/28,172.33.16.0/28)${NC}"
 
 if [ "$CONFIG_OK" = false ]; then
     echo -e "\n${RED}════════════════════════════════════════════════════════════════════════════════${NC}"
@@ -101,7 +101,7 @@ if [ "$CONFIG_OK" = false ]; then
     echo -e "  pulumi config set transit_gateway_id tgw-xxxxx"
     echo -e "\nOpcionales:"
     echo -e "  pulumi config set vimenca_cidr 172.16.70.0/24"
-    echo -e "  pulumi config set affinity_cidrs 172.33.6.0/28,172.33.16.0/28"
+    echo -e "  pulumi config set vpn_cidrs 172.33.6.0/28,172.33.16.0/28"
     exit 1
 fi
 

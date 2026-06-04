@@ -13,7 +13,7 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/affinity/vpn-ctl.git
+git clone https://github.com/your-org/vpn-ctl.git
 cd vpn-ctl
 
 # Install globally
@@ -676,7 +676,7 @@ vpnctl tunnel diagnose vimenca
 aws sts get-caller-identity
 
 # Check Transit Gateway exists
-aws ec2 describe-transit-gateways --filters Name=tag:Name,Values=affinity-hub-tgw
+aws ec2 describe-transit-gateways --filters Name=tag:Name,Values=vpn-hub-tgw
 
 # Debug export
 vpnctl infra export-config --debug
@@ -944,15 +944,15 @@ This project is licensed under the **MIT License** - see LICENSE file for detail
 
 ## 🙋 Support & Contact
 
-- **Issues**: [GitHub Issues](https://github.com/affinity/vpn-ctl/issues)
+- **Issues**: [GitHub Issues](https://github.com/your-org/vpn-ctl/issues)
 - **Documentation**: [docs/README.md](docs/README.md)
-- **Contact**: engineering@affinity.com
+- **Contact**: engineering@example.com
 
 ---
 
 ## 🎉 Acknowledgments
 
-Built and maintained by the **Affinity Engineering** team.
+Built and maintained by the **Engineering Team** team.
 
 **Key Technologies**:
 - Pulumi - Infrastructure automation
