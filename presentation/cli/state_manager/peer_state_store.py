@@ -1,6 +1,7 @@
 """Per-peer isolated state storage."""
 
 import json
+from collections import deque
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, Any, List
@@ -64,11 +65,11 @@ class PeerStateStore:
         with open(deployments[-1]) as f:
             return json.load(f)
 
-    def get_deployment_history(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_deployment_history(self, limit: Optional[int] = 10) -> List[Dict[str, Any]]:
         """Get deployment history (most recent first).
 
         Args:
-            limit: Maximum number of deployments to return
+            limit: Maximum number of deployments to return, or None for all
 
         Returns:
             List of deployment metadata dicts
@@ -112,11 +113,11 @@ class PeerStateStore:
             data = json.load(f)
             return data.get("tunnels")
 
-    def get_audit_log(self, limit: int = 100) -> List[Dict[str, Any]]:
+    def get_audit_log(self, limit: Optional[int] = 100) -> List[Dict[str, Any]]:
         """Get audit log entries (most recent first).
 
         Args:
-            limit: Maximum number of entries to return
+            limit: Maximum number of entries to return, or None for all entries
 
         Returns:
             List of audit log entries
@@ -124,15 +125,17 @@ class PeerStateStore:
         if not self.audit_file.exists():
             return []
 
-        entries = []
         with open(self.audit_file) as f:
-            for i, line in enumerate(f):
-                if i >= limit:
-                    break
-                try:
-                    entries.append(json.loads(line))
-                except json.JSONDecodeError:
-                    pass
+            # deque(maxlen=limit) keeps the *last* `limit` lines, so the newest
+            # entries survive truncation; maxlen=None keeps every line.
+            recent_lines = deque(f, maxlen=limit)
+
+        entries = []
+        for line in recent_lines:
+            try:
+                entries.append(json.loads(line))
+            except json.JSONDecodeError:
+                pass
 
         return list(reversed(entries))
 

@@ -364,13 +364,40 @@ class TestPeerStateManagement:
         store._log_audit('deployment_started', {'deployment_id': 'dep-1'})
         store._log_audit('deployment_completed', {'vpn_id': 'vpn-123'})
 
-        # Retrieve audit log
+        # Retrieve audit log (contract: most recent first)
         audit_log = store.get_audit_log()
 
         assert len(audit_log) >= 3
-        assert audit_log[0]['event_type'] == 'peer_created'
+        assert audit_log[0]['event_type'] == 'deployment_completed'
         assert audit_log[1]['event_type'] == 'deployment_started'
-        assert audit_log[2]['event_type'] == 'deployment_completed'
+        assert audit_log[2]['event_type'] == 'peer_created'
+
+    def test_audit_log_limit_keeps_most_recent(self, tmp_path):
+        """Audit log truncation must keep the newest entries, not the oldest."""
+        store = PeerStateStore('test-peer', base_dir=str(tmp_path))
+
+        for i in range(10):
+            store._log_audit(f'event_{i:02d}', {})
+
+        audit_log = store.get_audit_log(limit=3)
+
+        assert len(audit_log) == 3
+        assert [e['event_type'] for e in audit_log] == [
+            'event_09', 'event_08', 'event_07'
+        ]
+
+    def test_audit_log_unlimited(self, tmp_path):
+        """limit=None returns every entry instead of raising TypeError."""
+        store = PeerStateStore('test-peer', base_dir=str(tmp_path))
+
+        for i in range(150):
+            store._log_audit(f'event_{i:03d}', {})
+
+        audit_log = store.get_audit_log(limit=None)
+
+        assert len(audit_log) == 150
+        assert audit_log[0]['event_type'] == 'event_149'
+        assert audit_log[-1]['event_type'] == 'event_000'
 
     def test_tunnel_status_snapshots(self, tmp_path):
         """Test tunnel status snapshot functionality."""
